@@ -95,6 +95,7 @@ def log_run(command: str, counts: dict, failures: list[str] | None = None, notes
     for secret in redact:
         if secret:
             command = command.replace(secret, "<agency>")
+            notes = notes.replace(secret, "<agency>")
     stamp = now_iso()
     lines = [f"\n### {stamp}", f"- **Command:** `{command}`"]
     lines.append("- **Counts:** " + ", ".join(f"{k}={v}" for k, v in counts.items()))
