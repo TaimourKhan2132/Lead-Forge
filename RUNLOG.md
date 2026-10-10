@@ -36,6 +36,17 @@ Counts only. No lead names or scraped data are written to this file, so it is sa
 - **2026-10-10 — Triage before qualification.** 325 agencies is too many to judge one by one, so
   `src/shortlist.py` applies cheap rules (dead site, outside the Gulf, big-company signals, no
   relevant services) and sends the best 70 to the reasoning layer.
+- **2026-10-10 — Eight verdicts were re-scored after a second read.** Before building packs, the
+  top-ranked agencies were checked against the full stored page text, not just the digest. That
+  changed facts for eight of them: the "person card" count double-counted one team and counted
+  layout tiles on another; one agency turned out to sell data services itself; one has nine
+  managers and an overseas delivery office; one names a founder and four staff. The corrected
+  verdicts are in `data/scored/_batches/batch_08_rescore.json` and replaced the originals. The
+  card count is now treated as a layout hint only, never as a headcount.
+- **2026-10-10 — Pack order follows the corrected ranking.** The five packs are built for the five
+  highest-scoring tier A agencies after the re-score. One of them sells to contractors, not
+  shopfront businesses, so `prospects.py` gained `--signals`: per-agency fit signals read from the
+  prospect's own site copy, used alongside the standard gaps.
 
 ## Runs
 
@@ -107,4 +118,229 @@ Counts only. No lead names or scraped data are written to this file, so it is sa
 ### 2026-10-10T18:40:18+05:00
 - **Command:** `python src/qualify.py summary --top 15`
 - **Counts:** scored=70, tier_A=20, tier_B=42, tier_C=8
+- **Failures:** none
+
+### 2026-10-10T18:43:43+05:00
+- **Command:** `python src/qualify.py ingest data/scored/_batches/batch_08_rescore.json`
+- **Counts:** verdicts=8, written=8, rejected=0
+- **Failures:** none
+
+### 2026-10-10T18:43:45+05:00
+- **Command:** `python src/qualify.py summary --top 15`
+- **Counts:** scored=70, tier_A=20, tier_B=42, tier_C=8
+- **Failures:** none
+
+### 2026-10-10T18:45:19+05:00
+- **Command:** `python src/discover.py queries/packs/<agency>.txt pack_<agency> --concurrency 2`
+- **Counts:** queries=5, raw_rows=110, unique=94, with_site=85, platform_only=0, no_website=9, with_email=0, with_review_count=94
+- **Failures:** none
+- **Notes:** engine=playwright, output=data/raw/pack_<agency>.csv
+
+### 2026-10-10T18:46:22+05:00
+- **Command:** `python src/discover.py queries/packs/<agency>.txt pack_<agency> --concurrency 2`
+- **Counts:** queries=5, raw_rows=110, unique=94, with_site=76, platform_only=9, no_website=9, with_email=0, with_review_count=94
+- **Failures:** none
+- **Notes:** engine=playwright, output=data/raw/pack_<agency>.csv
+
+### 2026-10-10T18:47:08+05:00
+- **Command:** `python src/discover.py queries/packs/<agency>.txt pack_<agency> --concurrency 2`
+- **Counts:** queries=5, raw_rows=110, unique=85, with_site=76, platform_only=0, no_website=9, with_email=0, with_review_count=85
+- **Failures:** none
+- **Notes:** engine=playwright, output=data/raw/pack_<agency>.csv
+
+### 2026-10-10T18:47:43+05:00
+- **Command:** `python src/enrich.py data/raw/pack_<agency>.csv --mode light --out data/enriched/packs/<agency>`
+- **Counts:** leads=94, blocked=6, dead=4, no_website=9, ok=75
+- **Failures:** none
+
+### 2026-10-10T18:47:48+05:00
+- **Command:** `python src/discover.py queries/packs/<agency>.txt pack_<agency> --concurrency 2`
+- **Counts:** queries=5, raw_rows=100, unique=61, with_site=52, platform_only=0, no_website=9, with_email=0, with_review_count=61
+- **Failures:** none
+- **Notes:** engine=playwright, output=data/raw/pack_<agency>.csv
+
+### 2026-10-10T18:48:50+05:00
+- **Command:** `python src/discover.py queries/packs/<agency>.txt pack_<agency> --concurrency 2`
+- **Counts:** queries=5, raw_rows=104, unique=82, with_site=71, platform_only=0, no_website=11, with_email=0, with_review_count=82
+- **Failures:** none
+- **Notes:** engine=playwright, output=data/raw/pack_<agency>.csv
+
+### 2026-10-10T18:48:52+05:00
+- **Command:** `python src/enrich.py data/raw/pack_<agency>.csv --mode light --out data/enriched/packs/<agency>`
+- **Counts:** leads=94, blocked=3, dead=5, no_website=9, ok=66, platform_only=11
+- **Failures:** none
+
+### 2026-10-10T18:48:55+05:00
+- **Command:** `python src/prospects.py <agency> --niche dental clinic --want no_chat,no_booking,booking_cta_only`
+- **Counts:** listings=94, candidates=87, dropped=7, median_reviews=333
+- **Failures:** none
+
+### 2026-10-10T18:48:58+05:00
+- **Command:** `python src/prospects.py <agency> --niche spa --want no_ads_tags,no_chat,no_booking`
+- **Counts:** listings=94, candidates=83, dropped=11, median_reviews=105
+- **Failures:** none
+
+### 2026-10-10T18:49:26+05:00
+- **Command:** `python src/prospects.py <agency> --niche dental clinic --want no_chat,no_booking,booking_cta_only --min-reviews 40 --digest 26`
+- **Counts:** listings=94, candidates=80, dropped=14, median_reviews=333
+- **Failures:** none
+
+### 2026-10-10T18:50:08+05:00
+- **Command:** `python src/enrich.py data/raw/pack_<agency>.csv --mode light --out data/enriched/packs/<agency>`
+- **Counts:** leads=85, blocked=4, dead=3, no_website=9, ok=69
+- **Failures:** none
+
+### 2026-10-10T18:50:48+05:00
+- **Command:** `python src/enrich.py data/raw/pack_<agency>.csv --mode light --out data/enriched/packs/<agency>`
+- **Counts:** leads=61, blocked=2, dead=1, http_error=1, no_website=9, ok=46, placeholder=2
+- **Failures:** none
+
+### 2026-10-10T18:51:44+05:00
+- **Command:** `python src/verify.py <agency> --want no_chat,no_booking,booking_cta_only --top 26`
+- **Counts:** rendered=25, render_failed=1, gaps_confirmed=55, gaps_removed=17
+- **Failures:** none
+
+### 2026-10-10T18:52:36+05:00
+- **Command:** `python src/pack.py build <agency>`
+- **Counts:** prospects=10, files=2
+- **Failures:** none
+
+### 2026-10-10T18:52:45+05:00
+- **Command:** `python src/prospects.py <agency> --niche spa --want no_ads_tags,no_chat,no_booking,booking_cta_only --min-reviews 30 --max-reviews 2500`
+- **Counts:** listings=94, candidates=73, dropped=21, median_reviews=105
+- **Failures:** none
+
+### 2026-10-10T18:52:51+05:00
+- **Command:** `python src/enrich.py data/raw/pack_<agency>.csv --mode full --out data/enriched/packs/<agency>`
+- **Counts:** leads=82, blocked=6, dead=5, http_error=1, no_website=11, ok=58, placeholder=1
+- **Failures:** none
+
+### 2026-10-10T18:54:28+05:00
+- **Command:** `python src/verify.py <agency> --want no_ads_tags,no_chat,no_booking,booking_cta_only --top 30`
+- **Counts:** rendered=29, render_failed=1, gaps_confirmed=80, gaps_removed=5
+- **Failures:** none
+
+### 2026-10-10T18:55:09+05:00
+- **Command:** `python src/pack.py build <agency>`
+- **Counts:** prospects=10, files=2
+- **Failures:** none
+
+### 2026-10-10T18:55:11+05:00
+- **Command:** `python src/prospects.py <agency> --niche school and nursery --want no_ads_tags,no_chat,no_booking,booking_cta_only --min-reviews 20 --max-reviews 1500`
+- **Counts:** listings=85, candidates=52, dropped=33, median_reviews=60
+- **Failures:** none
+
+### 2026-10-10T18:57:25+05:00
+- **Command:** `python src/verify.py <agency> --want no_ads_tags,no_chat,no_booking,booking_cta_only --top 28`
+- **Counts:** rendered=22, render_failed=6, gaps_confirmed=60, gaps_removed=5
+- **Failures:** none
+
+### 2026-10-10T18:58:24+05:00
+- **Command:** `python src/prospects.py <agency> --niche dental clinic --want no_chat,no_booking,booking_cta_only --min-reviews 40 --max-reviews 2500`
+- **Counts:** listings=94, candidates=76, dropped=18, median_reviews=333
+- **Failures:** none
+
+### 2026-10-10T18:59:33+05:00
+- **Command:** `python src/verify.py <agency> --want no_chat,no_booking,booking_cta_only --top 30`
+- **Counts:** rendered=29, render_failed=1, gaps_confirmed=60, gaps_downgraded=3, gaps_removed=16
+- **Failures:** none
+
+### 2026-10-10T18:59:35+05:00
+- **Command:** `python src/prospects.py <agency> --niche spa --want no_ads_tags,no_chat,no_booking,booking_cta_only --min-reviews 30 --max-reviews 2500`
+- **Counts:** listings=94, candidates=73, dropped=21, median_reviews=105
+- **Failures:** none
+
+### 2026-10-10T19:01:10+05:00
+- **Command:** `python src/verify.py <agency> --want no_ads_tags,no_chat,no_booking,booking_cta_only --top 32`
+- **Counts:** rendered=31, render_failed=1, gaps_confirmed=81, gaps_downgraded=0, gaps_removed=6
+- **Failures:** none
+
+### 2026-10-10T19:01:12+05:00
+- **Command:** `python src/prospects.py <agency> --niche school and nursery --want no_ads_tags,no_chat,no_booking,booking_cta_only --min-reviews 20 --max-reviews 1500`
+- **Counts:** listings=85, candidates=52, dropped=33, median_reviews=60
+- **Failures:** none
+
+### 2026-10-10T19:02:42+05:00
+- **Command:** `python src/verify.py <agency> --want no_ads_tags,no_chat,no_booking,booking_cta_only --top 30`
+- **Counts:** rendered=29, render_failed=1, gaps_confirmed=67, gaps_downgraded=2, gaps_removed=7
+- **Failures:** none
+
+### 2026-10-10T19:04:40+05:00
+- **Command:** `python src/verify.py <agency> --want no_chat,no_booking,booking_cta_only --top 30 --force`
+- **Counts:** rendered=29, render_failed=1, gaps_confirmed=63, gaps_downgraded=0, gaps_removed=0
+- **Failures:** none
+
+### 2026-10-10T19:06:56+05:00
+- **Command:** `python src/verify.py <agency> --want no_ads_tags,no_chat,no_booking,booking_cta_only --top 32 --force`
+- **Counts:** rendered=31, render_failed=1, gaps_confirmed=80, gaps_downgraded=0, gaps_removed=1
+- **Failures:** none
+
+### 2026-10-10T19:08:55+05:00
+- **Command:** `python src/verify.py <agency> --want no_ads_tags,no_chat,no_booking,booking_cta_only --top 30 --force`
+- **Counts:** rendered=30, render_failed=0, gaps_confirmed=71, gaps_downgraded=0, gaps_removed=1
+- **Failures:** none
+
+### 2026-10-10T19:10:14+05:00
+- **Command:** `python src/pack.py build <agency>`
+- **Counts:** prospects=10, files=2
+- **Failures:** none
+
+### 2026-10-10T19:10:15+05:00
+- **Command:** `python src/pack.py build <agency>`
+- **Counts:** prospects=10, files=2
+- **Failures:** none
+
+### 2026-10-10T19:10:15+05:00
+- **Command:** `python src/pack.py build <agency>`
+- **Counts:** prospects=10, files=2
+- **Failures:** none
+
+### 2026-10-10T19:10:18+05:00
+- **Command:** `python src/prospects.py <agency> --niche contractor --signals queries/packs/<agency>.signals.json --require-signal --min-reviews 5 --digest 30`
+- **Counts:** listings=82, candidates=43, dropped=39, median_reviews=40
+- **Failures:** none
+
+### 2026-10-10T19:11:19+05:00
+- **Command:** `python src/prospects.py <agency> --niche travel and tour --want no_booking,booking_cta_only,no_chat,no_ads_tags,no_site,platform_site,dead_site,no_meta_description --min-reviews 15 --max-reviews 3000`
+- **Counts:** listings=61, candidates=53, dropped=8, median_reviews=194
+- **Failures:** none
+
+### 2026-10-10T19:13:16+05:00
+- **Command:** `python src/verify.py <agency> --want no_booking,booking_cta_only,no_chat,no_ads_tags,no_site,platform_site,dead_site,no_meta_description --top 30`
+- **Counts:** rendered=24, render_failed=1, gaps_confirmed=58, gaps_downgraded=2, gaps_removed=10
+- **Failures:** none
+
+### 2026-10-10T19:15:25+05:00
+- **Command:** `python src/verify.py <agency> --want no_booking,booking_cta_only,no_chat,no_ads_tags,no_site,platform_site,dead_site,no_meta_description --top 30 --force`
+- **Counts:** rendered=17, render_failed=4, gaps_confirmed=48, gaps_downgraded=0, gaps_removed=1
+- **Failures:** none
+
+### 2026-10-10T19:16:24+05:00
+- **Command:** `python src/pack.py build <agency>`
+- **Counts:** prospects=10, files=2
+- **Failures:** none
+
+### 2026-10-10T19:16:24+05:00
+- **Command:** `python src/pack.py build <agency>`
+- **Counts:** prospects=10, files=2
+- **Failures:** none
+
+### 2026-10-10T19:17:37+05:00
+- **Command:** `python src/pack.py build <agency>`
+- **Counts:** prospects=10, files=2
+- **Failures:** none
+
+### 2026-10-10T19:17:58+05:00
+- **Command:** `python src/pack.py build <agency>`
+- **Counts:** prospects=10, files=2
+- **Failures:** none
+
+### 2026-10-10T19:18:14+05:00
+- **Command:** `python src/prospects.py <agency> --niche contractor --signals queries/packs/<agency>.signals.json --require-signal --min-reviews 5 --digest 30`
+- **Counts:** listings=82, candidates=43, dropped=39, median_reviews=40
+- **Failures:** none
+
+### 2026-10-10T19:18:14+05:00
+- **Command:** `python src/pack.py build <agency>`
+- **Counts:** prospects=10, files=2
 - **Failures:** none

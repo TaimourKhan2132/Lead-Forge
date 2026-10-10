@@ -52,6 +52,10 @@ customers, and the result is the sample pack.
   not observe for that business. Names, links and contact details are copied from data, never retyped.
 - **Claims are scoped to what was looked at.** A pack says "no booking system found on the homepage
   and contact page". It does not say "they have no online booking".
+- **Signals fit the buyer.** Website gaps (no booking, no chat, no ad tracking) suit agencies that
+  sell to shopfront businesses. For an agency that sells something else, `prospects.py --signals`
+  takes a small JSON file of fit signals to look for in each prospect's own site copy, for example
+  a published tenders@ address or a careers page asking for estimators.
 - **The LLM judges; code checks.** Scoring is a judgement call, so a model makes it. Arithmetic, tier
   boundaries and evidence checks are not, so code does those.
 - **Small, polite crawls.** One pass per site, at most six pages, a labelled user agent, no proxies,

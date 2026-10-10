@@ -122,7 +122,15 @@ SOURCE_SIGNALS = {
     "snap_pixel": r"sc-static\.net/scevent",
     "linkedin_insight": r"snap\.licdn\.com",
 }
-BOOKING_CTA = r"book (?:now|online|an? (?:appointment|consultation|call|demo|table|visit|session))|book appointment|schedule (?:an? )?(?:appointment|consultation|call)|request (?:an? )?appointment|reserve (?:a table|now|online)|online booking"
+# Deliberately broad. A false "they have a booking prompt" costs nothing; a false "no way to book"
+# would put a wrong claim in front of a prospect.
+BOOKING_CTA = (r"\bbook(?:ing)?\s+(?:now|online|here|today|(?:an?|your|my|the)\s+[\w-]+)"
+               r"|\bbook\s+(?:appointment|consultation|tour|visit|session|table|class)"
+               r"|schedule\s+(?:an?\s+|your\s+)?(?:appointment|consultation|call|tour|visit|viewing)"
+               r"|request\s+(?:an?\s+)?(?:appointment|tour|callback|call back|quote)"
+               r"|arrange\s+an?\s+(?:tour|visit|viewing|call)"
+               r"|reserve\s+(?:now|online|a\s+\w+|your\s+\w+)|online\s+booking|make\s+a\s+reservation"
+               r"|appointment\s+(?:form|request)|enquire\s+now|enquiry\s+form|get\s+a\s+(?:free\s+)?quote")
 PARKED = r"domain (?:is|may be) for sale|buy this domain|domain parking|parked free|sedoparking|hugedomains|afternic|godaddy\.com/forsale|is available for purchase|account (?:has been )?suspended|website (?:has )?expired|this site can.t be reached"
 PLACEHOLDER = r"coming soon|under construction|launching soon|site is being updated"
 HIRING = r"we.re hiring|we are hiring|join our team|open positions?|current openings?|vacanc(?:y|ies)|job openings?|open roles?|apply now|send (?:us )?your (?:cv|resume)"
@@ -355,6 +363,13 @@ async def enrich_site(client, insecure, lead: dict, mode: str) -> dict:
         return record
 
     home = await fetch(client, insecure, lead["website"], flags)
+    if not home.ok and lead["website"].startswith("http://") and home.status == 0:
+        # Plenty of listings still carry an http:// link to a site that only answers on https.
+        # Browsers upgrade that silently, so calling the site dead would be wrong.
+        retry = await fetch(client, insecure, "https://" + lead["website"][7:], flags)
+        if retry.ok:
+            home = retry
+            flags.add("http_link_only_works_on_https")
     if not home.ok:
         if home.status in (401, 403, 406, 429, 503):
             record["status"] = "blocked"
