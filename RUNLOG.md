@@ -68,3 +68,43 @@ Counts only. No lead names or scraped data are written to this file, so it is sa
 - **Counts:** enriched=325, eligible=207, shortlisted=70, batches=7
 - **Failures:** none
 - **Notes:** skipped: site no_website=24, big-company signal=23, site dead=22, no relevant services found in site copy=19, site blocked=15, site http_error=7, outside UAE/KSA/Qatar=7, site platform_only=1
+
+### 2026-10-10T18:34:32+05:00
+- **Command:** `python src/qualify.py ingest data/scored/_batches/batch_01.json`
+- **Counts:** verdicts=10, written=10, rejected=0
+- **Failures:** none
+
+### 2026-10-10T18:40:06+05:00
+- **Command:** `python src/qualify.py ingest data/scored/_batches/batch_02.json`
+- **Counts:** verdicts=10, written=10, rejected=0
+- **Failures:** none
+
+### 2026-10-10T18:40:07+05:00
+- **Command:** `python src/qualify.py ingest data/scored/_batches/batch_03.json`
+- **Counts:** verdicts=10, written=10, rejected=0
+- **Failures:** none
+
+### 2026-10-10T18:40:09+05:00
+- **Command:** `python src/qualify.py ingest data/scored/_batches/batch_04.json`
+- **Counts:** verdicts=10, written=10, rejected=0
+- **Failures:** none
+
+### 2026-10-10T18:40:10+05:00
+- **Command:** `python src/qualify.py ingest data/scored/_batches/batch_05.json`
+- **Counts:** verdicts=10, written=10, rejected=0
+- **Failures:** none
+
+### 2026-10-10T18:40:11+05:00
+- **Command:** `python src/qualify.py ingest data/scored/_batches/batch_06.json`
+- **Counts:** verdicts=10, written=10, rejected=0
+- **Failures:** none
+
+### 2026-10-10T18:40:13+05:00
+- **Command:** `python src/qualify.py ingest data/scored/_batches/batch_07.json`
+- **Counts:** verdicts=10, written=10, rejected=0
+- **Failures:** none
+
+### 2026-10-10T18:40:18+05:00
+- **Command:** `python src/qualify.py summary --top 15`
+- **Counts:** scored=70, tier_A=20, tier_B=42, tier_C=8
+- **Failures:** none
