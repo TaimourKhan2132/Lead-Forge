@@ -1,0 +1,20 @@
+# Secrets
+.env
+
+# Scraped data and anything derived from it. None of this is safe to publish.
+data/
+packs/*
+!packs/.gitkeep
+outreach/drafts/*
+!outreach/drafts/.gitkeep
+
+# Python
+.venv/
+__pycache__/
+*.pyc
+
+# OS / editor
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/

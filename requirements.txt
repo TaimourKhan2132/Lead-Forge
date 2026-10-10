@@ -1,0 +1,11 @@
+httpx
+beautifulsoup4
+lxml
+pandas
+dnspython
+python-dotenv
+tldextract
+rich
+# Fallback Maps engine, used when Docker is unavailable. Drives the system's
+# Edge/Chrome, so no `playwright install` browser download is needed.
+playwright
