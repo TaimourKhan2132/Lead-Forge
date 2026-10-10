@@ -1,0 +1,35 @@
+[
+ {
+  "key": "tender_contact",
+  "headline": "Publishes a tender or estimation contact",
+  "where": "emails",
+  "pattern": "^(tender|tenders|tendering|estimation|estimating|estimate|qs|bid|bids|bidding|procurement|contracts)@",
+  "label": "Publishes a dedicated address for tenders or estimation: {match}.",
+  "weight": 7
+ },
+ {
+  "key": "hiring_estimators",
+  "headline": "Hiring estimators or quantity surveyors",
+  "where": "text",
+  "kinds": ["careers"],
+  "pattern": "quantity surveyor|estimator|estimation engineer|tendering engineer|\\bQS\\b",
+  "label": "Its careers page mentions estimation staff: \"{match}\"",
+  "weight": 7
+ },
+ {
+  "key": "tender_copy",
+  "headline": "Describes tendering or estimation work",
+  "where": "text",
+  "pattern": "tender(?:s|ing)?\\b|bill of quantities|\\bBOQ\\b|quantity survey|cost estimat|estimation|pre-?construction|value engineering",
+  "label": "Its own site copy describes tendering or estimation: \"{match}\"",
+  "weight": 5
+ },
+ {
+  "key": "main_contractor",
+  "headline": "Positions itself as a main contractor",
+  "where": "text",
+  "pattern": "main contractor|general contract(?:or|ing)|turnkey|design and build|design & build|G\\+\\d",
+  "label": "Positions itself as a main or turnkey contractor: \"{match}\"",
+  "weight": 3
+ }
+]

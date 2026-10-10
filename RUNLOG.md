@@ -47,6 +47,37 @@ Counts only. No lead names or scraped data are written to this file, so it is sa
   highest-scoring tier A agencies after the re-score. One of them sells to contractors, not
   shopfront businesses, so `prospects.py` gained `--signals`: per-agency fit signals read from the
   prospect's own site copy, used alongside the standard gaps.
+- **2026-10-10 — Gaps are re-tested in a real browser (`src/verify.py`).** The first pack looked
+  right until its "no WhatsApp or chat" claims were checked on the rendered page: several clinics
+  had a WhatsApp button that only exists after JavaScript runs. Every gap now has to survive two
+  rendered passes (scroll, then wait for late widgets). Across the four gap-based packs this
+  removed 41 gaps before any prospect was chosen.
+- **2026-10-10 — The booking pattern was too narrow.** It matched "book an appointment" but not
+  "book a tour" or "book your appointment", which would have produced false "no way to book"
+  claims. It is now deliberately broad, and the three packs already drafted were recomputed and
+  re-verified with it. A booking prompt with no booking system is reported as the weaker gap it is.
+- **2026-10-10 — "Dead" needs an https retry.** One prospect's listing links to `http://`, which
+  times out, while `https://` loads normally. Browsers upgrade that silently, so the "site does
+  not load" finding was wrong and the prospect was replaced. `enrich.py` and `verify.py` now retry
+  over https before calling a site dead. **Not re-run:** the 22 agencies marked dead in the Phase 3
+  crawl were fetched before this fix, so a few may be live. They were excluded from scoring, not
+  mis-described. Re-crawl them with `python src/enrich.py data/raw/agencies_gulf.csv --force`.
+- **2026-10-10 — Pack niches.** Each pack's niche comes from the agency's own site: a named client
+  category in a testimonial, an industry page, a case study, or a product. Where the site names no
+  sector, the pack says so in its first paragraph and explains the niche it used instead.
+- **2026-10-10 — Tracker test.** One lead was marked `sent` to confirm the follow-up dates are set
+  (day 3 and day 7), then reset to `drafted`. Nothing was sent.
+- **2026-10-10 — Phase 9 not started,** as instructed. It waits until 10 emails have gone out.
+
+## Open items
+
+- **Docker path is untested.** `discover.py --engine docker` (gosom) is written but has never run
+  on this machine, which has no Docker.
+- **No Clutch shortlist yet.** Paste `data/raw/clutch_shortlist.csv` (`name,website`), then run
+  `merge_clutch.py`, `enrich.py`, `shortlist.py` again.
+- **Placeholders are unfilled.** `{{NAME}}`, `{{EMAIL}}`, `{{LINKEDIN}}`, `{{GITHUB}}` remain in the
+  packs, drafts and README. Set them in `.env` and run `python src/pack.py fill`.
+- **Agency qualification has no browser pass.** Only pack prospects are re-tested in a browser.
 
 ## Runs
 
@@ -343,4 +374,9 @@ Counts only. No lead names or scraped data are written to this file, so it is sa
 ### 2026-10-10T19:18:14+05:00
 - **Command:** `python src/pack.py build <agency>`
 - **Counts:** prospects=10, files=2
+- **Failures:** none
+
+### 2026-10-10T19:21:18+05:00
+- **Command:** `python src/qualify.py summary --top 15`
+- **Counts:** scored=70, tier_A=20, tier_B=42, tier_C=8
 - **Failures:** none

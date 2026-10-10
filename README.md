@@ -52,10 +52,16 @@ customers, and the result is the sample pack.
   not observe for that business. Names, links and contact details are copied from data, never retyped.
 - **Claims are scoped to what was looked at.** A pack says "no booking system found on the homepage
   and contact page". It does not say "they have no online booking".
+- **Every gap is re-tested in a real browser.** Raw HTML cannot see a WhatsApp button, chat widget
+  or ad tag that JavaScript injects, and an `http://` link that times out is not a dead site if
+  `https://` answers. `verify.py` loads each candidate in the installed browser and re-runs the same
+  checks on the rendered page. A gap has to survive two passes. On the first real run this
+  overturned 41 gaps the static crawl had reported, before any of them reached a pack.
 - **Signals fit the buyer.** Website gaps (no booking, no chat, no ad tracking) suit agencies that
   sell to shopfront businesses. For an agency that sells something else, `prospects.py --signals`
   takes a small JSON file of fit signals to look for in each prospect's own site copy, for example
-  a published tenders@ address or a careers page asking for estimators.
+  a published tenders@ address or a careers page asking for estimators
+  ([example](examples/contractor.signals.example.json)).
 - **The LLM judges; code checks.** Scoring is a judgement call, so a model makes it. Arithmetic, tier
   boundaries and evidence checks are not, so code does those.
 - **Small, polite crawls.** One pass per site, at most six pages, a labelled user agent, no proxies,
@@ -92,6 +98,8 @@ python src/qualify.py summary --top 15
 python src/discover.py queries/packs/<agency-domain>.txt pack_<agency-domain>
 python src/enrich.py data/raw/pack_<agency-domain>.csv --mode light --out data/enriched/packs/<agency-domain>
 python src/prospects.py <agency-domain> --niche "dental clinic" --want no_booking,no_chat
+python src/verify.py <agency-domain> --want no_booking,no_chat           # re-test in a real browser
+python src/verify.py <agency-domain> --want no_booking,no_chat --force   # second pass
 python src/pack.py build <agency-domain>
 
 # 5. Check drafts, then track what you send by hand
@@ -123,7 +131,8 @@ src/
   enrich.py         site crawl -> data/enriched/<domain>.json (with evidence)
   shortlist.py      rule-based triage + digests for the reasoning layer
   qualify.py        validate verdicts, compute scores, write summary.csv
-  prospects.py      observable gaps per prospect, for a sample pack
+  prospects.py      observable gaps and fit signals per prospect, for a sample pack
+  verify.py         re-test each gap against the rendered page in a real browser
   pack.py           render a pack as Markdown and printable HTML
   lint_drafts.py    check outreach drafts against the house rules
   track.py          SQLite outreach tracker
@@ -150,8 +159,12 @@ Tier A is 70 and above, B is 50 to 69, C is below 50.
 
 ## Limits
 
-- Signals come from server-rendered HTML. A site that renders entirely in the browser is flagged
-  `thin_html` and scored on less evidence.
+- Agency qualification reads server-rendered HTML only. A site that renders entirely in the browser
+  is flagged `thin_html` and scored on less evidence. (Pack prospects get the browser pass; the
+  agency list does not yet.)
+- A repeated "person card" layout on a team page is a hint, never a headcount. It double-counted one
+  team and counted feature tiles on another, so team size is only stated when names and titles are
+  readable in the page text.
 - "No ad tracking" means no tag in the page source. It is never claimed when a Tag Manager container
   is present, because that container could be loading tags.
 - Review responses are not read, so "ignores negative reviews" is never claimed.
