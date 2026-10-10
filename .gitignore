@@ -7,6 +7,8 @@ packs/*
 !packs/.gitkeep
 outreach/drafts/*
 !outreach/drafts/.gitkeep
+# Per-agency query lists are named after the agency being pitched.
+queries/packs/
 
 # Python
 .venv/

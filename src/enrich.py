@@ -130,7 +130,8 @@ NOT_HIRING = r"no (?:open|current) (?:positions|openings|vacancies)|not (?:curre
 ROLE = r"\b((?:senior |junior |lead |head of )?(?:seo|ppc|social media|digital marketing|performance marketing|content|account|project|business development|sales|marketing|graphic|ui/ux|ux|web|frontend|front-end|backend|back-end|full[- ]stack|software|data|ai|automation|crm|video|motion)[\w /&-]{0,30}?(?:specialist|manager|executive|developer|designer|engineer|strategist|analyst|writer|editor|lead|intern|coordinator|consultant))\b"
 TEAM_SIZE = [
     r"(?:team of|over|more than|with)\s+(\d{1,4})\+?\s+(?:[\w-]+\s){0,2}?(?:people|professionals|experts|specialists|employees|members|creatives|marketers|developers|engineers|staff|consultants)",
-    r"(\d{1,4})\+?\s+(?:team members|employees|professionals|experts|specialists|in-house [\w-]+)",
+    r"\b([1-9]\d{0,3})\+?\s+(?:team members|employees|professionals|experts|specialists|in-house [\w-]+)",
+    r"(?:team members?|employees|staff)\s*:?\s*([1-9]\d{1,3})\s*\+",  # counter widgets: "Team members 80+"
 ]
 OFFICES = r"offices? (?:in|across|located in)\s+([^.|]{5,160})"
 GLOBAL = r"global offices|offices (?:worldwide|around the world|across the globe)|(\d{1,3})\+?\s+countries"
@@ -143,7 +144,9 @@ FOUNDER_TITLES = r"(?:Co-?Founder(?: (?:&|and) (?:CEO|CTO|Managing Director))?|F
 NAME = r"[A-Z][a-z]{1,15}(?: (?:[A-Z]\.|(?:Al|El|Bin|Abu|De|Van) )?[A-Z][a-zA-Z'\-]{1,18}){1,2}"
 NOT_NAMES = {"Our", "The", "Meet", "About", "From", "Message", "Team", "Contact", "Read", "View", "And",
              "Digital", "Marketing", "Agency", "Company", "Dubai", "Abu", "Home", "Services", "With",
-             "Your", "Chief", "Managing", "Founder", "Director", "Head", "Senior", "Get", "Learn", "Why"}
+             "Your", "Chief", "Managing", "Founder", "Director", "Head", "Senior", "Get", "Learn", "Why",
+             "Google", "Maps", "Join", "Us", "Designer", "Operations", "Working", "Domain", "Manager",
+             "Business", "Creative", "Social", "Media", "Group", "Solutions", "Technologies", "Global"}
 
 EMAIL_RE = re.compile(r"[a-zA-Z0-9][a-zA-Z0-9._%+\-]*@[a-zA-Z0-9\-]+(?:\.[a-zA-Z0-9\-]+)*\.[a-zA-Z]{2,}")
 JUNK_TLDS = {"png", "jpg", "jpeg", "gif", "webp", "svg", "css", "js", "avif", "woff", "woff2", "ico"}
@@ -155,7 +158,7 @@ JUNK_LOCAL = {"your", "name", "email", "user", "you", "yourname", "youremail", "
 FREEMAIL = {"gmail.com", "yahoo.com", "hotmail.com", "outlook.com", "icloud.com", "live.com", "ymail.com"}
 GENERIC_LOCAL = {"info", "hello", "contact", "sales", "support", "admin", "office", "enquiries", "enquiry",
                  "inquiry", "inquiries", "marketing", "team", "hi", "hey", "mail", "business", "careers",
-                 "jobs", "hr", "media", "press", "booking", "bookings", "reception", "reservations",
+                 "jobs", "career", "cv", "recruitment", "privacy", "legal", "webmaster", "hr", "media", "press", "booking", "bookings", "reception", "reservations",
                  "appointments", "care", "customercare", "service", "help", "connect", "ask", "biz",
                  "partnerships", "projects", "work", "social", "accounts", "billing", "news", "newbusiness"}
 SOCIALS = {"linkedin": r"linkedin\.com/(?:company|in|school)/", "instagram": r"instagram\.com/",
@@ -574,7 +577,8 @@ async def enrich_site(client, insecure, lead: dict, mode: str) -> dict:
                 record["big_company"].append({"signal": "global_footprint", "snippet": snippet(text, match.start(), match.end(), 60), "source_url": url})
         if page_kind in ("home", "contact", "about"):
             for match in re.finditer(OFFSHORE, text, re.I):
-                if len(record["offshore_hints"]) < 4:
+                place = match.group(1).title()
+                if len(record["offshore_hints"]) < 4 and not any(h["place"] == place for h in record["offshore_hints"]):
                     record["offshore_hints"].append({"place": match.group(1).title(), "snippet": snippet(text, match.start(), match.end(), 60), "source_url": url})
     for hint in record["team"]["size_hints"]:
         if hint["number"] > 50:
@@ -674,7 +678,9 @@ def main() -> int:
         leads = leads[:args.limit]
     counts, failures = asyncio.run(enrich_all(leads, args.out, args.mode, min(args.concurrency, 8), args.force))
     summary = {"leads": len(leads), **dict(sorted(counts.items()))}
-    log_run("python " + " ".join(["src/enrich.py"] + sys.argv[1:]), summary, failures)
+    # Sample-pack runs are named after the agency they are for; keep that out of the public log.
+    redact = (args.csv.stem[5:],) if args.csv.stem.startswith("pack_") else ()
+    log_run("python " + " ".join(["src/enrich.py"] + sys.argv[1:]), summary, failures, redact=redact)
     console.print("[bold]enrich[/bold] " + ", ".join(f"{k}={v}" for k, v in summary.items()))
     for failure in failures[:10]:
         console.print(f"[yellow]! {failure}[/yellow]")

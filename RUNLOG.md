@@ -22,8 +22,20 @@ Counts only. No lead names or scraped data are written to this file, so it is sa
   skips it because `enrich.py` fetches the same pages anyway and checks MX records.
 - **2026-10-10 — Listings whose "website" is a social or directory profile** (Instagram, Facebook,
   Linktree and so on) are tagged `website_kind=platform` and never used as a dedupe key.
-- **2026-10-10 — `packs/` and `outreach/drafts/` are gitignored** along with `data/`. They contain
-  real scraped businesses. Only the anonymized example in `examples/` is committed.
+- **2026-10-10 — `packs/`, `outreach/drafts/` and `queries/packs/` are gitignored** along with
+  `data/`. They contain real scraped businesses, or name the agency being pitched. Only the
+  fictional example in `examples/` is committed.
+- **2026-10-10 — This log names no businesses.** Failure lines identify the site that failed, so
+  the detail goes to `data/logs/failures.log` (gitignored) and this file gets grouped reasons only.
+  Sample-pack commands have the agency's domain replaced with `<agency>`. The first commit's
+  validation entry listed two failing domains; it was rewritten before anything was pushed.
+- **2026-10-10 — No Clutch shortlist yet.** `data/raw/clutch_shortlist.csv` did not exist when the
+  agency run started, so the run continued on Maps data alone. Paste the file and run
+  `python src/merge_clutch.py data/raw/agencies_gulf.csv`, then re-run enrich (cached leads are
+  skipped) to bring Clutch leads in at the front of the queue.
+- **2026-10-10 — Triage before qualification.** 325 agencies is too many to judge one by one, so
+  `src/shortlist.py` applies cheap rules (dead site, outside the Gulf, big-company signals, no
+  relevant services) and sends the best 70 to the reasoning layer.
 
 ## Runs
 
@@ -34,3 +46,25 @@ Counts only. No lead names or scraped data are written to this file, so it is sa
   - 1 × 404
   - 1 × connect: [Errno 11001] getaddrinfo failed
 - **Notes:** engine=playwright, output=data/raw/validation.csv
+
+### 2026-10-10T18:22:53+05:00
+- **Command:** `python src/enrich.py data/raw/validation.csv --out data/enriched/_validation --force`
+- **Counts:** leads=20, dead=1, http_error=1, ok=18
+- **Failures:** none
+
+### 2026-10-10T18:24:42+05:00
+- **Command:** `python src/discover.py queries/agencies_gulf.txt agencies_gulf --concurrency 2`
+- **Counts:** queries=20, raw_rows=418, unique=325, with_site=300, platform_only=1, no_website=24, with_email=0, with_review_count=325
+- **Failures:** none
+- **Notes:** engine=playwright, output=data/raw/agencies_gulf.csv
+
+### 2026-10-10T18:32:10+05:00
+- **Command:** `python src/enrich.py data/raw/agencies_gulf.csv`
+- **Counts:** leads=325, blocked=15, dead=22, http_error=7, no_website=24, ok=256, platform_only=1
+- **Failures:** none
+
+### 2026-10-10T18:32:49+05:00
+- **Command:** `python src/shortlist.py --top 70`
+- **Counts:** enriched=325, eligible=207, shortlisted=70, batches=7
+- **Failures:** none
+- **Notes:** skipped: site no_website=24, big-company signal=23, site dead=22, no relevant services found in site copy=19, site blocked=15, site http_error=7, outside UAE/KSA/Qatar=7, site platform_only=1

@@ -189,6 +189,8 @@ def main() -> int:
     console.print(f"[bold]discover[/bold] {len(queries)} queries, engine={engine}, depth={args.depth}")
 
     command = "python " + " ".join(["src/discover.py"] + sys.argv[1:])
+    # Sample-pack runs are named after the agency they are for; keep that out of the public log.
+    redact = (args.name[5:],) if args.name.startswith("pack_") else ()
     try:
         if engine == "docker":
             raw, failures = run_gosom(queries, args.name, args.depth, args.email)
@@ -198,7 +200,7 @@ def main() -> int:
         if type(exc).__name__ != "GoogleBlocked":
             raise
         console.print(f"[red bold]Google blocked the session: {exc}. Stopping, not retrying.[/red bold]")
-        log_run(command, {"queries": len(queries)}, [f"GoogleBlocked: {exc}"], notes="Run aborted.")
+        log_run(command, {"queries": len(queries)}, [f"GoogleBlocked: {exc}"], notes="Run aborted.", redact=redact)
         return 3
 
     rows = normalise(raw, engine, args.source)
@@ -218,7 +220,7 @@ def main() -> int:
         "with_email": sum(bool(r["emails"]) for r in unique),
         "with_review_count": sum(r["review_count"] != "" for r in unique),
     }
-    log_run(command, counts, failures, notes=f"engine={engine}, output=data/raw/{args.name}.csv")
+    log_run(command, counts, failures, notes=f"engine={engine}, output=data/raw/{args.name}.csv", redact=redact)
 
     table = Table(title=f"data/raw/{args.name}.csv")
     for key in counts:
