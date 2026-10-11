@@ -205,7 +205,10 @@ def main() -> int:
 
     counts = {"enriched": len(rows), "eligible": sum(not r["skip_reason"] for r in rows),
               "shortlisted": len(chosen), "batches": -(-len(chosen) // args.batch)}
-    log_run("python " + " ".join(["src/shortlist.py"] + sys.argv[1:]), counts,
+    command = "python " + " ".join(["src/shortlist.py"] + sys.argv[1:])
+    if args.domains:  # the public log must not name the agencies being looked at
+        command = command.replace(args.domains, f"<{len(only)} domains>")
+    log_run(command, counts,
             notes="skipped: " + (", ".join(f"{k}={v}" for k, v in skipped.most_common()) or "none"))
     console.print("[bold]shortlist[/bold] " + ", ".join(f"{k}={v}" for k, v in counts.items()))
     for reason, n in skipped.most_common():

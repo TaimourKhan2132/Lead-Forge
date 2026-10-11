@@ -119,6 +119,12 @@ Counts only. No lead names or scraped data are written to this file, so it is sa
   ignored and were never committed, and that the README's links resolve. Listing titles made only
   of generic words ("AI Automation Agency") are not treated as names, and form placeholders are
   not treated as addresses; both rules are in the script. Nothing was pushed.
+- **2026-10-11 â€” The audit found a leak on its first full run, and it was removed.** The
+  re-crawl digest had been produced with `shortlist.py --domains`, and that command line, with
+  three agency domains in it, was written to this log and committed. The audit flagged all three.
+  `shortlist.py` now logs the count of domains instead of the domains, and the six unpushed
+  commits that carried the line were rewritten. The audit was run again afterwards and the history
+  is clean.
 
 ## Open items
 
