@@ -9,7 +9,7 @@
 <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-0f766e" alt="MIT licence"></a>
 <img src="https://img.shields.io/badge/python-3.10%2B-3776AB?logo=python&logoColor=white" alt="Python 3.10 or newer">
 <img src="https://img.shields.io/badge/browser-Playwright-2EAD33?logo=playwright&logoColor=white" alt="Playwright">
-<img src="https://img.shields.io/badge/sends-nothing%2C%20ever-111827" alt="Sends nothing, ever">
+<img src="https://img.shields.io/badge/sends-nothing-111827" alt="Sends nothing">
 
 <br><br>
 
@@ -197,19 +197,19 @@ who checks, so the trade is always made the same way.
 flowchart TB
     subgraph FIND ["1 · Find agencies"]
         direction LR
-        Q["queries/*.txt"] --> D["discover.py<br/>Google Maps"] --> E["enrich.py<br/>site crawl, an evidence<br/>record per fact"]
+        Q["queries/*.txt"] --> D["discover.py<br/>Google Maps"] --> E["enrich.py<br/>evidence for<br/>every fact"]
     end
     subgraph JUDGE ["2 · Qualify them"]
         direction LR
-        S["shortlist.py<br/>rule-based triage"] --> L{{"an LLM scores<br/>against the rubric"}} --> V["qualify.py<br/>rejects any verdict that<br/>cites an unfetched page"]
+        S["shortlist.py<br/>rule-based triage"] --> L{{"an LLM scores<br/>the rubric"}} --> V["qualify.py<br/>rejects unsourced<br/>verdicts"]
     end
     subgraph PROVE ["3 · Find their buyers, and prove it"]
         direction LR
-        A2["discover and enrich again,<br/>in the agency's own<br/>niche and city"] --> P["prospects.py<br/>candidate signals"] --> Y["verify.py<br/>a real browser, today"]
+        A2["discover + enrich again:<br/>the agency's own<br/>niche and city"] --> P["prospects.py<br/>candidate signals"] --> Y["verify.py<br/>a real browser, today"]
     end
     subgraph DELIVER ["4 · Deliver"]
         direction LR
-        K["pack.py<br/>ten prospects"] --> R["draft.py<br/>email built from<br/>verified signals"] --> T[("track.py<br/>plan, caps,<br/>follow-ups")] --> H(["a person sends"])
+        K["pack.py<br/>ten prospects"] --> R["draft.py<br/>email from<br/>verified signals"] --> T[("track.py<br/>plan, caps,<br/>follow-ups")] --> H(["a person<br/>sends"])
     end
     FIND --> JUDGE --> PROVE --> DELIVER
 
