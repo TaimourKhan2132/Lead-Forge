@@ -3,97 +3,83 @@
  "agency": "Northlight Growth",
  "niche": "dental clinics",
  "city": "Dubai",
- "summary": "Northlight Growth sells WhatsApp booking flows and Google Ads management to clinics. Five Maps searches across Dubai returned 58 dental clinics. These ten are established enough to have a budget, and each shows a gap on its own listing or website that sits inside what Northlight already delivers. This is an illustrative pack: the agency and every business are fictional.",
+ "summary": "Northlight Growth sells website builds, Google Ads management and local SEO to clinics. Five Maps searches across Dubai returned 58 dental clinics. Each of these ten shows something on its own Google listing or website that sits inside what Northlight already delivers, and each line below can be checked in a few seconds by opening the link beside it. This is an illustrative pack: the agency and every business are fictional.",
+ "fit": {
+  "no_site": "With {reviews} reviews and no website on the listing, there is no page of its own to rank or to send ad traffic to. A first site is Northlight's entry project.",
+  "dead_site": "The listing sends people to a link that does not open. Every tap on Website is a lost visit until the site is rebuilt or the link is fixed.",
+  "not_https": "Browsers mark the site Not secure before a patient reads a word. Moving it to https is a small first job that opens the door to the rest.",
+  "stale": "A footer that still says {year} suggests nobody has touched the site since, which is the redesign conversation.",
+  "no_ads_tags": "No Google tag or Meta Pixel means no paid search or paid social is being measured here, so a Google Ads account would start clean.",
+  "low_reviews": "{reviews} reviews against a median of {median} nearby: a local SEO and review-request job.",
+  "low_rating": "A {rating} rating against a median of {median} is the first thing a new patient sees, which is where local SEO work has to start."
+ },
+ "method": "Illustrative pack: every business is fictional, so nothing was searched or opened. A real pack states here the date of its Maps searches and the date each listing and website was opened in a browser, and what was checked.",
  "prospects": [
   {
-   "key": "marinapearl-dental.example",
+   "key": "listing-01",
    "gaps": [
-    "no_booking",
-    "no_chat"
-   ],
-   "why_fit": "212 reviews says the chairs are busy, yet the only way to book is to phone. That is the exact WhatsApp booking flow Northlight builds, with obvious volume behind it.",
-   "opener": "Your Marina clinic has 212 Google reviews and no way to book without phoning. Have you looked at what a WhatsApp booking flow would take off the front desk?"
+    "no_site"
+   ]
   },
   {
    "key": "jltfamilydentistry.example",
    "gaps": [
     "low_reviews",
     "no_ads_tags"
-   ],
-   "why_fit": "A 4.9 rating that almost nobody sees. No ad tracking on the site means no paid search is running, so Northlight's Google Ads offer starts from a clean account.",
-   "opener": "A 4.9 rating from 31 reviews in JLT is a strong base that is not being advertised anywhere. Is paid search something you have tried?"
+   ]
   },
   {
    "key": "albarshasmile.example",
    "gaps": [
-    "booking_cta_only",
     "stale"
-   ],
-   "why_fit": "They already want online bookings (the button is there) but it lands on a form. Swapping that form for an automated WhatsApp flow is a small, concrete first project.",
-   "opener": "Your 'Book now' button opens a contact form, so patients still wait for a call back. Would an instant WhatsApp confirmation be worth testing?"
+   ]
   },
   {
    "key": "listing-04",
    "gaps": [
-    "platform_site",
+    "no_site",
     "low_reviews"
-   ],
-   "why_fit": "A solo orthodontist running the practice from Instagram. There is no website to rebuild, so a WhatsApp booking link in the bio is the whole job and quick to show working.",
-   "opener": "Your Maps listing sends patients to Instagram, where they have to DM to book. A booking link in the bio would cut that to one tap."
+   ]
   },
   {
    "key": "creeksidedental.example",
    "gaps": [
     "low_rating",
-    "no_chat"
-   ],
-   "why_fit": "143 reviews at 3.8 points to a service or response problem, and patients have no chat or WhatsApp route to reach the clinic. Faster replies are the cheapest fix for both.",
-   "opener": "At 143 reviews and 3.8 stars, a few slow replies are probably costing you more than they should. Do patients have any way to message the clinic directly?"
+    "no_ads_tags"
+   ]
   },
   {
    "key": "palmviewdental.example",
    "gaps": [
-    "no_viewport",
-    "no_booking"
-   ],
-   "why_fit": "A Palm Jumeirah clinic whose site does not scale on a phone and has no booking route. High-value patients, low-effort fixes, and a clear before and after.",
-   "opener": "Your site does not resize on a phone and there is no way to book from it. For a Palm clinic most of that traffic will be mobile."
+    "dead_site"
+   ]
   },
   {
    "key": "mirdifkidsdental.example",
    "gaps": [
-    "low_reviews",
-    "no_booking"
-   ],
-   "why_fit": "A children's clinic lives on parents booking between other things. There is no online booking and few reviews, and a post-visit WhatsApp review request would lift both.",
-   "opener": "Parents booking for kids rarely want to phone during clinic hours. Have you considered letting them book and confirm over WhatsApp?"
+    "no_ads_tags"
+   ]
   },
   {
    "key": "listing-08",
    "gaps": [
     "no_site",
     "low_reviews"
-   ],
-   "why_fit": "No website at all, so every search click that is not a phone call is lost. A single landing page with a WhatsApp booking button is Northlight's entry package.",
-   "opener": "Your Maps listing has no website attached, so anyone who does not want to phone has nowhere to go. A one-page site with WhatsApp booking would close that."
+   ]
   },
   {
    "key": "jumeirah-aesthetic.example",
    "gaps": [
     "no_ads_tags",
-    "no_chat"
-   ],
-   "why_fit": "The strongest profile in the set (301 reviews, 4.9) with no ad tracking and no chat. They can clearly afford growth work and are not doing the basics yet.",
-   "opener": "301 reviews at 4.9 is the best profile I found in Jumeirah, and there is no ad tracking on the site. Are you relying on word of mouth alone?"
+    "stale"
+   ]
   },
   {
    "key": "karamadentalpoint.example",
    "gaps": [
     "not_https",
     "stale"
-   ],
-   "why_fit": "A dated, insecure site is a credibility problem for a clinic. Lower priority than the others, but an easy conversation starter that leads into ads and booking.",
-   "opener": "Browsers flag your site as 'Not secure' because it runs without https. That warning shows before a patient reads a word."
+   ]
   }
  ]
 }

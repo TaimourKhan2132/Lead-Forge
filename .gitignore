@@ -8,6 +8,8 @@ packs/*
 outreach/drafts/*
 !outreach/drafts/.gitkeep
 outreach/us_track/
+# The day's send file names real agencies and businesses.
+outreach/ready/
 samples/
 # Per-agency query lists are named after the agency being pitched.
 queries/packs/

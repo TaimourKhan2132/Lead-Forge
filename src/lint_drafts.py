@@ -4,7 +4,10 @@
 
 Rules for outreach/drafts: subjects of 6 words or fewer; email 1 at 120 words or fewer with no
 links, the fixed call-to-action and a {{NAME}} sign-off; follow-ups at 50 and 40 words; a LinkedIn
-note of 280 characters or fewer; an evidence comment under email 1; and none of the banned phrases.
+note of 280 characters or fewer; an evidence comment under email 1; none of the banned phrases; and
+none of the retired signal wording from signals.py (no booking, no WhatsApp, no chat, no social
+profiles and the rest), anywhere in the file. A draft whose header says "Status: BLOCKED" holds no
+email and is reported as blocked, not checked.
 
 Rules for outreach/us_track: a contact-form message of 90 words or fewer with no links, the fixed
 LeadForge sentence, a fixed-price offer and the fixed call-to-action; a source URL for the hook, or
@@ -18,6 +21,7 @@ import sys
 from dotenv import dotenv_values
 from rich.console import Console
 
+import signals
 from common import DRAFTS, ROOT, US_TRACK, utf8_stdout
 
 BANNED = ["i hope this finds you well", "i hope this email finds you", "i came across your profile",
@@ -45,7 +49,13 @@ def words(text: str) -> int:
     return len(re.findall(r"[\w'’{}$%-]+", text))
 
 
+def is_blocked(text: str) -> bool:
+    return bool(re.search(r"^- \*\*Status:\*\* *BLOCKED", text.split("\n## ", 1)[0], flags=re.M))
+
+
 def lint(text: str) -> list[str]:
+    if is_blocked(text):
+        return []  # nothing to send, so nothing to check
     problems = []
     secs = sections(text)
 
@@ -91,6 +101,8 @@ def lint(text: str) -> list[str]:
 
     lowered = body(text).lower()
     problems += [f"banned phrase: {phrase!r}" for phrase in BANNED if phrase in lowered]
+    # Checked over the whole file, comments included: a retired signal has no business in the notes either.
+    problems += [f"retired signal wording: {name}" for name in signals.retired_in(text)]
     return problems
 
 
@@ -142,20 +154,24 @@ def lint_us(text: str) -> list[str]:
 
 def main() -> int:
     utf8_stdout()
-    failed = total = 0
+    failed = total = blocked = 0
     for folder, check in ((DRAFTS, lint), (US_TRACK, lint_us)):
         for path in sorted(folder.glob("*.md")):
             total += 1
-            problems = check(path.read_text(encoding="utf-8"))
+            text = path.read_text(encoding="utf-8")
+            problems = check(text)
             label = f"{folder.name}/{path.name}"
-            if problems:
+            if is_blocked(text):
+                blocked += 1
+                console.print(f"[yellow]blocked[/yellow] {label}")
+            elif problems:
                 failed += 1
                 console.print(f"[red]FAIL[/red] {label}")
                 for problem in problems:
                     console.print(f"   - {problem}")
             else:
                 console.print(f"[green]ok[/green]   {label}")
-    console.print(f"{total - failed}/{total} drafts pass")
+    console.print(f"{total - failed - blocked}/{total} drafts pass, {blocked} blocked")
     return 1 if failed else 0
 
 

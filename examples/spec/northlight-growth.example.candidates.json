@@ -1,27 +1,29 @@
 [
  {
-  "key": "marinapearl-dental.example",
+  "key": "listing-01",
   "name": "Marina Pearl Dental Studio",
   "category": "Dental clinic",
   "address": "Dubai Marina, Dubai",
+  "niche": "dental clinic",
   "maps_link": "https://maps.example/place/EXAMPLE01",
-  "website": "https://marinapearl-dental.example/",
+  "website": "",
   "phone": "+971 4 555 0101",
-  "emails": [
-   "hello@marinapearl-dental.example"
-  ],
+  "emails": [],
   "review_count": "212",
   "review_rating": "4.7",
+  "pool": {
+   "median_reviews": 96,
+   "peers": 58,
+   "rated_peers": 51,
+   "median_rating": 4.7
+  },
+  "verified_on": "2026-10-11",
   "gaps": [
    {
-    "key": "no_booking",
-    "label": "No online booking: no booking system and no 'book' call-to-action found on the homepage and contact page.",
-    "source_url": "https://marinapearl-dental.example/"
-   },
-   {
-    "key": "no_chat",
-    "label": "No WhatsApp link and no chat widget in the page source of the homepage and contact page.",
-    "source_url": "https://marinapearl-dental.example/"
+    "key": "no_site",
+    "detail": {},
+    "checked": "2026-10-11",
+    "source_url": "https://maps.example/place/EXAMPLE01"
    }
   ]
  },
@@ -30,6 +32,7 @@
   "name": "JLT Family Dentistry",
   "category": "Dental clinic",
   "address": "JLT, Dubai",
+  "niche": "dental clinic",
   "maps_link": "https://maps.example/place/EXAMPLE02",
   "website": "https://jltfamilydentistry.example/",
   "phone": "+971 4 555 0102",
@@ -38,15 +41,28 @@
   ],
   "review_count": "31",
   "review_rating": "4.9",
+  "pool": {
+   "median_reviews": 96,
+   "peers": 58,
+   "rated_peers": 51,
+   "median_rating": 4.7
+  },
+  "verified_on": "2026-10-11",
   "gaps": [
    {
     "key": "low_reviews",
-    "label": "31 Google reviews, against a median of 96 across the 58 dental clinic listings these searches returned.",
+    "detail": {
+     "reviews": 31,
+     "median": 96,
+     "peers": 58
+    },
+    "checked": "2026-10-11",
     "source_url": "https://maps.example/place/EXAMPLE02"
    },
    {
     "key": "no_ads_tags",
-    "label": "No Meta Pixel, Google Ads tag or Tag Manager container in the page source of the homepage and contact page, so paid traffic is not being tracked there.",
+    "detail": {},
+    "checked": "2026-10-11",
     "source_url": "https://jltfamilydentistry.example/"
    }
   ]
@@ -56,23 +72,30 @@
   "name": "Al Barsha Smile Centre",
   "category": "Dental clinic",
   "address": "Al Barsha, Dubai",
+  "niche": "dental clinic",
   "maps_link": "https://maps.example/place/EXAMPLE03",
   "website": "https://albarshasmile.example/",
   "phone": "+971 4 555 0103",
   "emails": [
    "reception@albarshasmile.example"
   ],
-  "review_count": "88",
+  "review_count": "188",
   "review_rating": "4.4",
+  "pool": {
+   "median_reviews": 96,
+   "peers": 58,
+   "rated_peers": 51,
+   "median_rating": 4.7
+  },
+  "verified_on": "2026-10-11",
   "gaps": [
    {
-    "key": "booking_cta_only",
-    "label": "There is a 'book' call-to-action but no booking system in the page source of the homepage and contact page, so it most likely leads to a form or a phone call.",
-    "source_url": "https://albarshasmile.example/"
-   },
-   {
     "key": "stale",
-    "label": "The footer copyright still reads 2021.",
+    "detail": {
+     "year": 2019,
+     "line": "© 2019 Al Barsha Smile Centre. All rights reserved"
+    },
+    "checked": "2026-10-11",
     "source_url": "https://albarshasmile.example/"
    }
   ]
@@ -82,21 +105,35 @@
   "name": "Dr. Hana Orthodontics",
   "category": "Dental clinic",
   "address": "Business Bay, Dubai",
+  "niche": "dental clinic",
   "maps_link": "https://maps.example/place/EXAMPLE04",
   "website": "",
   "phone": "+971 4 555 0104",
   "emails": [],
   "review_count": "17",
   "review_rating": "5.0",
+  "pool": {
+   "median_reviews": 96,
+   "peers": 58,
+   "rated_peers": 51,
+   "median_rating": 4.7
+  },
+  "verified_on": "2026-10-11",
   "gaps": [
    {
-    "key": "platform_site",
-    "label": "The listing's website field points to a social or directory profile (https://instagram.example/drhana.ortho), not a site of their own.",
+    "key": "no_site",
+    "detail": {},
+    "checked": "2026-10-11",
     "source_url": "https://maps.example/place/EXAMPLE04"
    },
    {
     "key": "low_reviews",
-    "label": "17 Google reviews, against a median of 96 across the 58 dental clinic listings these searches returned.",
+    "detail": {
+     "reviews": 17,
+     "median": 96,
+     "peers": 58
+    },
+    "checked": "2026-10-11",
     "source_url": "https://maps.example/place/EXAMPLE04"
    }
   ]
@@ -106,6 +143,7 @@
   "name": "Creekside Dental & Implant Clinic",
   "category": "Dental clinic",
   "address": "Deira, Dubai",
+  "niche": "dental clinic",
   "maps_link": "https://maps.example/place/EXAMPLE05",
   "website": "https://creeksidedental.example/",
   "phone": "+971 4 555 0105",
@@ -114,15 +152,29 @@
   ],
   "review_count": "143",
   "review_rating": "3.8",
+  "pool": {
+   "median_reviews": 96,
+   "peers": 58,
+   "rated_peers": 51,
+   "median_rating": 4.7
+  },
+  "verified_on": "2026-10-11",
   "gaps": [
    {
     "key": "low_rating",
-    "label": "Rated 3.8 on Google from 143 reviews.",
+    "detail": {
+     "rating": 3.8,
+     "reviews": 143,
+     "median": 4.7,
+     "peers": 51
+    },
+    "checked": "2026-10-11",
     "source_url": "https://maps.example/place/EXAMPLE05"
    },
    {
-    "key": "no_chat",
-    "label": "No WhatsApp link and no chat widget in the page source of the homepage and contact page.",
+    "key": "no_ads_tags",
+    "detail": {},
+    "checked": "2026-10-11",
     "source_url": "https://creeksidedental.example/"
    }
   ]
@@ -132,24 +184,30 @@
   "name": "Palm View Dental",
   "category": "Dental clinic",
   "address": "Palm Jumeirah, Dubai",
+  "niche": "dental clinic",
   "maps_link": "https://maps.example/place/EXAMPLE06",
   "website": "https://palmviewdental.example/",
   "phone": "+971 4 555 0106",
   "emails": [
    "info@palmviewdental.example"
   ],
-  "review_count": "64",
+  "review_count": "164",
   "review_rating": "4.6",
+  "pool": {
+   "median_reviews": 96,
+   "peers": 58,
+   "rated_peers": 51,
+   "median_rating": 4.7
+  },
+  "verified_on": "2026-10-11",
   "gaps": [
    {
-    "key": "no_viewport",
-    "label": "The homepage has no mobile viewport tag, so it will not scale properly on phones.",
-    "source_url": "https://palmviewdental.example/"
-   },
-   {
-    "key": "no_booking",
-    "label": "No online booking: no booking system and no 'book' call-to-action found on the homepage and contact page.",
-    "source_url": "https://palmviewdental.example/"
+    "key": "dead_site",
+    "detail": {
+     "how": "does not resolve"
+    },
+    "checked": "2026-10-11",
+    "source_url": "https://maps.example/place/EXAMPLE06"
    }
   ]
  },
@@ -158,23 +216,27 @@
   "name": "Mirdif Kids Dental",
   "category": "Dental clinic",
   "address": "Mirdif, Dubai",
+  "niche": "dental clinic",
   "maps_link": "https://maps.example/place/EXAMPLE07",
   "website": "https://mirdifkidsdental.example/",
   "phone": "+971 4 555 0107",
   "emails": [
    "smile@mirdifkidsdental.example"
   ],
-  "review_count": "39",
+  "review_count": "139",
   "review_rating": "4.8",
+  "pool": {
+   "median_reviews": 96,
+   "peers": 58,
+   "rated_peers": 51,
+   "median_rating": 4.7
+  },
+  "verified_on": "2026-10-11",
   "gaps": [
    {
-    "key": "low_reviews",
-    "label": "39 Google reviews, against a median of 96 across the 58 dental clinic listings these searches returned.",
-    "source_url": "https://maps.example/place/EXAMPLE07"
-   },
-   {
-    "key": "no_booking",
-    "label": "No online booking: no booking system and no 'book' call-to-action found on the homepage and contact page.",
+    "key": "no_ads_tags",
+    "detail": {},
+    "checked": "2026-10-11",
     "source_url": "https://mirdifkidsdental.example/"
    }
   ]
@@ -184,21 +246,35 @@
   "name": "Silicon Oasis Dental Care",
   "category": "Dental clinic",
   "address": "Dubai Silicon Oasis, Dubai",
+  "niche": "dental clinic",
   "maps_link": "https://maps.example/place/EXAMPLE08",
   "website": "",
   "phone": "+971 4 555 0108",
   "emails": [],
   "review_count": "22",
   "review_rating": "4.5",
+  "pool": {
+   "median_reviews": 96,
+   "peers": 58,
+   "rated_peers": 51,
+   "median_rating": 4.7
+  },
+  "verified_on": "2026-10-11",
   "gaps": [
    {
     "key": "no_site",
-    "label": "The Google Maps listing has no website attached.",
+    "detail": {},
+    "checked": "2026-10-11",
     "source_url": "https://maps.example/place/EXAMPLE08"
    },
    {
     "key": "low_reviews",
-    "label": "22 Google reviews, against a median of 96 across the 58 dental clinic listings these searches returned.",
+    "detail": {
+     "reviews": 22,
+     "median": 96,
+     "peers": 58
+    },
+    "checked": "2026-10-11",
     "source_url": "https://maps.example/place/EXAMPLE08"
    }
   ]
@@ -208,6 +284,7 @@
   "name": "Jumeirah Aesthetic Dentistry",
   "category": "Dental clinic",
   "address": "Jumeirah 1, Dubai",
+  "niche": "dental clinic",
   "maps_link": "https://maps.example/place/EXAMPLE09",
   "website": "https://jumeirah-aesthetic.example/",
   "phone": "+971 4 555 0109",
@@ -216,15 +293,27 @@
   ],
   "review_count": "301",
   "review_rating": "4.9",
+  "pool": {
+   "median_reviews": 96,
+   "peers": 58,
+   "rated_peers": 51,
+   "median_rating": 4.7
+  },
+  "verified_on": "2026-10-11",
   "gaps": [
    {
     "key": "no_ads_tags",
-    "label": "No Meta Pixel, Google Ads tag or Tag Manager container in the page source of the homepage and contact page, so paid traffic is not being tracked there.",
+    "detail": {},
+    "checked": "2026-10-11",
     "source_url": "https://jumeirah-aesthetic.example/"
    },
    {
-    "key": "no_chat",
-    "label": "No WhatsApp link and no chat widget in the page source of the homepage and contact page.",
+    "key": "stale",
+    "detail": {
+     "year": 2022,
+     "line": "© 2022 Jumeirah Aesthetic Dentistry. All rights reserved"
+    },
+    "checked": "2026-10-11",
     "source_url": "https://jumeirah-aesthetic.example/"
    }
   ]
@@ -234,23 +323,38 @@
   "name": "Karama Dental Point",
   "category": "Dental clinic",
   "address": "Al Karama, Dubai",
+  "niche": "dental clinic",
   "maps_link": "https://maps.example/place/EXAMPLE10",
   "website": "https://karamadentalpoint.example/",
   "phone": "+971 4 555 0110",
   "emails": [
    "info@karamadentalpoint.example"
   ],
-  "review_count": "57",
+  "review_count": "157",
   "review_rating": "4.2",
+  "pool": {
+   "median_reviews": 96,
+   "peers": 58,
+   "rated_peers": 51,
+   "median_rating": 4.7
+  },
+  "verified_on": "2026-10-11",
   "gaps": [
    {
     "key": "not_https",
-    "label": "The site is served over plain http, without https.",
+    "detail": {
+     "https": "does not load"
+    },
+    "checked": "2026-10-11",
     "source_url": "https://karamadentalpoint.example/"
    },
    {
     "key": "stale",
-    "label": "The footer copyright still reads 2019.",
+    "detail": {
+     "year": 2018,
+     "line": "© 2018 Karama Dental Point. All rights reserved"
+    },
+    "checked": "2026-10-11",
     "source_url": "https://karamadentalpoint.example/"
    }
   ]

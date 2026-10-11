@@ -30,7 +30,7 @@ from enrich import JUNK_LOCAL
 ALLOWED_DOMAINS = {"example.com", "anthropic.com", "github.com", "google.com", "gmail.com", "yahoo.com",
                    "hotmail.com", "outlook.com", "icloud.com", "live.com", "ymail.com", "sentry.io",
                    "wixpress.com", "domain.com", "email.com", "company.com", "test.com", "mail.com"}
-PRIVATE_PATHS = ["data", ".env", "packs", "outreach/drafts", "outreach/us_track", "queries/packs"]
+PRIVATE_PATHS = ["data", ".env", "packs", "outreach/drafts", "outreach/ready", "outreach/us_track", "queries/packs", "samples"]
 GENERIC_WORDS = set("""a ai agency agencies and app apps arabia automation beauty best branding business car
     center centre clinic clinics cleaning company consultancy consultant consulting content crm data dental design
     development dhabi abu digital doha dubai ecommerce estate generation group growth house hubspot in it jeddah

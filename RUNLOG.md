@@ -171,6 +171,62 @@ Counts only. No lead names or scraped data are written to this file, so it is sa
   pack built so far carries such an address. Known limit, now written down: the booking check
   recognises appointment and table-booking systems but not hotel booking engines, so "no booking
   system" must not be claimed for hotels.
+- - **2026-10-11: seven signals retired after a manual check found most of them false.** The
+  operator   opened pack prospects by hand and found booking pages, booking tools that open in a
+  new tab, and   chat widgets where packs said there were none. Root cause: the detector looked
+  for tools embedded   in the page, so a button that links out, or a widget a script injects
+  later, read as "absent", and   the browser pass re-ran the same narrow patterns and "confirmed"
+  them. Retired for good: no   booking, no online booking, book button with no booking system, no
+  WhatsApp, no chat, no enquiry   chat, no social profiles linked. Also dropped, because they are
+  not on the allowed list: no meta   description, no mobile viewport, listing links to a social
+  profile, no email published. - **Allowed signals, each checkable by a person in 10 seconds on a
+  phone** (`src/signals.py`): no   website on the Google listing; the listing's website link is
+  dead or does not resolve; site served   without https; footer copyright year 2023 or older; no
+  Google tag, Tag Manager or Meta Pixel in the   rendered page after 8 seconds; review count or
+  rating against the pack median; text quoted from   the business's own site. `signals.py` also
+  writes the wording for packs and emails, and the linter   rejects the retired wording anywhere
+  in a draft. - **`verify.py` rewritten.** It opens the live Google listing (Website button,
+  review count, rating)   and the site (8.5 seconds, mouse move and scroll), and keeps a signal
+  only when the browser shows   it. Tags: `dataLayer`, `gtag`, `fbq` and related globals in every
+  frame, every script source, the   page code, and the requests the page makes. Absence claims (no
+  tags, dead link, no https) need two   visits. Dropped as unsettled, never guessed: timeouts and
+  resets, HTTP 403/5xx, bot walls, pages   with almost no text, sites with a consent tool, Shopify
+  sites, listings that did not load. A dead   link is claimed only on a DNS "does not exist"
+  (confirmed by a second resolver call), a 404/410, or   a page that says the account is suspended
+  or the domain is for sale. Low rating is now relative:   under 4.0 and at least 0.4 below the
+  median rating of the pack's listings with 15+ reviews. - **The tag signal is the weakest.** It
+  is the only one that cannot be checked on a phone, and the   check runs in a headless browser.
+  Emails prefer the other signals when a pack has them. - **Emails are built from verified data,
+  not typed.** `draft.py` generates the three business lines   from the signals `verify.py`
+  confirmed, and lists under each email the pages to open to check them.   The sentence about gaps
+  being checked twice in a real browser is gone from every email and   follow-up, and the linter
+  rejects it. - **Opening lines are checked too.** One opening line said something the agency's
+  site does not say.   Each draft spec now lists the words its first line relies on, and `draft.py
+  quotes` confirms they   are on the agency's rendered page. - **Send rules** (`track.py`): at
+  most 10 new emails a day, 15 a day with follow-ups, follow-ups   first, no Saturday or Sunday
+  sends, a weekend follow-up moves to Monday, follow-ups on day 3 and   day 7. `plan` schedules a
+  new email only where its two follow-ups will also fit. `ready <date>`   writes the day's emails
+  and check links to the gitignored `outreach/ready/`. - **Operator's send status, 2026-10-11:**
+  one email stays scheduled in the mail client for Mon 12 Oct   (its three signals are quoted
+  text, re-checked by hand) and is recorded as sent on that date. Four   other scheduled sends
+  were cancelled and are back to drafted.
+- - **2026-10-11, operator spot-check of 7 rebuilt claims: 5 right, 2 wrong.** Both wrong ones
+  came from   a listing link that does not lead where it appears to.   - *No https* was claimed
+  for a listing whose link redirects to a different company's domain, which     loads fine over
+  https. The rule is now: claim it only when the https:// version of the same URL     fails to
+  load or has an invalid certificate. An https address that answers and redirects is not a
+  failure. Both the link on the listing and the page the visitor ends on are tried.   - *Dead link
+  (404)* was claimed for a listing whose link is malformed (a maps link glued onto the     URL).
+  The domain itself serves a default WordPress page. That line now says the link is broken and
+  what the domain shows, in the operator's wording. `verify.py` now looks behind a 404 on a deep
+  link and reports a broken link when the domain's homepage loads.   - New guard from the same
+  finding: when a listing's link lands on a different domain, nothing is     claimed about the
+  page it lands on. Applying it dropped three more claims, one of them a "no tags"     reading
+  taken from a site builder's "expired" page. - **Ready file format.** Under each email, one line
+  per claim with the exact URL to open. For "no   website on the listing" that URL is the Google
+  Maps link. - **A slow connection during the run** made page loads time out for three agencies.
+  Timeouts drop a   claim, they never create one, so nothing false came of it; those three were
+  re-run. One page hung a   run outright, so every browser step now has a hard deadline.
 
 ## Open items
 
@@ -178,16 +234,23 @@ Counts only. No lead names or scraped data are written to this file, so it is sa
   on this machine, which has no Docker.
 - **No Gulf rows on the Clutch shortlist.** The shortlist that arrived on 2026-10-11 holds only
   track=us agencies, which went to the US track. Nothing was merged into the Gulf list.
-- **The send plan exceeds the daily cap from its fourth day.** Ten new sends a day plus day-3
-  follow-ups is 20 messages on Thursday 15 October and 19 on Friday against a cap of 15. The
-  tracker holds the overflow of new sends over to the next day. The operator has to choose between
-  fewer new sends on those days, a higher cap, or a later follow-up.
-- **Three later batches are planned but not built** (Wednesday, Thursday, Friday). Each is built one
-  send day ahead.
-- **The booking check does not recognise hotel booking engines.** Do not claim "no booking system"
-  for a hotel until those are added to the pattern.
+- **One Gulf draft is blocked.** A web design studio's pack has only 7 prospects with a signal a web
+  studio can act on. It needs one more Maps search, which is new discovery and waits for the operator.
 - **One US-track draft is blocked** until a way to deliver its message is confirmed by hand.
-- **Agency qualification has no browser pass.** Only pack prospects are re-tested in a browser.
+- **The tag signal is checked in a headless browser only.** It is the one allowed signal that cannot
+  be confirmed on a phone. A site that serves a headless browser different code would fool it. Emails
+  use it only when a pack has nothing stronger, and the ready file says how to confirm it on a desktop.
+- **Quoted-text packs depend on the page staying as it was.** Three packs are built on words quoted
+  from the prospect's own site. `verify.py` re-reads them on the day; a site can still change before
+  the email is sent.
+- **Later batches are planned but not built.** Nothing new is built until the operator says so. Each
+  batch is built one send day ahead, with the allowed signals only.
+- **The plan is throttled by follow-ups.** Follow-ups from Wednesday, Thursday and Friday sends all
+  land on the following Monday, so `plan` places fewer new emails late in the week.
+- **The connection was unreliable during the 2026-10-11 run.** Page loads timed out in bursts. A
+  timeout only ever drops a claim, but it cost candidates; a re-run on a quiet line may recover more.
+- **Agency qualification has no browser pass.** Opening lines are checked against the agency's page
+  with `draft.py quotes`, but the rubric evidence is still read from server-rendered HTML.
 - **19 agencies are still unreachable** after the re-crawl, and 15 refuse the crawler outright.
   They are unscored, not mis-described.
 
@@ -1131,6 +1194,971 @@ Counts only. No lead names or scraped data are written to this file, so it is sa
 - **Failures:** none
 
 ### 2026-10-11T14:03:43+05:00
+- **Command:** `python src/draft.py build <agency>`
+- **Counts:** lint_problems=0
+- **Failures:** none
+
+### 2026-10-11T18:06:32+05:00
+- **Command:** `python src/prospects.py <agency> --niche dental clinic --want no_site,dead_site,stale,no_ads_tags --min-reviews 40 --max-reviews 2500`
+- **Counts:** listings=94, candidates=47, dropped=47, median_reviews=333, median_rating=4.9
+- **Failures:** none
+
+### 2026-10-11T18:08:19+05:00
+- **Command:** `python src/verify.py <agency> --want no_site,dead_site,stale,no_ads_tags --top 12`
+- **Counts:** listings_read=8, listings_failed=4, sites_opened=2, sites_unclear=1, confirmed=10, dropped=10, dead_site=1, not_https=0, no_ads_tags=1, usable=7
+- **Failures:** none
+
+### 2026-10-11T18:10:15+05:00
+- **Command:** `python src/prospects.py <agency> --niche spa --min-reviews 30 --max-reviews 2500 --want no_ads_tags,no_site,low_rating`
+- **Counts:** listings=94, candidates=40, dropped=54, median_reviews=105, median_rating=4.6
+- **Failures:** none
+
+### 2026-10-11T18:14:59+05:00
+- **Command:** `python src/verify.py <agency> --want no_ads_tags,no_site,low_rating --top 34`
+- **Counts:** listings_read=30, listings_failed=4, sites_opened=21, sites_unclear=6, confirmed=20, dropped=20, dead_site=0, not_https=0, no_ads_tags=12, usable=18
+- **Failures:** none
+
+### 2026-10-11T18:15:02+05:00
+- **Command:** `python src/prospects.py <agency> --niche school and nursery --min-reviews 20 --max-reviews 1500 --want no_site,dead_site,not_https,stale,no_ads_tags,low_rating`
+- **Counts:** listings=85, candidates=21, dropped=64, median_reviews=60, median_rating=4.8
+- **Failures:** none
+
+### 2026-10-11T18:17:34+05:00
+- **Command:** `python src/verify.py <agency> --want no_site,dead_site,not_https,stale,no_ads_tags,low_rating --top 30`
+- **Counts:** listings_read=21, listings_failed=0, sites_opened=18, sites_unclear=2, confirmed=13, dropped=16, dead_site=0, not_https=0, no_ads_tags=5, usable=12
+- **Failures:** none
+
+### 2026-10-11T18:17:36+05:00
+- **Command:** `python src/prospects.py <agency> --niche travel agency and tour operator --min-reviews 15 --max-reviews 3000 --want no_site,dead_site,not_https,stale,no_ads_tags,low_rating`
+- **Counts:** listings=61, candidates=37, dropped=24, median_reviews=194, median_rating=4.7
+- **Failures:** none
+
+### 2026-10-11T18:21:06+05:00
+- **Command:** `python src/pack.py build <agency>`
+- **Counts:** prospects=10, files=2
+- **Failures:** none
+
+### 2026-10-11T18:21:06+05:00
+- **Command:** `python src/draft.py build <agency>`
+- **Counts:** lint_problems=0
+- **Failures:** none
+
+### 2026-10-11T18:21:07+05:00
+- **Command:** `python src/pack.py build <agency>`
+- **Counts:** prospects=10, files=2
+- **Failures:** none
+
+### 2026-10-11T18:21:08+05:00
+- **Command:** `python src/draft.py build <agency>`
+- **Counts:** lint_problems=0
+- **Failures:** none
+
+### 2026-10-11T18:21:26+05:00
+- **Command:** `python src/verify.py <agency> --want no_site,dead_site,not_https,stale,no_ads_tags,low_rating --top 34`
+- **Counts:** listings_read=34, listings_failed=0, sites_opened=25, sites_unclear=2, confirmed=35, dropped=17, dead_site=1, not_https=0, no_ads_tags=10, usable=23
+- **Failures:** none
+
+### 2026-10-11T18:21:29+05:00
+- **Command:** `python src/prospects.py <agency> --niche car rental --min-reviews 20 --max-reviews 3000 --want no_site,dead_site,not_https,stale,no_ads_tags,low_rating`
+- **Counts:** listings=89, candidates=45, dropped=44, median_reviews=206, median_rating=4.8
+- **Failures:** none
+
+### 2026-10-11T18:23:51+05:00
+- **Command:** `python src/pack.py build <agency>`
+- **Counts:** prospects=10, files=2
+- **Failures:** none
+
+### 2026-10-11T18:23:52+05:00
+- **Command:** `python src/draft.py build <agency>`
+- **Counts:** lint_problems=0
+- **Failures:** none
+
+### 2026-10-11T18:25:03+05:00
+- **Command:** `python src/verify.py <agency> --want no_site,dead_site,not_https,stale,no_ads_tags,low_rating --top 34`
+- **Counts:** listings_read=34, listings_failed=0, sites_opened=25, sites_unclear=1, confirmed=38, dropped=15, dead_site=2, not_https=0, no_ads_tags=8, usable=29
+- **Failures:** none
+
+### 2026-10-11T18:25:05+05:00
+- **Command:** `python src/prospects.py <agency> --niche real estate agency --min-reviews 15 --max-reviews 600 --want no_ads_tags,no_site,low_rating`
+- **Counts:** listings=94, candidates=52, dropped=42, median_reviews=89, median_rating=4.7
+- **Failures:** none
+
+### 2026-10-11T18:29:23+05:00
+- **Command:** `python src/verify.py <agency> --want no_ads_tags,no_site,low_rating --top 34`
+- **Counts:** listings_read=32, listings_failed=2, sites_opened=25, sites_unclear=2, confirmed=39, dropped=19, dead_site=2, not_https=1, no_ads_tags=11, usable=28
+- **Failures:** none
+
+### 2026-10-11T18:29:25+05:00
+- **Command:** `python src/prospects.py <agency> --niche beauty salon --min-reviews 20 --max-reviews 2500 --want no_site,dead_site,not_https,stale,no_ads_tags,low_rating`
+- **Counts:** listings=102, candidates=56, dropped=46, median_reviews=298, median_rating=4.8
+- **Failures:** none
+
+### 2026-10-11T18:30:15+05:00
+- **Command:** `python src/pack.py build <agency>`
+- **Counts:** prospects=10, files=2
+- **Failures:** none
+
+### 2026-10-11T18:30:15+05:00
+- **Command:** `python src/draft.py build <agency>`
+- **Counts:** lint_problems=0
+- **Failures:** none
+
+### 2026-10-11T18:30:16+05:00
+- **Command:** `python src/pack.py build <agency>`
+- **Counts:** prospects=10, files=2
+- **Failures:** none
+
+### 2026-10-11T18:30:17+05:00
+- **Command:** `python src/draft.py build <agency>`
+- **Counts:** lint_problems=1
+- **Failures:** none
+
+### 2026-10-11T18:30:24+05:00
+- **Command:** `python src/pack.py build <agency>`
+- **Counts:** prospects=10, files=2
+- **Failures:** none
+
+### 2026-10-11T18:30:25+05:00
+- **Command:** `python src/draft.py build <agency>`
+- **Counts:** lint_problems=0
+- **Failures:** none
+
+### 2026-10-11T18:30:25+05:00
+- **Command:** `python src/pack.py build <agency>`
+- **Counts:** prospects=10, files=2
+- **Failures:** none
+
+### 2026-10-11T18:30:26+05:00
+- **Command:** `python src/draft.py build <agency>`
+- **Counts:** lint_problems=0
+- **Failures:** none
+
+### 2026-10-11T18:31:41+05:00
+- **Command:** `python src/verify.py <agency> --want no_site,dead_site,not_https,stale,no_ads_tags,low_rating --top 36`
+- **Counts:** listings_read=33, listings_failed=3, sites_opened=11, sites_unclear=4, confirmed=34, dropped=19, dead_site=2, not_https=0, no_ads_tags=3, usable=27
+- **Failures:** none
+
+### 2026-10-11T18:31:43+05:00
+- **Command:** `python src/prospects.py <agency> --niche cleaning company --min-reviews 15 --max-reviews 3000 --want no_ads_tags,no_site,low_rating`
+- **Counts:** listings=66, candidates=36, dropped=30, median_reviews=199, median_rating=4.7
+- **Failures:** none
+
+### 2026-10-11T18:35:39+05:00
+- **Command:** `python src/verify.py <agency> --want no_ads_tags,no_site,low_rating --top 34`
+- **Counts:** listings_read=34, listings_failed=0, sites_opened=20, sites_unclear=2, confirmed=34, dropped=13, dead_site=2, not_https=0, no_ads_tags=7, usable=26
+- **Failures:** none
+
+### 2026-10-11T18:35:41+05:00
+- **Command:** `python src/prospects.py <agency> --niche veterinary and pet care --min-reviews 15 --max-reviews 3000 --want no_site,dead_site,not_https,stale,no_ads_tags,low_rating`
+- **Counts:** listings=52, candidates=30, dropped=22, median_reviews=217, median_rating=4.6
+- **Failures:** none
+
+### 2026-10-11T18:36:37+05:00
+- **Command:** `python src/pack.py build <agency>`
+- **Counts:** prospects=10, files=2
+- **Failures:** none
+
+### 2026-10-11T18:36:38+05:00
+- **Command:** `python src/draft.py build <agency>`
+- **Counts:** lint_problems=0
+- **Failures:** none
+
+### 2026-10-11T18:36:39+05:00
+- **Command:** `python src/pack.py build <agency>`
+- **Counts:** prospects=10, files=2
+- **Failures:** none
+
+### 2026-10-11T18:36:39+05:00
+- **Command:** `python src/draft.py build <agency>`
+- **Counts:** lint_problems=0
+- **Failures:** none
+
+### 2026-10-11T18:38:32+05:00
+- **Command:** `python src/verify.py <agency> --want no_site,dead_site,not_https,stale,no_ads_tags,low_rating --top 32`
+- **Counts:** listings_read=29, listings_failed=1, sites_opened=13, sites_unclear=2, confirmed=37, dropped=6, dead_site=1, not_https=1, no_ads_tags=9, usable=25
+- **Failures:** none
+
+### 2026-10-11T18:38:35+05:00
+- **Command:** `python src/prospects.py <agency> --niche aesthetic clinic --min-reviews 20 --max-reviews 3000 --want no_ads_tags,no_site,low_rating`
+- **Counts:** listings=80, candidates=40, dropped=40, median_reviews=215, median_rating=4.8
+- **Failures:** none
+
+### 2026-10-11T18:46:55+05:00
+- **Command:** `python src/pack.py build <agency>`
+- **Counts:** prospects=10, files=2
+- **Failures:** none
+
+### 2026-10-11T18:46:55+05:00
+- **Command:** `python src/draft.py build <agency>`
+- **Counts:** lint_problems=1
+- **Failures:** none
+
+### 2026-10-11T18:47:07+05:00
+- **Command:** `python src/pack.py build <agency>`
+- **Counts:** prospects=10, files=2
+- **Failures:** none
+
+### 2026-10-11T18:47:07+05:00
+- **Command:** `python src/draft.py build <agency>`
+- **Counts:** lint_problems=0
+- **Failures:** none
+
+### 2026-10-11T18:50:40+05:00
+- **Command:** `python src/prospects.py <agency> --niche training institute --min-reviews 15 --max-reviews 3000 --want no_site,dead_site,not_https,stale`
+- **Counts:** listings=46, candidates=28, dropped=18, median_reviews=114, median_rating=4.8
+- **Failures:** none
+
+### 2026-10-11T18:55:42+05:00
+- **Command:** `python src/verify.py <agency> --want no_site,dead_site,not_https,stale --top 30`
+- **Counts:** listings_read=28, listings_failed=0, sites_opened=8, sites_unclear=14, confirmed=15, dropped=19, dead_site=0, not_https=0, no_ads_tags=2, usable=11
+- **Failures:** none
+
+### 2026-10-11T18:55:44+05:00
+- **Command:** `python src/prospects.py <agency> --niche medical centre --min-reviews 20 --max-reviews 4000 --want no_site,dead_site,not_https,stale,no_ads_tags,low_rating`
+- **Counts:** listings=55, candidates=36, dropped=19, median_reviews=327, median_rating=4.6
+- **Failures:** none
+
+### 2026-10-11T19:00:43+05:00
+- **Command:** `python src/verify.py <agency> --want no_site,dead_site,not_https,stale,no_ads_tags,low_rating --top 34`
+- **Counts:** listings_read=33, listings_failed=1, sites_opened=8, sites_unclear=13, confirmed=31, dropped=20, dead_site=0, not_https=0, no_ads_tags=4, usable=22
+- **Failures:** none
+
+### 2026-10-11T19:00:46+05:00
+- **Command:** `python src/prospects.py <agency> --niche restaurant and cafe --min-reviews 50 --max-reviews 2500 --want no_site,dead_site,not_https,stale,no_ads_tags,low_rating`
+- **Counts:** listings=77, candidates=42, dropped=35, median_reviews=1173, median_rating=4.7
+- **Failures:** none
+
+### 2026-10-11T19:04:03+05:00
+- **Command:** `python src/verify.py <agency> --want no_site,dead_site,not_https,stale,no_ads_tags,low_rating --top 34`
+- **Counts:** listings_read=34, listings_failed=0, sites_opened=17, sites_unclear=6, confirmed=46, dropped=13, dead_site=2, not_https=0, no_ads_tags=9, usable=32
+- **Failures:** none
+
+### 2026-10-11T19:04:06+05:00
+- **Command:** `python src/prospects.py <agency> --niche restaurant and cafe --min-reviews 30 --max-reviews 3000 --want no_site,dead_site,not_https,stale`
+- **Counts:** listings=77, candidates=51, dropped=26, median_reviews=416, median_rating=4.5
+- **Failures:** none
+
+### 2026-10-11T19:05:04+05:00
+- **Command:** `python src/pack.py build <agency>`
+- **Counts:** prospects=10, files=2
+- **Failures:** none
+
+### 2026-10-11T19:05:06+05:00
+- **Command:** `python src/draft.py build <agency>`
+- **Counts:** lint_problems=0
+- **Failures:** none
+
+### 2026-10-11T19:07:58+05:00
+- **Command:** `python src/verify.py <agency> --want no_site,dead_site,not_https,stale --top 36`
+- **Counts:** listings_read=36, listings_failed=0, sites_opened=11, sites_unclear=2, confirmed=47, dropped=5, dead_site=3, not_https=2, no_ads_tags=6, usable=32
+- **Failures:** none
+
+### 2026-10-11T19:08:01+05:00
+- **Command:** `python src/prospects.py <agency> --niche law firm --min-reviews 10 --max-reviews 1500 --want no_ads_tags,no_site,low_rating`
+- **Counts:** listings=73, candidates=43, dropped=30, median_reviews=63, median_rating=4.8
+- **Failures:** none
+
+### 2026-10-11T19:08:35+05:00
+- **Command:** `python src/pack.py build <agency>`
+- **Counts:** prospects=10, files=2
+- **Failures:** none
+
+### 2026-10-11T19:08:36+05:00
+- **Command:** `python src/draft.py build <agency>`
+- **Counts:** lint_problems=0
+- **Failures:** none
+
+### 2026-10-11T19:13:20+05:00
+- **Command:** `python src/verify.py <agency> --want no_ads_tags,no_site,low_rating --top 34`
+- **Counts:** listings_read=32, listings_failed=2, sites_opened=23, sites_unclear=6, confirmed=26, dropped=21, dead_site=1, not_https=0, no_ads_tags=8, usable=19
+- **Failures:** none
+
+### 2026-10-11T19:13:22+05:00
+- **Command:** `python src/prospects.py <agency> --niche logistics company --min-reviews 10 --max-reviews 2000 --want no_site,dead_site,not_https,stale,no_ads_tags,low_rating`
+- **Counts:** listings=72, candidates=51, dropped=21, median_reviews=72, median_rating=4.5
+- **Failures:** none
+
+### 2026-10-11T19:14:08+05:00
+- **Command:** `python src/pack.py build <agency>`
+- **Counts:** prospects=10, files=2
+- **Failures:** none
+
+### 2026-10-11T19:14:08+05:00
+- **Command:** `python src/draft.py build <agency>`
+- **Counts:** lint_problems=0
+- **Failures:** none
+
+### 2026-10-11T19:17:48+05:00
+- **Command:** `python src/verify.py <agency> --want no_site,dead_site,not_https,stale,no_ads_tags,low_rating --top 34`
+- **Counts:** listings_read=34, listings_failed=0, sites_opened=27, sites_unclear=4, confirmed=44, dropped=17, dead_site=6, not_https=0, no_ads_tags=9, usable=28
+- **Failures:** none
+
+### 2026-10-11T19:17:51+05:00
+- **Command:** `python src/prospects.py <agency> --niche real estate agency --min-reviews 10 --max-reviews 800 --want no_ads_tags,no_site,low_rating`
+- **Counts:** listings=71, candidates=34, dropped=37, median_reviews=85, median_rating=4.7
+- **Failures:** none
+
+### 2026-10-11T19:18:24+05:00
+- **Command:** `python src/pack.py build <agency>`
+- **Counts:** prospects=10, files=2
+- **Failures:** none
+
+### 2026-10-11T19:18:25+05:00
+- **Command:** `python src/draft.py build <agency>`
+- **Counts:** lint_problems=0
+- **Failures:** none
+
+### 2026-10-11T19:21:49+05:00
+- **Command:** `python src/verify.py <agency> --want no_ads_tags,no_site,low_rating --top 34`
+- **Counts:** listings_read=34, listings_failed=0, sites_opened=23, sites_unclear=4, confirmed=37, dropped=14, dead_site=1, not_https=0, no_ads_tags=11, usable=23
+- **Failures:** none
+
+### 2026-10-11T19:21:54+05:00
+- **Command:** `python src/prospects.py <agency> --niche medical centre --min-reviews 20 --max-reviews 4000 --want no_site,dead_site,not_https,stale,no_ads_tags,low_rating`
+- **Counts:** listings=65, candidates=38, dropped=27, median_reviews=542, median_rating=4.6
+- **Failures:** none
+
+### 2026-10-11T19:26:03+05:00
+- **Command:** `python src/verify.py <agency> --want no_site,dead_site,not_https,stale,no_ads_tags,low_rating --top 34`
+- **Counts:** listings_read=34, listings_failed=0, sites_opened=20, sites_unclear=6, confirmed=38, dropped=12, dead_site=2, not_https=0, no_ads_tags=7, usable=24
+- **Failures:** none
+
+### 2026-10-11T19:26:06+05:00
+- **Command:** `python src/prospects.py <agency> --niche dental clinic --min-reviews 40 --max-reviews 2500 --want no_site,dead_site,not_https,stale,no_ads_tags,low_rating`
+- **Counts:** listings=94, candidates=47, dropped=47, median_reviews=333, median_rating=4.9
+- **Failures:** none
+
+### 2026-10-11T19:27:08+05:00
+- **Command:** `python src/pack.py build <agency>`
+- **Counts:** prospects=10, files=2
+- **Failures:** none
+
+### 2026-10-11T19:27:10+05:00
+- **Command:** `python src/draft.py build <agency>`
+- **Counts:** lint_problems=0
+- **Failures:** none
+
+### 2026-10-11T19:27:11+05:00
+- **Command:** `python src/pack.py build <agency>`
+- **Counts:** prospects=10, files=2
+- **Failures:** none
+
+### 2026-10-11T19:27:12+05:00
+- **Command:** `python src/draft.py build <agency>`
+- **Counts:** lint_problems=0
+- **Failures:** none
+
+### 2026-10-11T19:27:13+05:00
+- **Command:** `python src/pack.py build <agency>`
+- **Counts:** prospects=10, files=2
+- **Failures:** none
+
+### 2026-10-11T19:27:14+05:00
+- **Command:** `python src/draft.py build <agency>`
+- **Counts:** lint_problems=0
+- **Failures:** none
+
+### 2026-10-11T19:27:16+05:00
+- **Command:** `python src/pack.py build <agency>`
+- **Counts:** prospects=10, files=2
+- **Failures:** none
+
+### 2026-10-11T19:27:17+05:00
+- **Command:** `python src/draft.py build <agency>`
+- **Counts:** lint_problems=0
+- **Failures:** none
+
+### 2026-10-11T19:27:18+05:00
+- **Command:** `python src/pack.py build <agency>`
+- **Counts:** prospects=10, files=2
+- **Failures:** none
+
+### 2026-10-11T19:27:19+05:00
+- **Command:** `python src/draft.py build <agency>`
+- **Counts:** lint_problems=0
+- **Failures:** none
+
+### 2026-10-11T19:28:00+05:00
+- **Command:** `python src/pack.py build <agency>`
+- **Counts:** prospects=10, files=2
+- **Failures:** none
+
+### 2026-10-11T19:28:02+05:00
+- **Command:** `python src/draft.py build <agency>`
+- **Counts:** lint_problems=0
+- **Failures:** none
+
+### 2026-10-11T19:28:36+05:00
+- **Command:** `python src/pack.py build <agency>`
+- **Counts:** prospects=10, files=2
+- **Failures:** none
+
+### 2026-10-11T19:28:37+05:00
+- **Command:** `python src/draft.py build <agency>`
+- **Counts:** lint_problems=0
+- **Failures:** none
+
+### 2026-10-11T19:30:11+05:00
+- **Command:** `python src/verify.py <agency> --want no_site,dead_site,not_https,stale,no_ads_tags,low_rating --top 34`
+- **Counts:** listings_read=30, listings_failed=4, sites_opened=20, sites_unclear=5, confirmed=24, dropped=27, dead_site=2, not_https=0, no_ads_tags=7, usable=20
+- **Failures:** none
+
+### 2026-10-11T19:30:15+05:00
+- **Command:** `python src/prospects.py <agency> --niche car service centre --min-reviews 20 --max-reviews 3000 --want no_site,dead_site,not_https,stale,no_ads_tags,low_rating`
+- **Counts:** listings=70, candidates=33, dropped=37, median_reviews=244, median_rating=4.8
+- **Failures:** none
+
+### 2026-10-11T19:34:31+05:00
+- **Command:** `python src/verify.py <agency> --want no_site,dead_site,not_https,stale,no_ads_tags,low_rating --top 34`
+- **Counts:** listings_read=12, listings_failed=21, sites_opened=2, sites_unclear=1, confirmed=19, dropped=29, dead_site=0, not_https=0, no_ads_tags=0, usable=11
+- **Failures:** none
+
+### 2026-10-11T19:34:36+05:00
+- **Command:** `python src/prospects.py <agency> --niche contractor --signals queries/packs/<agency>.signals.json --require-signal --min-reviews 5 --digest 30`
+- **Counts:** listings=82, candidates=43, dropped=39, median_reviews=40, median_rating=4.4
+- **Failures:** none
+
+### 2026-10-11T19:54:42+05:00
+- **Command:** `python src/verify.py <agency> --signals queries/packs/<agency>.signals.json --top 45`
+- **Counts:** listings_read=43, listings_failed=0, sites_opened=14, sites_unclear=20, confirmed=53, dropped=63, dead_site=0, not_https=0, no_ads_tags=9, usable=29
+- **Failures:** none
+
+### 2026-10-11T19:54:45+05:00
+- **Command:** `python src/prospects.py <agency> --niche aesthetic clinic --min-reviews 20 --max-reviews 3000 --want no_ads_tags,no_site,low_rating`
+- **Counts:** listings=80, candidates=40, dropped=40, median_reviews=215, median_rating=4.8
+- **Failures:** none
+
+### 2026-10-11T19:55:33+05:00
+- **Command:** `python src/draft.py quotes`
+- **Counts:** drafts=18, failed=7
+- **Failures:** none
+
+### 2026-10-11T19:58:48+05:00
+- **Command:** `python src/verify.py <agency> --want no_ads_tags,no_site,low_rating --top 34`
+- **Counts:** listings_read=32, listings_failed=2, sites_opened=17, sites_unclear=5, confirmed=23, dropped=18, dead_site=1, not_https=0, no_ads_tags=6, usable=20
+- **Failures:** none
+
+### 2026-10-11T19:58:50+05:00
+- **Command:** `python src/prospects.py <agency> --niche training institute --min-reviews 15 --max-reviews 3000 --want no_site,dead_site,not_https,stale`
+- **Counts:** listings=46, candidates=28, dropped=18, median_reviews=114, median_rating=4.8
+- **Failures:** none
+
+### 2026-10-11T19:59:25+05:00
+- **Command:** `python src/pack.py build <agency>`
+- **Counts:** prospects=10, files=2
+- **Failures:** none
+
+### 2026-10-11T19:59:25+05:00
+- **Command:** `python src/draft.py build <agency>`
+- **Counts:** lint_problems=0
+- **Failures:** none
+
+### 2026-10-11T20:03:54+05:00
+- **Command:** `python src/verify.py <agency> --want no_site,dead_site,not_https,stale --top 30`
+- **Counts:** listings_read=28, listings_failed=0, sites_opened=16, sites_unclear=6, confirmed=19, dropped=15, dead_site=0, not_https=0, no_ads_tags=4, usable=15
+- **Failures:** none
+
+### 2026-10-11T20:03:56+05:00
+- **Command:** `python src/prospects.py <agency> --niche medical centre --min-reviews 20 --max-reviews 4000 --want no_site,dead_site,not_https,stale,no_ads_tags,low_rating`
+- **Counts:** listings=55, candidates=36, dropped=19, median_reviews=327, median_rating=4.6
+- **Failures:** none
+
+### 2026-10-11T20:07:37+05:00
+- **Command:** `python src/verify.py <agency> --want no_site,dead_site,not_https,stale,no_ads_tags,low_rating --top 36`
+- **Counts:** listings_read=35, listings_failed=1, sites_opened=16, sites_unclear=6, confirmed=38, dropped=16, dead_site=2, not_https=0, no_ads_tags=7, usable=27
+- **Failures:** none
+
+### 2026-10-11T20:07:39+05:00
+- **Command:** `python src/prospects.py <agency> --niche dental clinic --signals queries/packs/<agency>.signals.json --require-signal --min-reviews 40 --max-reviews 2500 --digest 40`
+- **Counts:** listings=94, candidates=22, dropped=72, median_reviews=333, median_rating=4.9
+- **Failures:** none
+
+### 2026-10-11T20:08:18+05:00
+- **Command:** `python src/pack.py build <agency>`
+- **Counts:** prospects=10, files=2
+- **Failures:** none
+
+### 2026-10-11T20:08:18+05:00
+- **Command:** `python src/draft.py build <agency>`
+- **Counts:** lint_problems=0
+- **Failures:** none
+
+### 2026-10-11T20:08:19+05:00
+- **Command:** `python src/draft.py build <agency>`
+- **Counts:** lint_problems=0
+- **Failures:** none
+
+### 2026-10-11T20:12:50+05:00
+- **Command:** `python src/verify.py <agency> --signals queries/packs/<agency>.signals.json --top 30`
+- **Counts:** listings_read=22, listings_failed=0, sites_opened=4, sites_unclear=0, confirmed=16, dropped=12, dead_site=0, not_https=0, no_ads_tags=3, usable=13
+- **Failures:** none
+
+### 2026-10-11T20:12:52+05:00
+- **Command:** `python src/prospects.py <agency> --niche car service centre --signals queries/packs/<agency>.signals.json --require-signal --min-reviews 20 --max-reviews 3000 --digest 40`
+- **Counts:** listings=70, candidates=20, dropped=50, median_reviews=244, median_rating=4.8
+- **Failures:** none
+
+### 2026-10-11T20:13:40+05:00
+- **Command:** `python src/pack.py build <agency>`
+- **Counts:** prospects=10, files=2
+- **Failures:** none
+
+### 2026-10-11T20:13:41+05:00
+- **Command:** `python src/draft.py build <agency>`
+- **Counts:** lint_problems=2
+- **Failures:** none
+
+### 2026-10-11T20:13:55+05:00
+- **Command:** `python src/pack.py build <agency>`
+- **Counts:** prospects=10, files=2
+- **Failures:** none
+
+### 2026-10-11T20:13:56+05:00
+- **Command:** `python src/draft.py build <agency>`
+- **Counts:** lint_problems=0
+- **Failures:** none
+
+### 2026-10-11T20:16:52+05:00
+- **Command:** `python src/verify.py <agency> --signals queries/packs/<agency>.signals.json --top 30`
+- **Counts:** listings_read=20, listings_failed=0, sites_opened=6, sites_unclear=1, confirmed=19, dropped=13, dead_site=0, not_https=0, no_ads_tags=3, usable=14
+- **Failures:** none
+
+### 2026-10-11T20:16:58+05:00
+- **Command:** `python src/prospects.py <agency> --niche contractor --signals queries/packs/<agency>.signals.json --require-signal --min-reviews 5 --digest 30`
+- **Counts:** listings=82, candidates=43, dropped=39, median_reviews=40, median_rating=4.4
+- **Failures:** none
+
+### 2026-10-11T20:17:34+05:00
+- **Command:** `python src/pack.py build <agency>`
+- **Counts:** prospects=10, files=2
+- **Failures:** none
+
+### 2026-10-11T20:17:34+05:00
+- **Command:** `python src/draft.py build <agency>`
+- **Counts:** lint_problems=1
+- **Failures:** none
+
+### 2026-10-11T20:17:42+05:00
+- **Command:** `python src/pack.py build <agency>`
+- **Counts:** prospects=10, files=2
+- **Failures:** none
+
+### 2026-10-11T20:17:42+05:00
+- **Command:** `python src/draft.py build <agency>`
+- **Counts:** lint_problems=0
+- **Failures:** none
+
+### 2026-10-11T20:17:57+05:00
+- **Command:** `python src/pack.py build <agency>`
+- **Counts:** prospects=10, files=2
+- **Failures:** none
+
+### 2026-10-11T20:17:58+05:00
+- **Command:** `python src/draft.py build <agency>`
+- **Counts:** lint_problems=0
+- **Failures:** none
+
+### 2026-10-11T20:17:58+05:00
+- **Command:** `python src/pack.py build <agency>`
+- **Counts:** prospects=10, files=2
+- **Failures:** none
+
+### 2026-10-11T20:17:59+05:00
+- **Command:** `python src/draft.py build <agency>`
+- **Counts:** lint_problems=0
+- **Failures:** none
+
+### 2026-10-11T20:18:00+05:00
+- **Command:** `python src/pack.py build <agency>`
+- **Counts:** prospects=10, files=2
+- **Failures:** none
+
+### 2026-10-11T20:18:01+05:00
+- **Command:** `python src/draft.py build <agency>`
+- **Counts:** lint_problems=0
+- **Failures:** none
+
+### 2026-10-11T20:18:01+05:00
+- **Command:** `python src/pack.py build <agency>`
+- **Counts:** prospects=10, files=2
+- **Failures:** none
+
+### 2026-10-11T20:18:02+05:00
+- **Command:** `python src/draft.py build <agency>`
+- **Counts:** lint_problems=0
+- **Failures:** none
+
+### 2026-10-11T20:18:03+05:00
+- **Command:** `python src/pack.py build <agency>`
+- **Counts:** prospects=10, files=2
+- **Failures:** none
+
+### 2026-10-11T20:18:03+05:00
+- **Command:** `python src/draft.py build <agency>`
+- **Counts:** lint_problems=0
+- **Failures:** none
+
+### 2026-10-11T20:18:04+05:00
+- **Command:** `python src/pack.py build <agency>`
+- **Counts:** prospects=10, files=2
+- **Failures:** none
+
+### 2026-10-11T20:18:05+05:00
+- **Command:** `python src/draft.py build <agency>`
+- **Counts:** lint_problems=0
+- **Failures:** none
+
+### 2026-10-11T20:18:05+05:00
+- **Command:** `python src/pack.py build <agency>`
+- **Counts:** prospects=10, files=2
+- **Failures:** none
+
+### 2026-10-11T20:18:06+05:00
+- **Command:** `python src/draft.py build <agency>`
+- **Counts:** lint_problems=0
+- **Failures:** none
+
+### 2026-10-11T20:18:06+05:00
+- **Command:** `python src/pack.py build <agency>`
+- **Counts:** prospects=10, files=2
+- **Failures:** none
+
+### 2026-10-11T20:18:07+05:00
+- **Command:** `python src/draft.py build <agency>`
+- **Counts:** lint_problems=0
+- **Failures:** none
+
+### 2026-10-11T20:18:08+05:00
+- **Command:** `python src/pack.py build <agency>`
+- **Counts:** prospects=10, files=2
+- **Failures:** none
+
+### 2026-10-11T20:18:08+05:00
+- **Command:** `python src/draft.py build <agency>`
+- **Counts:** lint_problems=0
+- **Failures:** none
+
+### 2026-10-11T20:18:09+05:00
+- **Command:** `python src/pack.py build <agency>`
+- **Counts:** prospects=10, files=2
+- **Failures:** none
+
+### 2026-10-11T20:18:10+05:00
+- **Command:** `python src/draft.py build <agency>`
+- **Counts:** lint_problems=0
+- **Failures:** none
+
+### 2026-10-11T20:18:11+05:00
+- **Command:** `python src/pack.py build <agency>`
+- **Counts:** prospects=10, files=2
+- **Failures:** none
+
+### 2026-10-11T20:18:11+05:00
+- **Command:** `python src/draft.py build <agency>`
+- **Counts:** lint_problems=0
+- **Failures:** none
+
+### 2026-10-11T20:18:12+05:00
+- **Command:** `python src/pack.py build <agency>`
+- **Counts:** prospects=10, files=2
+- **Failures:** none
+
+### 2026-10-11T20:18:12+05:00
+- **Command:** `python src/draft.py build <agency>`
+- **Counts:** lint_problems=0
+- **Failures:** none
+
+### 2026-10-11T20:18:13+05:00
+- **Command:** `python src/pack.py build <agency>`
+- **Counts:** prospects=10, files=2
+- **Failures:** none
+
+### 2026-10-11T20:18:14+05:00
+- **Command:** `python src/draft.py build <agency>`
+- **Counts:** lint_problems=0
+- **Failures:** none
+
+### 2026-10-11T20:18:15+05:00
+- **Command:** `python src/pack.py build <agency>`
+- **Counts:** prospects=10, files=2
+- **Failures:** none
+
+### 2026-10-11T20:18:15+05:00
+- **Command:** `python src/draft.py build <agency>`
+- **Counts:** lint_problems=0
+- **Failures:** none
+
+### 2026-10-11T20:18:16+05:00
+- **Command:** `python src/pack.py build <agency>`
+- **Counts:** prospects=10, files=2
+- **Failures:** none
+
+### 2026-10-11T20:18:17+05:00
+- **Command:** `python src/draft.py build <agency>`
+- **Counts:** lint_problems=0
+- **Failures:** none
+
+### 2026-10-11T20:18:17+05:00
+- **Command:** `python src/pack.py build <agency>`
+- **Counts:** prospects=10, files=2
+- **Failures:** none
+
+### 2026-10-11T20:18:18+05:00
+- **Command:** `python src/draft.py build <agency>`
+- **Counts:** lint_problems=0
+- **Failures:** none
+
+### 2026-10-11T20:18:19+05:00
+- **Command:** `python src/draft.py build <agency>`
+- **Counts:** lint_problems=0
+- **Failures:** none
+
+### 2026-10-11T20:18:20+05:00
+- **Command:** `python src/pack.py build <agency>`
+- **Counts:** prospects=10, files=2
+- **Failures:** none
+
+### 2026-10-11T20:18:20+05:00
+- **Command:** `python src/draft.py build <agency>`
+- **Counts:** lint_problems=0
+- **Failures:** none
+
+### 2026-10-11T20:18:21+05:00
+- **Command:** `python src/pack.py build <agency>`
+- **Counts:** prospects=10, files=2
+- **Failures:** none
+
+### 2026-10-11T20:18:22+05:00
+- **Command:** `python src/draft.py build <agency>`
+- **Counts:** lint_problems=0
+- **Failures:** none
+
+### 2026-10-11T20:25:08+05:00
+- **Command:** `python src/verify.py <agency> --signals queries/packs/<agency>.signals.json --top 45`
+- **Counts:** listings_read=43, listings_failed=0, sites_opened=20, sites_unclear=14, confirmed=64, dropped=52, dead_site=0, not_https=0, no_ads_tags=12, usable=31
+- **Failures:** none
+
+### 2026-10-11T20:26:42+05:00
+- **Command:** `python src/pack.py build <agency>`
+- **Counts:** prospects=10, files=2
+- **Failures:** none
+
+### 2026-10-11T20:28:23+05:00
+- **Command:** `python src/draft.py quotes`
+- **Counts:** drafts=18, failed=4
+- **Failures:** none
+
+### 2026-10-11T20:30:51+05:00
+- **Command:** `python src/draft.py quotes`
+- **Counts:** drafts=4, failed=4
+- **Failures:** none
+
+### 2026-10-11T20:32:24+05:00
+- **Command:** `python src/draft.py quotes`
+- **Counts:** drafts=18, failed=4
+- **Failures:** none
+
+### 2026-10-11T20:33:21+05:00
+- **Command:** `python src/draft.py quotes`
+- **Counts:** drafts=4, failed=4
+- **Failures:** none
+
+### 2026-10-11T20:33:21+05:00
+- **Command:** `python src/pack.py build <agency>`
+- **Counts:** prospects=10, files=2
+- **Failures:** none
+
+### 2026-10-11T20:33:22+05:00
+- **Command:** `python src/draft.py build <agency>`
+- **Counts:** lint_problems=0
+- **Failures:** none
+
+### 2026-10-11T20:33:22+05:00
+- **Command:** `python src/pack.py build <agency>`
+- **Counts:** prospects=10, files=2
+- **Failures:** none
+
+### 2026-10-11T20:33:23+05:00
+- **Command:** `python src/draft.py build <agency>`
+- **Counts:** lint_problems=0
+- **Failures:** none
+
+### 2026-10-11T20:33:23+05:00
+- **Command:** `python src/pack.py build <agency>`
+- **Counts:** prospects=10, files=2
+- **Failures:** none
+
+### 2026-10-11T20:33:24+05:00
+- **Command:** `python src/draft.py build <agency>`
+- **Counts:** lint_problems=0
+- **Failures:** none
+
+### 2026-10-11T20:33:24+05:00
+- **Command:** `python src/pack.py build <agency>`
+- **Counts:** prospects=10, files=2
+- **Failures:** none
+
+### 2026-10-11T20:33:25+05:00
+- **Command:** `python src/draft.py build <agency>`
+- **Counts:** lint_problems=0
+- **Failures:** none
+
+### 2026-10-11T20:33:25+05:00
+- **Command:** `python src/pack.py build <agency>`
+- **Counts:** prospects=10, files=2
+- **Failures:** none
+
+### 2026-10-11T20:33:26+05:00
+- **Command:** `python src/draft.py build <agency>`
+- **Counts:** lint_problems=0
+- **Failures:** none
+
+### 2026-10-11T20:33:26+05:00
+- **Command:** `python src/pack.py build <agency>`
+- **Counts:** prospects=10, files=2
+- **Failures:** none
+
+### 2026-10-11T20:33:27+05:00
+- **Command:** `python src/draft.py build <agency>`
+- **Counts:** lint_problems=0
+- **Failures:** none
+
+### 2026-10-11T20:33:27+05:00
+- **Command:** `python src/pack.py build <agency>`
+- **Counts:** prospects=10, files=2
+- **Failures:** none
+
+### 2026-10-11T20:33:28+05:00
+- **Command:** `python src/draft.py build <agency>`
+- **Counts:** lint_problems=0
+- **Failures:** none
+
+### 2026-10-11T20:33:28+05:00
+- **Command:** `python src/pack.py build <agency>`
+- **Counts:** prospects=10, files=2
+- **Failures:** none
+
+### 2026-10-11T20:33:29+05:00
+- **Command:** `python src/draft.py build <agency>`
+- **Counts:** lint_problems=0
+- **Failures:** none
+
+### 2026-10-11T20:33:30+05:00
+- **Command:** `python src/pack.py build <agency>`
+- **Counts:** prospects=10, files=2
+- **Failures:** none
+
+### 2026-10-11T20:33:30+05:00
+- **Command:** `python src/draft.py build <agency>`
+- **Counts:** lint_problems=0
+- **Failures:** none
+
+### 2026-10-11T20:33:31+05:00
+- **Command:** `python src/pack.py build <agency>`
+- **Counts:** prospects=10, files=2
+- **Failures:** none
+
+### 2026-10-11T20:33:31+05:00
+- **Command:** `python src/draft.py build <agency>`
+- **Counts:** lint_problems=0
+- **Failures:** none
+
+### 2026-10-11T20:33:32+05:00
+- **Command:** `python src/pack.py build <agency>`
+- **Counts:** prospects=10, files=2
+- **Failures:** none
+
+### 2026-10-11T20:33:32+05:00
+- **Command:** `python src/draft.py build <agency>`
+- **Counts:** lint_problems=0
+- **Failures:** none
+
+### 2026-10-11T20:33:33+05:00
+- **Command:** `python src/pack.py build <agency>`
+- **Counts:** prospects=10, files=2
+- **Failures:** none
+
+### 2026-10-11T20:33:33+05:00
+- **Command:** `python src/draft.py build <agency>`
+- **Counts:** lint_problems=0
+- **Failures:** none
+
+### 2026-10-11T20:33:34+05:00
+- **Command:** `python src/pack.py build <agency>`
+- **Counts:** prospects=10, files=2
+- **Failures:** none
+
+### 2026-10-11T20:33:34+05:00
+- **Command:** `python src/draft.py build <agency>`
+- **Counts:** lint_problems=0
+- **Failures:** none
+
+### 2026-10-11T20:33:35+05:00
+- **Command:** `python src/pack.py build <agency>`
+- **Counts:** prospects=10, files=2
+- **Failures:** none
+
+### 2026-10-11T20:33:35+05:00
+- **Command:** `python src/draft.py build <agency>`
+- **Counts:** lint_problems=0
+- **Failures:** none
+
+### 2026-10-11T20:33:36+05:00
+- **Command:** `python src/pack.py build <agency>`
+- **Counts:** prospects=10, files=2
+- **Failures:** none
+
+### 2026-10-11T20:33:37+05:00
+- **Command:** `python src/draft.py build <agency>`
+- **Counts:** lint_problems=0
+- **Failures:** none
+
+### 2026-10-11T20:33:37+05:00
+- **Command:** `python src/pack.py build <agency>`
+- **Counts:** prospects=10, files=2
+- **Failures:** none
+
+### 2026-10-11T20:33:38+05:00
+- **Command:** `python src/draft.py build <agency>`
+- **Counts:** lint_problems=0
+- **Failures:** none
+
+### 2026-10-11T20:33:38+05:00
+- **Command:** `python src/draft.py build <agency>`
+- **Counts:** lint_problems=0
+- **Failures:** none
+
+### 2026-10-11T20:33:39+05:00
+- **Command:** `python src/pack.py build <agency>`
+- **Counts:** prospects=10, files=2
+- **Failures:** none
+
+### 2026-10-11T20:33:39+05:00
+- **Command:** `python src/draft.py build <agency>`
+- **Counts:** lint_problems=0
+- **Failures:** none
+
+### 2026-10-11T20:33:40+05:00
+- **Command:** `python src/pack.py build <agency>`
+- **Counts:** prospects=10, files=2
+- **Failures:** none
+
+### 2026-10-11T20:33:40+05:00
+- **Command:** `python src/draft.py build <agency>`
+- **Counts:** lint_problems=0
+- **Failures:** none
+
+### 2026-10-11T20:34:35+05:00
+- **Command:** `python src/draft.py quotes`
+- **Counts:** drafts=1, failed=1
+- **Failures:** none
+
+### 2026-10-11T20:34:36+05:00
+- **Command:** `python src/pack.py build <agency>`
+- **Counts:** prospects=10, files=2
+- **Failures:** none
+
+### 2026-10-11T20:34:36+05:00
 - **Command:** `python src/draft.py build <agency>`
 - **Counts:** lint_problems=0
 - **Failures:** none

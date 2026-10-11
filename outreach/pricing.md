@@ -4,7 +4,7 @@ Use this only after someone replies. It never goes in a first email or a follow-
 
 | Offer | Price | What they get |
 |---|---|---|
-| **Starter batch** | **$59**, paid upfront | 50 qualified leads in their niche and city, each with the observed gap, the evidence link, contact details and a suggested opener line. Delivered as a spreadsheet plus a printable report within 3 working days. |
+| **Starter batch** | **$59**, paid upfront | 50 qualified leads in their niche and city, each with a signal confirmed in a browser, the link to check it, contact details and a suggested opener line. Delivered as a spreadsheet plus a printable report within 3 working days. |
 | **Weekly batches** | **$99 / month** | 25 fresh qualified leads every week, no repeats, same format. Cancel any time. |
 | **Custom pipeline or automation work** | Quoted per project | Scrapers, n8n workflows, data cleaning and enrichment pipelines built for their own process. Fixed quote after a short written brief. |
 
@@ -21,7 +21,7 @@ Markdown), then one line:
 
 **They ask how the leads are found.**
 
-> Google Maps searches for your niche and city, then one visit to each business's own website to check for the gaps you can fix. Every gap in the report links to the page it was seen on. No bought lists.
+> Google Maps searches for your niche and city. Each listing and each website is then opened in a browser, and the report states only what you can check yourself in ten seconds: no website on the listing, a dead link, no https, an old footer year, no Google tag or Meta Pixel, or a review count or rating below the local median. Every line links to the page to open. No bought lists.
 
 **They ask for a call.**
 

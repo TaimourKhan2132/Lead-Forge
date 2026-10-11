@@ -4,10 +4,11 @@
     python src/pack.py fill                      # fill {{NAME}} etc. in packs, drafts and README from .env
     python src/pack.py fill --readme-no-email    # same, but keep your email out of the public README
 
-The pack spec is the reasoning layer's selection: which ten candidates, which of their observed
-gaps matter to this agency, why, and an opener line. Names, links, contact details and the gap
-wording itself are pulled from the candidates file, never retyped, so a pack cannot state a
-fact that the pipeline did not observe.
+The pack spec is the reasoning layer's selection: which ten candidates, which of their verified
+signals matter to this agency, and one sentence per signal on why it matters to them. Names, links,
+contact details and the wording of every signal come from the candidates file and signals.py, never
+retyped, so a pack cannot say more than verify.py confirmed in a browser. A candidate that has not
+been verified in the last three days is refused, and so is any of the retired wording.
 """
 from __future__ import annotations
 
@@ -24,19 +25,12 @@ from pathlib import Path
 from dotenv import load_dotenv
 from rich.console import Console
 
+import signals
 from common import DRAFTS, PACKS, RAW, ROOT, SCORED, US_TRACK, log_run, utf8_stdout
 
 PLACEHOLDERS = {"{{NAME}}": "LEADFORGE_NAME", "{{EMAIL}}": "LEADFORGE_EMAIL",
                 "{{LINKEDIN}}": "LEADFORGE_LINKEDIN", "{{GITHUB}}": "LEADFORGE_GITHUB"}
-HEADLINES = {
-    "no_site": "No website", "platform_site": "Social profile instead of a website",
-    "dead_site": "Website not loading", "no_booking": "No online booking",
-    "booking_cta_only": "Booking is a form or a call", "no_chat": "No WhatsApp or chat",
-    "no_ads_tags": "No ad tracking", "stale": "Stale site", "no_viewport": "Not mobile-ready",
-    "not_https": "No https", "no_meta_description": "No meta description",
-    "no_socials": "No socials linked", "no_email": "No email published",
-    "low_reviews": "Few reviews", "low_rating": "Low rating",
-}
+MAX_AGE_DAYS = 3  # a signal checked longer ago than this has to be checked again before it is used
 MD_SIGNATURE = "{{NAME}} · {{EMAIL}} · {{LINKEDIN}} · {{GITHUB}}"
 HTML_SIGNATURE = ('{{NAME}} · <a href="mailto:{{EMAIL}}">{{EMAIL}}</a> · <a href="{{LINKEDIN}}">LinkedIn</a>'
                   ' · <a href="{{GITHUB}}">GitHub</a>')
@@ -77,14 +71,14 @@ footer a{color:#1a4f8b;text-decoration:none;border-bottom:1px solid #b9cbe0}
 
 def _profile(c: dict) -> str:
     try:
-        return f"{float(c['review_rating']):.1f}★ from {int(float(c['review_count']))} Google reviews"
+        return f"{float(c['review_rating']):.1f}★ from {int(float(c['review_count'])):,} Google reviews"
     except (TypeError, ValueError):
         return "no Google rating yet"
 
 
 def _headline(gap: dict) -> str:
     """Short label for the summary table. Custom signals carry their own."""
-    return gap.get("headline") or HEADLINES[gap["key"]]
+    return gap.get("headline") or signals.HEADLINES[gap["key"]]
 
 
 def _contact(c: dict) -> list[str]:
@@ -98,28 +92,58 @@ def load_pack(agency: str, spec_dir: Path) -> tuple[dict, list[dict]]:
     problems, rows = [], []
     if len(spec["prospects"]) != 10:
         problems.append(f"a pack needs exactly 10 prospects, got {len(spec['prospects'])}")
+    oldest = (dt.date.today() - dt.timedelta(days=MAX_AGE_DAYS)).isoformat()
     for item in spec["prospects"]:
         cand = candidates.get(item["key"])
         if cand is None:
             problems.append(f"{item['key']}: not in the candidates file")
             continue
-        observed = {g["key"]: g for g in cand["gaps"]}
-        missing = [g for g in item["gaps"] if g not in observed]
-        if missing or not item["gaps"]:
-            problems.append(f"{item['key']}: gaps {missing or '(none listed)'} were not observed for this business")
+        if cand.get("verified_on", "") < oldest:
+            problems.append(f"{item['key']}: not verified in a browser since {oldest}; run verify.py")
             continue
-        if not item.get("why_fit") or not item.get("opener"):
-            problems.append(f"{item['key']}: needs why_fit and opener")
-        rows.append({**cand, "chosen": [observed[g] for g in item["gaps"]],
-                     "why_fit": item.get("why_fit", ""), "opener": item.get("opener", "")})
+        confirmed = {g["key"]: g for g in cand["gaps"] if g.get("checked", "") >= oldest}
+        missing = [g for g in item["gaps"] if g not in confirmed]
+        if missing or not item["gaps"]:
+            problems.append(f"{item['key']}: signals {missing or '(none listed)'} were not confirmed for this business")
+            continue
+        chosen = [confirmed[g] for g in item["gaps"]]
+        not_allowed = [g["key"] for g in chosen if g["key"] not in signals.ALLOWED and "headline" not in g]
+        if not_allowed:
+            problems.append(f"{item['key']}: {not_allowed} are not allowed signals")
+            continue
+        facts = {"name": cand["name"], "reviews": _reviews(cand), "rating": cand["review_rating"]}
+        try:
+            why = item["why_fit"].format(**facts) if item.get("why_fit") else " ".join(
+                spec["fit"][g["key"]].format(**{**_readable(g.get("detail", {})), **facts}) for g in chosen)
+        except KeyError as exc:
+            problems.append(f"{item['key']}: the spec's \"fit\" has no sentence for {exc}")
+            continue
+        rows.append({**cand, "chosen": chosen, "why_fit": why,
+                     "opener": (item.get("opener", "").format(**facts) or spec.get("openers", {}).get(chosen[0]["key"], "").format(**facts)
+                                or signals.opener(chosen[0], cand)),
+                     "labels": [signals.label(g, cand.get("niche", "comparable")) for g in chosen]})
+    wording = " ".join([spec["summary"]] + [" ".join([r["why_fit"], r["opener"], *r["labels"]]) for r in rows])
+    problems += [f"retired wording in the pack: {name}" for name in signals.retired_in(wording)]
     if problems:
         raise ValueError("\n".join(problems))
     return spec, rows
 
 
+def _readable(detail: dict) -> dict:
+    """Counts with thousands separators, for use inside a sentence. A year stays as it is."""
+    return {k: f"{v:,}" if isinstance(v, int) and k != "year" else v for k, v in detail.items()}
+
+
+def _reviews(c: dict) -> str:
+    try:
+        return f"{int(float(c['review_count'])):,}"
+    except (TypeError, ValueError):
+        return "unknown"
+
+
 def render_md(spec: dict, rows: list[dict], method: str) -> str:
     title = f"10 qualified prospects for {spec['agency']}: {spec['niche']}, {spec['city']}"
-    out = [f"# {title}", "", spec["summary"], "", f"| # | Business | Google profile | {spec.get('table_label', 'Main gap')} |", "|---|---|---|---|"]
+    out = [f"# {title}", "", spec["summary"], "", f"| # | Business | Google profile | {spec.get('table_label', 'Main signal')} |", "|---|---|---|---|"]
     for i, r in enumerate(rows, 1):
         out.append(f"| {i} | {r['name'].replace('|', '/')} | {_profile(r)} | {_headline(r['chosen'][0])} |")
     for i, r in enumerate(rows, 1):
@@ -128,8 +152,8 @@ def render_md(spec: dict, rows: list[dict], method: str) -> str:
                 f"- **Website:** {r['website'] or 'none listed'}",
                 f"- **Contact:** {' · '.join(_contact(r)) or 'unknown'}",
                 f"- **Google profile:** {_profile(r)} · {r['category']}",
-                f"- **{spec.get('gap_label', 'Observed gap')}:**"]
-        out += [f"  - {g['label']} ([source]({g['source_url']}))" for g in r["chosen"]]
+                f"- **{spec.get('gap_label', 'What you can check')}:**"]
+        out += [f"  - {text} ([open]({g['source_url']}))" for g, text in zip(r["chosen"], r["labels"])]
         out += [f"- **Why it fits {spec['agency']}:** {r['why_fit']}",
                 f"- **Suggested opener:** \"{r['opener']}\""]
     out += ["", "---", "", f"Generated by LeadForge. {method}", "",
@@ -146,12 +170,12 @@ def render_html(spec: dict, rows: list[dict], method: str) -> str:
     cards = []
     for i, r in enumerate(rows, 1):
         site = f"<a href='{e(r['website'])}'>{e(r['website'].split('//')[-1].rstrip('/'))}</a>" if r["website"] else "no website listed"
-        gaps = "".join(f"<li>{e(g['label'])} <a href='{e(g['source_url'])}'>source ↗</a></li>" for g in r["chosen"])
+        gaps = "".join(f"<li>{e(text)} <a href='{e(g['source_url'])}'>open ↗</a></li>" for g, text in zip(r["chosen"], r["labels"]))
         cards.append(
             f"<section class=card><h2><span>{i:02d}</span>{e(r['name'])}</h2>"
             f"<div class=meta>{e(r['category'])} · {e(_profile(r))} · <a href='{e(r['maps_link'])}'>Google Maps</a> · {site}"
             f"<br>{e(' · '.join(_contact(r)) or 'contact unknown')}</div>"
-            f"<div class=label>{e(spec.get('gap_label', 'Observed gap'))}</div><ul>{gaps}</ul>"
+            f"<div class=label>{e(spec.get('gap_label', 'What you can check'))}</div><ul>{gaps}</ul>"
             f"<div class=label>Why it fits {e(spec['agency'])}</div><p>{e(r['why_fit'])}</p>"
             f"<div class=label>Suggested opener</div><p class=opener>{e(r['opener'])}</p></section>")
     return (
@@ -161,7 +185,7 @@ def render_html(spec: dict, rows: list[dict], method: str) -> str:
         f"<div class=kicker>Prospect research · {e(spec['niche'])} · {e(spec['city'])}</div>"
         f"<h1>{e(title)}</h1><p class=lede>{e(spec['summary'])}</p>"
         "<table><thead><tr><th class=n>#</th><th>Business</th><th class=c>Google profile</th>"
-        f"<th>{e(spec.get('table_label', 'Main gap'))}</th></tr></thead>"
+        f"<th>{e(spec.get('table_label', 'Main signal'))}</th></tr></thead>"
         f"<tbody>{table}</tbody></table>{''.join(cards)}"
         f"<footer><strong>Generated by LeadForge.</strong> {e(method)}<br>"
         f"{HTML_SIGNATURE}</footer></div></body></html>\n")
@@ -185,11 +209,13 @@ def build(agency: str, spec_dir: Path = SCORED / "packs", out_dir: Path = PACKS)
         console.print(f"[red]Pack spec rejected:\n{exc}[/red]")
         return 1
     date = searched_on(agency) if out_dir == PACKS else dt.date.today().strftime("%d %b %Y")
-    method = spec.get("method", "").replace("{date}", date) or (
-        f"Method: Google Maps searches for {spec['niche']} in {spec['city']} on {date}, one visit to each "
-        "listed website (homepage and contact page), and page-source checks for booking, chat, WhatsApp "
-        "and ad tags. Every gap links to the page it was observed on; anything that could not be checked "
-        "was left out.")
+    checked = dt.date.fromisoformat(max(g["checked"] for r in rows for g in r["chosen"])).strftime("%d %b %Y")
+    method = spec.get("method", "").replace("{date}", date).replace("{checked}", checked) or (
+        f"Method: Google Maps searches for {spec['niche']} in {spec['city']} on {date}. On {checked} each listing "
+        "and each website here was opened in a browser, and only what it showed is stated: whether the listing has "
+        "a Website button, whether the link opens and over https, the footer copyright year, whether a Google tag, "
+        "Tag Manager or Meta Pixel loaded within 8 seconds, and the review count and rating. Each line links to "
+        "the page to open. Anything the browser could not settle was left out.")
     out_dir.mkdir(exist_ok=True)
     (out_dir / f"{agency}.md").write_text(render_md(spec, rows, method), encoding="utf-8")
     (out_dir / f"{agency}.html").write_text(render_html(spec, rows, method), encoding="utf-8")

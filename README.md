@@ -3,9 +3,10 @@
 A lead-research pipeline that finds businesses with a specific, observable problem, and can prove
 each one.
 
-Give it a niche and a city. It searches Google Maps, visits each business's own website once, and
-returns a short report of qualified prospects. Every claim in that report links to the page it was
-observed on. If something could not be checked, the report leaves it out instead of guessing.
+Give it a niche and a city. It searches Google Maps, opens each listing and each business's own
+website in a real browser, and returns a short report of qualified prospects. Every claim in that
+report is something a person can confirm in ten seconds on a phone, and links to the page to open.
+If the browser could not settle something, the report leaves it out instead of guessing.
 
 **See the output:** [`examples/northlight-growth.example.md`](examples/northlight-growth.example.md)
 (the same report as a printable page: [`examples/northlight-growth.example.html`](examples/northlight-growth.example.html)).
@@ -15,12 +16,12 @@ The example uses fictional businesses. No scraped data is stored in this reposit
 
 1. **Discovers** businesses from Google Maps searches: name, category, website, phone, rating, review count.
 2. **Enriches** each one by reading a handful of pages on its own website: contact routes, services,
-   team and hiring signals, tools in use, and what is missing from the page source (booking, chat,
-   WhatsApp, ad tracking).
+   team and hiring signals, and the tools named in the page source.
 3. **Qualifies** them against a written rubric. An LLM does the judging, and a validator rejects any
    verdict that cites a page the pipeline never fetched.
 4. **Builds a sample pack**: ten prospects for one agency, in that agency's niche and city, each with
-   the observed gap, the evidence link, contact details and a suggested opening line.
+   a signal confirmed in a browser that day, the link to check it, contact details and a suggested
+   opening line.
 5. **Drafts outreach** that leads with the pack, and **tracks** sends and follow-ups in SQLite.
 
 Nothing is ever sent automatically. The pipeline drafts; a person sends.
@@ -48,20 +49,31 @@ customers, and the result is the sample pack.
 
 - **Evidence or "unknown".** Enrichment records every extracted fact as
   `{field, value, source_url, snippet}`. `qualify.py` refuses a verdict whose reasons cite a URL that
-  was not fetched for that lead, and `pack.py` refuses a pack that mentions a gap the pipeline did
-  not observe for that business. Names, links and contact details are copied from data, never retyped.
-- **Claims are scoped to what was looked at.** A pack says "no booking system found on the homepage
-  and contact page". It does not say "they have no online booking".
-- **Every gap is re-tested in a real browser.** Raw HTML cannot see a WhatsApp button, chat widget
-  or ad tag that JavaScript injects, and an `http://` link that times out is not a dead site if
-  `https://` answers. `verify.py` loads each candidate in the installed browser and re-runs the same
-  checks on the rendered page. A gap has to survive two passes. On the first real run this
-  overturned 41 gaps the static crawl had reported, before any of them reached a pack.
-- **Signals fit the buyer.** Website gaps (no booking, no chat, no ad tracking) suit agencies that
-  sell to shopfront businesses. For an agency that sells something else, `prospects.py --signals`
-  takes a small JSON file of fit signals to look for in each prospect's own site copy, for example
-  a published tenders@ address or a careers page asking for estimators
-  ([example](examples/contractor.signals.example.json)).
+  was not fetched for that lead. Names, links and contact details are copied from data, never retyped.
+- **Seven signals, each checkable in ten seconds on a phone.** A pack or an email may say only this
+  about a business: its Google listing has no website; the website link on the listing is dead or
+  does not resolve; the site is served without https (the https version of the same URL fails to
+  load or has an invalid certificate); the footer copyright year is 2023 or older; no
+  Google tag, Tag Manager or Meta Pixel is in the rendered page after 8 seconds; its review count or
+  its rating compared with the pack median. The one other thing allowed is text quoted from the
+  business's own site. The list lives in [`src/signals.py`](src/signals.py), which also writes the
+  wording, so a pack cannot phrase a signal more strongly than it was checked.
+- **"Not found" is not "not there".** An earlier version reported no booking, no WhatsApp, no chat
+  and no social links when a page scan found none. A manual check showed most of those claims were
+  false: a "Book now" button that opens another site, or a chat widget a script injects later, is
+  invisible to a scan for embedded tools. Those signals are retired. The linter rejects their wording
+  in any pack, email, follow-up or note.
+- **Confirmed in a browser on the day.** `verify.py` opens the live Google listing and the website
+  in the installed browser, leaves the page open for 8 seconds with a scroll, and keeps a signal
+  only when the browser shows it. A claim that something is absent or broken has to hold on two
+  separate visits. A page behind a bot check, a consent banner that may be holding tags back, a link
+  that times out from here: each is dropped, not guessed. `pack.py` refuses any business that has
+  not been through it in the last three days.
+- **Signals fit the buyer.** For an agency whose buyers are not judged by their website,
+  `prospects.py --signals` takes a small JSON file of wording to look for in each prospect's own
+  site copy, for example a published tenders@ address or a careers page asking for estimators
+  ([example](examples/contractor.signals.example.json)). `verify.py` re-reads the quote on the
+  rendered page before it is used.
 - **The LLM judges; code checks.** Scoring is a judgement call, so a model makes it. Arithmetic, tier
   boundaries and evidence checks are not, so code does those.
 - **Small, polite crawls.** One pass per site, at most six pages, a labelled user agent, no proxies,
@@ -98,18 +110,26 @@ python src/qualify.py summary --top 15
 # 4. Build a sample pack for one qualified agency
 python src/discover.py queries/packs/<agency-domain>.txt pack_<agency-domain>
 python src/enrich.py data/raw/pack_<agency-domain>.csv --mode light --out data/enriched/packs/<agency-domain>
-python src/prospects.py <agency-domain> --niche "dental clinic" --want no_booking,no_chat
-python src/verify.py <agency-domain> --want no_booking,no_chat           # re-test in a real browser
-python src/verify.py <agency-domain> --want no_booking,no_chat --force   # second pass
+python src/prospects.py <agency-domain> --niche "dental clinic" --want no_site,stale,no_ads_tags
+python src/verify.py <agency-domain> --want no_site,stale,no_ads_tags    # confirm in a real browser, today
 python src/pack.py build <agency-domain>
+python src/draft.py build <agency-domain>                                # the email, built from confirmed signals
 
 # 5. Check drafts, then track what you send by hand
 python src/lint_drafts.py
 python src/track.py sync
-python src/track.py plan 2026-10-13        # give the next 10 agencies by score a send date
-python src/track.py plan                   # the plan, and each day's load against the daily cap
-python src/track.py today                  # follow-ups due first, then new sends, 15 a day in all
+python src/track.py plan 2026-10-13        # schedule every unsent lead from that day, best score first
+python src/track.py ready 2026-10-13       # that day's emails in one file, with the links to check
+python src/track.py today                  # follow-ups due first, then new sends
 python src/track.py mark <agency-domain> sent
+```
+
+The tracker holds the send rules: at most 10 new emails a day and 15 messages a day counting
+follow-ups, follow-ups first, nothing on Saturday or Sunday, follow-ups on day 3 and day 7, and a
+follow-up that lands on a weekend moves to Monday.
+
+```bash
+python src/audit_public.py --online        # before every push
 ```
 
 ### From a job post to a sample
@@ -145,12 +165,13 @@ src/
   enrich.py         site crawl -> data/enriched/<domain>.json (with evidence)
   shortlist.py      rule-based triage + digests for the reasoning layer
   qualify.py        validate verdicts, compute scores, write summary.csv
-  prospects.py      observable gaps and fit signals per prospect, for a sample pack
-  verify.py         re-test each gap against the rendered page in a real browser
+  signals.py        the seven allowed signals, their wording, and the retired ones
+  prospects.py      the allowed signals each prospect appears to show, before verification
+  verify.py         confirm every signal in a rendered browser on the day
   pack.py           render a pack as Markdown and printable HTML
   draft.py          render an outreach draft from a spec, then lint it
   lint_drafts.py    check outreach drafts against the house rules
-  track.py          SQLite outreach tracker: send plan, daily cap, follow-ups
+  track.py          SQLite outreach tracker: send plan, daily caps, follow-ups, the day's ready file
   sample.py         a job description in, a 10-row sample and a short proposal out
   us_track.py       a second track: agencies that buy build work, not lead packs
   audit_public.py   confirm nothing from data/ ever reached git history
@@ -159,8 +180,8 @@ outreach/           pricing and (gitignored) drafts
 RUNLOG.md           every run: command, counts, failures
 ```
 
-`data/`, `packs/`, `samples/`, `outreach/drafts/`, `outreach/us_track/` and `queries/packs/` are gitignored. They
-hold real businesses.
+`data/`, `packs/`, `samples/`, `outreach/drafts/`, `outreach/ready/`, `outreach/us_track/` and
+`queries/packs/` are gitignored. They hold real businesses.
 
 ### Before publishing
 
@@ -201,8 +222,18 @@ Tier A is 70 and above, B is 50 to 69, C is below 50.
 - A repeated "person card" layout on a team page is a hint, never a headcount. It double-counted one
   team and counted feature tiles on another, so team size is only stated when names and titles are
   readable in the page text.
-- "No ad tracking" means no tag in the page source. It is never claimed when a Tag Manager container
-  is present, because that container could be loading tags.
+- The tag signal is the weakest of the seven and the only one that cannot be confirmed on a phone.
+  "No Google tag, Tag Manager or Meta Pixel" means none was seen in a headless browser on two visits:
+  no `dataLayer`, `gtag` or `fbq` in any frame, no tag script, no tag request. It is dropped whenever a
+  consent tool is present or the site is on Shopify. A site that serves a headless browser different
+  code would still fool it, so confirm it by hand with a tag checker before quoting it.
+- A dead link is only claimed when DNS says the name does not exist, the server answers 404 or 410, or
+  the page itself says the account is suspended or the domain is for sale. A timeout is never proof.
+  A 404 on a deep or malformed link is reported as a broken link when the domain's homepage loads.
+- "No https" is claimed only when the https version of the same URL fails to load or has an invalid
+  certificate. An https address that answers and redirects is not a failure.
+- When a listing's link lands on a different domain, nothing is said about the page it lands on.
+- Booking tools, chat widgets, WhatsApp buttons and social links are not checked at all.
 - Review responses are not read, so "ignores negative reviews" is never claimed.
 - Team size is a hint taken from the site's own wording, not a headcount.
 
