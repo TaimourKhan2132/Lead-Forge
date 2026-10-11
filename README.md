@@ -9,7 +9,7 @@
 <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-0f766e" alt="MIT licence"></a>
 <img src="https://img.shields.io/badge/python-3.10%2B-3776AB?logo=python&logoColor=white" alt="Python 3.10 or newer">
 <img src="https://img.shields.io/badge/browser-Playwright-2EAD33?logo=playwright&logoColor=white" alt="Playwright">
-<img src="https://img.shields.io/badge/sends-nothing-111827" alt="Sends nothing">
+<img src="docs/assets/sends-nothing.svg" alt="Sends nothing">
 
 <br><br>
 
