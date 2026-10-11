@@ -2,7 +2,7 @@
 
 Notable changes to LeadForge. No real business is named here or anywhere else in this repository.
 
-## [0.2.0] - 2026-10-11
+## [0.2.0] - 2026-10-11 · Seven signals
 
 The rebuild. A manual check of the first packs found that most "no booking", "no WhatsApp" and "no
 chat" claims were false: a page scan cannot see a button that links out, or a widget a script injects
@@ -24,7 +24,9 @@ kind and replaces how signals are produced, checked and worded.
   follow-ups on day 3 and day 7.
 - A linter rule that rejects the retired wording anywhere in a draft.
 - Tests for the rules, a fictional example email, and a draft written to fail (`examples/`).
-- `CLAUDE.md`, `LICENSE`, this changelog, and a checks workflow.
+- `CLAUDE.md`, an MIT `LICENSE`, this changelog, a checks workflow, and a release workflow that
+  publishes a version's entry here when its tag is pushed.
+- A README that shows the pipeline running on fictional data, with a script that regenerates its images.
 
 ### Changed
 - "No https" is claimed only when the https version of the same URL fails to load or has an invalid
@@ -45,7 +47,7 @@ kind and replaces how signals are produced, checked and worded.
 - The operator spot-checked 7 rebuilt claims by hand. 5 were right and 2 were wrong, both caused by a
   listing link that did not lead where it appeared to. The three "Changed" rules above came from that.
 
-## [0.1.0] - 2026-10-11
+## [0.1.0] - 2026-10-11 · First public version
 
 First public version.
 

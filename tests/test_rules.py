@@ -178,3 +178,19 @@ def test_a_pack_refuses_a_check_that_has_gone_stale(example, tmp_path):
 def test_an_email_line_cannot_quote_words_that_were_not_read_off_the_page():
     assert draft._plain("“Book via WhatsApp”") == draft._plain('"book  via whatsapp"')
     assert draft._plain("Book on WhatsApp") not in draft._plain("…Call us 04 000 0000 Book via WhatsApp Open 9 AM…")
+
+
+# --- releases ----------------------------------------------------------------------------------
+
+def test_every_version_in_the_changelog_has_notes_to_publish():
+    import importlib.util
+    spec = importlib.util.spec_from_file_location("release_notes", ROOT / ".github" / "release_notes.py")
+    release_notes = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(release_notes)
+    versions = release_notes.entries((ROOT / "CHANGELOG.md").read_text(encoding="utf-8"))
+    assert [v["version"] for v in versions] == sorted((v["version"] for v in versions), key=lambda s: tuple(map(int, s.split("."))))
+    assert len(versions) >= 2
+    for version in versions:
+        assert version["title"], version["version"]
+        assert len(version["notes"].split()) > 40, version["version"]
+        assert "](" not in version["notes"].splitlines()[-1]  # the link references at the foot are not notes

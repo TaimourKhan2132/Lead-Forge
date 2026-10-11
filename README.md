@@ -43,7 +43,7 @@ drafts the outreach. A person sends it.
 ## See it work
 
 <div align="center">
-<img src="docs/assets/demo.gif" alt="A terminal session. The example pack and email are built, an email written in the old style is refused by the linter with nine reasons, and 37 tests pass." width="860">
+<img src="docs/assets/demo.gif" alt="A terminal session. The example pack and email are built, an email written in the old style is refused by the linter with nine reasons, and 38 tests pass." width="860">
 <br>
 <sub>Real output, fictional data. The example is built, an email written the old way is refused, and the tests run.</sub>
 </div>

@@ -1,0 +1,27 @@
+name: release
+
+# Pushing a version tag publishes its release. The notes are that version's entry in CHANGELOG.md.
+on:
+  push:
+    tags: ["v*"]
+
+permissions:
+  contents: write
+
+jobs:
+  publish:
+    name: publish the changelog entry
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # every tag, so an earlier version without a release gets its notes too
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Publish
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: python .github/release_notes.py
