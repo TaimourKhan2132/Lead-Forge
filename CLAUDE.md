@@ -106,6 +106,7 @@ python src/verify.py <agency> --want <signals>               # confirm every sig
 python src/pack.py build <agency>                            # render the pack (.md and .html)
 python src/pack.py fill --readme-no-email                    # fill name and links from .env
 python src/draft.py build <agency>                           # render and lint the outreach draft
+python src/draft.py quotes [<agency>]                        # is what line 1 quotes on the agency's page today?
 python src/lint_drafts.py                                    # check every draft against the rules
 python src/track.py sync                                     # pick up new and blocked drafts
 python src/track.py plan <YYYY-MM-DD>                        # schedule unsent leads inside the send rules
@@ -150,6 +151,9 @@ When this conversation is compacted, keep all of the following word for word in 
   a broken link, not a dead site.
 - **The ready file** (`outreach/ready/<date>.md`) gives, for each claim, the exact URL to open; for
   "no website on the listing" that is the Google Maps link.
+- **An opening line may say only what the agency's own page says.** Check it with `draft.py quotes`.
+- If a site shows a browser check or does not answer, record it as unread, wait and re-run. Never
+  work around it.
 - **Verify every signal in a rendered browser on the day** (`verify.py`). Never say in an email how
   or how often something was checked. If the signals do not fit an agency's offer, mark the draft
   `BLOCKED` with the reason. Do not stretch.
@@ -160,7 +164,7 @@ When this conversation is compacted, keep all of the following word for word in 
 - **Before every push:** `python src/audit_public.py --online` must exit 0. **No `Co-Authored-By`
   lines.** No payment details in the repository.
 - **Commands:** `discover.py`, `merge_clutch.py`, `enrich.py`, `shortlist.py`, `qualify.py ingest`
-  and `summary`, `prospects.py`, `verify.py`, `pack.py build` and `fill`, `draft.py build`,
+  and `summary`, `prospects.py`, `verify.py`, `pack.py build` and `fill`, `draft.py build` and `quotes`,
   `lint_drafts.py`, `track.py sync`, `plan`, `ready`, `today`, `mark` and `list`, `us_track.py prepare`
   and `digest`, `sample.py --brief`, `audit_public.py --online`, `examples/make_example.py`. Run
   them with `./.venv/Scripts/python.exe`.

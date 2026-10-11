@@ -227,6 +227,25 @@ Counts only. No lead names or scraped data are written to this file, so it is sa
   Maps link. - **A slow connection during the run** made page loads time out for three agencies.
   Timeouts drop a   claim, they never create one, so nothing false came of it; those three were
   re-run. One page hung a   run outright, so every browser step now has a hard deadline.
+- - **Outcome of the rebuild, 2026-10-11.** 19 of 20 packs were rebuilt from signals verified that
+  day. One Gulf draft is blocked: a web design studio's pool has 8 prospects with a signal a web
+  studio can act on (no website on the listing, or a footer dated 2023 or older) and a pack needs
+  10.   It was checked twice, the second time on a quiet connection. The other signals in that
+  pool (review   counts, tags) are not something a web studio sells against, so they were not
+  used. - **Three packs now rest on quoted text, not gaps.** The contractor pack as before, and
+  two rebuilt   for agencies that sell a WhatsApp agent and a WhatsApp integration. Their
+  prospects are businesses   whose own sites tell customers to book or ask on WhatsApp, quoted
+  from the page. That is the reverse   of the retired claim, and it is something present that a
+  reader can see. - **Opening lines.** 17 of 18 were confirmed against the agency's own page with
+  `draft.py quotes`.   One agency's site gave no answer from this machine all evening; its draft
+  and the ready file say so,   and the operator reads that page before sending. - **A host's
+  browser check appeared mid-run and was waited out, not worked around.** After several   hundred
+  page loads, a group of sites began answering the pipeline with a "One moment, please" page.
+  Those pages were recorded as unread. About two hours later they answered normally and the
+  affected   checks were re-run. `verify.py` now waits for such a page the way a visitor's browser
+  does and   reports the page as unread if it stays. - **Tag claims named in emails were checked a
+  second way.** All nine were re-run in a visible   browser window and agreed with the headless
+  result. - **Ready files** were written for the first two send days of the new plan.
 
 ## Open items
 
@@ -234,8 +253,10 @@ Counts only. No lead names or scraped data are written to this file, so it is sa
   on this machine, which has no Docker.
 - **No Gulf rows on the Clutch shortlist.** The shortlist that arrived on 2026-10-11 holds only
   track=us agencies, which went to the US track. Nothing was merged into the Gulf list.
-- **One Gulf draft is blocked.** A web design studio's pack has only 7 prospects with a signal a web
+- **One Gulf draft is blocked.** A web design studio's pack has only 8 prospects with a signal a web
   studio can act on. It needs one more Maps search, which is new discovery and waits for the operator.
+- **One opening line is unconfirmed.** That agency's site gave no answer from this machine on
+  2026-10-11. Run `draft.py quotes <agency>` again, or read the page by hand, before its email goes.
 - **One US-track draft is blocked** until a way to deliver its message is confirmed by hand.
 - **The tag signal is checked in a headless browser only.** It is the one allowed signal that cannot
   be confirmed on a phone. A site that serves a headless browser different code would fool it. Emails
@@ -247,8 +268,9 @@ Counts only. No lead names or scraped data are written to this file, so it is sa
   batch is built one send day ahead, with the allowed signals only.
 - **The plan is throttled by follow-ups.** Follow-ups from Wednesday, Thursday and Friday sends all
   land on the following Monday, so `plan` places fewer new emails late in the week.
-- **The connection was unreliable during the 2026-10-11 run.** Page loads timed out in bursts. A
-  timeout only ever drops a claim, but it cost candidates; a re-run on a quiet line may recover more.
+- **Heavy runs trip a browser check on some hosts.** On 2026-10-11 page loads timed out in bursts and
+  one host showed a holding page for about two hours. Both only ever drop a claim, but they cost
+  candidates. Spread verification over smaller runs, and re-run what was dropped as unread.
 - **Agency qualification has no browser pass.** Opening lines are checked against the agency's page
   with `draft.py quotes`, but the rubric evidence is still read from server-rendered HTML.
 - **19 agencies are still unreachable** after the re-crawl, and 15 refuse the crawler outright.
@@ -2159,6 +2181,236 @@ Counts only. No lead names or scraped data are written to this file, so it is sa
 - **Failures:** none
 
 ### 2026-10-11T20:34:36+05:00
+- **Command:** `python src/draft.py build <agency>`
+- **Counts:** lint_problems=0
+- **Failures:** none
+
+### 2026-10-11T22:43:39+05:00
+- **Command:** `python src/draft.py quotes`
+- **Counts:** drafts=4, failed=1
+- **Failures:** none
+
+### 2026-10-11T22:46:05+05:00
+- **Command:** `python src/draft.py quotes`
+- **Counts:** drafts=1, failed=1
+- **Failures:** none
+
+### 2026-10-11T22:49:42+05:00
+- **Command:** `python src/pack.py build <agency>`
+- **Counts:** prospects=10, files=2
+- **Failures:** none
+
+### 2026-10-11T22:49:48+05:00
+- **Command:** `python src/prospects.py <agency> --niche training institute --min-reviews 15 --max-reviews 3000 --want no_site,dead_site,not_https,stale`
+- **Counts:** listings=46, candidates=28, dropped=18, median_reviews=114, median_rating=4.8
+- **Failures:** none
+
+### 2026-10-11T22:54:22+05:00
+- **Command:** `python src/verify.py <agency> --want no_site,dead_site,not_https,stale --top 30`
+- **Counts:** listings_read=28, listings_failed=0, sites_opened=21, sites_unclear=1, confirmed=23, dropped=11, dead_site=0, not_https=0, no_ads_tags=7, usable=19
+- **Failures:** none
+
+### 2026-10-11T22:54:42+05:00
+- **Command:** `python src/pack.py build <agency>`
+- **Counts:** prospects=10, files=2
+- **Failures:** none
+
+### 2026-10-11T22:54:42+05:00
+- **Command:** `python src/draft.py build <agency>`
+- **Counts:** lint_problems=0
+- **Failures:** none
+
+### 2026-10-11T22:54:43+05:00
+- **Command:** `python src/pack.py build <agency>`
+- **Counts:** prospects=10, files=2
+- **Failures:** none
+
+### 2026-10-11T22:54:43+05:00
+- **Command:** `python src/draft.py build <agency>`
+- **Counts:** lint_problems=0
+- **Failures:** none
+
+### 2026-10-11T22:54:44+05:00
+- **Command:** `python src/pack.py build <agency>`
+- **Counts:** prospects=10, files=2
+- **Failures:** none
+
+### 2026-10-11T22:54:45+05:00
+- **Command:** `python src/draft.py build <agency>`
+- **Counts:** lint_problems=0
+- **Failures:** none
+
+### 2026-10-11T22:54:45+05:00
+- **Command:** `python src/pack.py build <agency>`
+- **Counts:** prospects=10, files=2
+- **Failures:** none
+
+### 2026-10-11T22:54:46+05:00
+- **Command:** `python src/draft.py build <agency>`
+- **Counts:** lint_problems=0
+- **Failures:** none
+
+### 2026-10-11T22:54:46+05:00
+- **Command:** `python src/pack.py build <agency>`
+- **Counts:** prospects=10, files=2
+- **Failures:** none
+
+### 2026-10-11T22:54:47+05:00
+- **Command:** `python src/draft.py build <agency>`
+- **Counts:** lint_problems=0
+- **Failures:** none
+
+### 2026-10-11T22:54:48+05:00
+- **Command:** `python src/pack.py build <agency>`
+- **Counts:** prospects=10, files=2
+- **Failures:** none
+
+### 2026-10-11T22:54:48+05:00
+- **Command:** `python src/draft.py build <agency>`
+- **Counts:** lint_problems=0
+- **Failures:** none
+
+### 2026-10-11T22:54:49+05:00
+- **Command:** `python src/pack.py build <agency>`
+- **Counts:** prospects=10, files=2
+- **Failures:** none
+
+### 2026-10-11T22:54:49+05:00
+- **Command:** `python src/draft.py build <agency>`
+- **Counts:** lint_problems=0
+- **Failures:** none
+
+### 2026-10-11T22:54:50+05:00
+- **Command:** `python src/pack.py build <agency>`
+- **Counts:** prospects=10, files=2
+- **Failures:** none
+
+### 2026-10-11T22:54:51+05:00
+- **Command:** `python src/draft.py build <agency>`
+- **Counts:** lint_problems=0
+- **Failures:** none
+
+### 2026-10-11T22:54:51+05:00
+- **Command:** `python src/pack.py build <agency>`
+- **Counts:** prospects=10, files=2
+- **Failures:** none
+
+### 2026-10-11T22:54:52+05:00
+- **Command:** `python src/draft.py build <agency>`
+- **Counts:** lint_problems=0
+- **Failures:** none
+
+### 2026-10-11T22:54:53+05:00
+- **Command:** `python src/pack.py build <agency>`
+- **Counts:** prospects=10, files=2
+- **Failures:** none
+
+### 2026-10-11T22:54:53+05:00
+- **Command:** `python src/draft.py build <agency>`
+- **Counts:** lint_problems=0
+- **Failures:** none
+
+### 2026-10-11T22:54:54+05:00
+- **Command:** `python src/pack.py build <agency>`
+- **Counts:** prospects=10, files=2
+- **Failures:** none
+
+### 2026-10-11T22:54:54+05:00
+- **Command:** `python src/draft.py build <agency>`
+- **Counts:** lint_problems=0
+- **Failures:** none
+
+### 2026-10-11T22:54:55+05:00
+- **Command:** `python src/pack.py build <agency>`
+- **Counts:** prospects=10, files=2
+- **Failures:** none
+
+### 2026-10-11T22:54:56+05:00
+- **Command:** `python src/draft.py build <agency>`
+- **Counts:** lint_problems=0
+- **Failures:** none
+
+### 2026-10-11T22:54:56+05:00
+- **Command:** `python src/pack.py build <agency>`
+- **Counts:** prospects=10, files=2
+- **Failures:** none
+
+### 2026-10-11T22:54:57+05:00
+- **Command:** `python src/draft.py build <agency>`
+- **Counts:** lint_problems=0
+- **Failures:** none
+
+### 2026-10-11T22:54:58+05:00
+- **Command:** `python src/pack.py build <agency>`
+- **Counts:** prospects=10, files=2
+- **Failures:** none
+
+### 2026-10-11T22:54:58+05:00
+- **Command:** `python src/draft.py build <agency>`
+- **Counts:** lint_problems=0
+- **Failures:** none
+
+### 2026-10-11T22:54:59+05:00
+- **Command:** `python src/pack.py build <agency>`
+- **Counts:** prospects=10, files=2
+- **Failures:** none
+
+### 2026-10-11T22:55:00+05:00
+- **Command:** `python src/draft.py build <agency>`
+- **Counts:** lint_problems=0
+- **Failures:** none
+
+### 2026-10-11T22:55:00+05:00
+- **Command:** `python src/pack.py build <agency>`
+- **Counts:** prospects=10, files=2
+- **Failures:** none
+
+### 2026-10-11T22:55:01+05:00
+- **Command:** `python src/draft.py build <agency>`
+- **Counts:** lint_problems=0
+- **Failures:** none
+
+### 2026-10-11T22:55:01+05:00
+- **Command:** `python src/draft.py build <agency>`
+- **Counts:** lint_problems=0
+- **Failures:** none
+
+### 2026-10-11T22:55:02+05:00
+- **Command:** `python src/pack.py build <agency>`
+- **Counts:** prospects=10, files=2
+- **Failures:** none
+
+### 2026-10-11T22:55:03+05:00
+- **Command:** `python src/draft.py build <agency>`
+- **Counts:** lint_problems=0
+- **Failures:** none
+
+### 2026-10-11T22:55:03+05:00
+- **Command:** `python src/pack.py build <agency>`
+- **Counts:** prospects=10, files=2
+- **Failures:** none
+
+### 2026-10-11T22:55:04+05:00
+- **Command:** `python src/draft.py build <agency>`
+- **Counts:** lint_problems=0
+- **Failures:** none
+
+### 2026-10-11T22:55:05+05:00
+- **Command:** `python src/pack.py build <agency>`
+- **Counts:** prospects=10, files=2
+- **Failures:** none
+
+### 2026-10-11T22:55:18+05:00
+- **Command:** `python src/pack.py build <agency>`
+- **Counts:** prospects=10, files=2
+- **Failures:** none
+
+### 2026-10-11T22:55:19+05:00
+- **Command:** `python src/draft.py build <agency>`
+- **Counts:** lint_problems=0
+- **Failures:** none
+
+### 2026-10-11T22:55:19+05:00
 - **Command:** `python src/draft.py build <agency>`
 - **Counts:** lint_problems=0
 - **Failures:** none

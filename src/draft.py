@@ -254,7 +254,7 @@ def quotes(domains: list[str], browser: bool = True) -> int:
         unread = [c["url"] for c in checks if not pages[c["url"]]]
         if missing or not any(c["quotes"] for c in checks):
             failed += 1
-            why = ("the site showed the pipeline a browser check, so the page could not be read" if unread
+            why = ("the page could not be read from this machine (no answer, or a browser check)" if unread
                    else "these words were not found: " + "; ".join(missing)) if checks else "the spec lists no words to check"
             results[spec["domain"]] = {"ok": False, "checked": today, "why": why}
             console.print(f"[red]FAIL[/red] {spec['domain']}: {missing or 'no line1_checks given'}")

@@ -114,6 +114,7 @@ python src/prospects.py <agency-domain> --niche "dental clinic" --want no_site,s
 python src/verify.py <agency-domain> --want no_site,stale,no_ads_tags    # confirm in a real browser, today
 python src/pack.py build <agency-domain>
 python src/draft.py build <agency-domain>                                # the email, built from confirmed signals
+python src/draft.py quotes <agency-domain>                               # is line 1 still what the agency's page says?
 
 # 5. Check drafts, then track what you send by hand
 python src/lint_drafts.py
