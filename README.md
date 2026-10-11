@@ -106,9 +106,22 @@ python src/pack.py build <agency-domain>
 # 5. Check drafts, then track what you send by hand
 python src/lint_drafts.py
 python src/track.py sync
-python src/track.py today
+python src/track.py plan 2026-10-13        # give the next 10 agencies by score a send date
+python src/track.py plan                   # the plan, and each day's load against the daily cap
+python src/track.py today                  # follow-ups due first, then new sends, 15 a day in all
 python src/track.py mark <agency-domain> sent
 ```
+
+### From a job post to a sample
+
+```bash
+python src/sample.py --brief "Need a list of 300 dental clinics in Austin, Texas with phone, email and website"
+```
+
+`sample.py` reads the niche, the location and the fields a job description asks for, runs one
+search, and writes a 10-row CSV plus a proposal of 120 words or fewer that points at it. The
+proposal reports only what the sample contains, such as how many rows have an email. A field that
+cannot be sourced honestly, an owner's name for instance, is named as missing and left out.
 
 ### Discovery engines
 
@@ -136,7 +149,8 @@ src/
   verify.py         re-test each gap against the rendered page in a real browser
   pack.py           render a pack as Markdown and printable HTML
   lint_drafts.py    check outreach drafts against the house rules
-  track.py          SQLite outreach tracker
+  track.py          SQLite outreach tracker: send plan, daily cap, follow-ups
+  sample.py         a job description in, a 10-row sample and a short proposal out
   us_track.py       a second track: agencies that buy build work, not lead packs
   audit_public.py   confirm nothing from data/ ever reached git history
 examples/           a sample pack built from fictional data
@@ -144,7 +158,7 @@ outreach/           pricing and (gitignored) drafts
 RUNLOG.md           every run: command, counts, failures
 ```
 
-`data/`, `packs/`, `outreach/drafts/`, `outreach/us_track/` and `queries/packs/` are gitignored. They
+`data/`, `packs/`, `samples/`, `outreach/drafts/`, `outreach/us_track/` and `queries/packs/` are gitignored. They
 hold real businesses.
 
 ### Before publishing
@@ -198,4 +212,4 @@ Tier A is 70 and above, B is 50 to 69, C is below 50.
 
 ---
 
-Built by {{NAME}} · {{EMAIL}} · {{LINKEDIN}} · {{GITHUB}}
+Built by Taimour Khan · [LinkedIn](https://www.linkedin.com/in/taimour-khan-869476382) · [GitHub](https://github.com/TaimourKhan2132)

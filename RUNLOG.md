@@ -125,6 +125,36 @@ Counts only. No lead names or scraped data are written to this file, so it is sa
   `shortlist.py` now logs the count of domains instead of the domains, and the six unpushed
   commits that carried the line were rewritten. The audit was run again afterwards and the history
   is clean.
+- **2026-10-11 â€” Identity moved to `.env`, placeholders filled.** The operator's details were
+  moved out of the tracked example file into `.env`, the LinkedIn value was given its https://
+  prefix, and `.env.example` was restored to blanks. `pack.py fill` then filled every pack, draft
+  and US-track draft. The public files (README and the example pack) were filled without the email
+  address. Pack footers are now real links, and a rebuilt pack keeps the date its searches
+  actually ran instead of the rebuild date.
+- **2026-10-11 â€” Starter price raised from $49 to $59** on the operator's instruction, in the
+  pricing table and both reply templates. The reason given was a minimum on payment requests plus
+  card fees. No payment details are recorded here.
+- **2026-10-11 â€” Volume plan: batches of ten, one send day ahead.** `track.py plan <date>` gives
+  the next ten unplanned agencies by score a send date (tier A first, then tier B down to a score
+  of 60), skipping the domains in `data/skip.txt`. The ten packs already built are planned for
+  Monday 12 October; the next four batches are planned Tuesday to Friday, 39 agencies in all
+  because that is how many remain at 60 or above. A third agency went on the skip list: its own
+  site sells email databases, which is the rule the operator applied to the first two. The daily
+  cap of 15 now counts follow-ups as well as first emails, and follow-ups are shown first. That
+  exposes a conflict the operator needs to settle: ten new sends a day plus day-3 follow-ups comes
+  to 20 on Thursday and 19 on Friday, so the tracker will hold the overflow of new sends to the
+  next day unless the plan or the cap changes.
+- **2026-10-11 â€” `sample.py`: a job description in, a sample and a proposal out.** It reads
+  niche, location and requested fields from a pasted brief with plain patterns, prints what it
+  understood, runs one search with the email lookup, and keeps the ten rows that fill the most
+  requested fields. The proposal is built from the sample's own counts, capped at 120 words, and
+  checked against a list of claims it must never make (past clients, reviews, results,
+  guarantees). Fields that cannot be sourced honestly are named as missing. The brief itself is
+  never written to this log, because a brief can name a client. Tested on one brief: 21 listings,
+  10 rows, 9 with an email, 112 words.
+- **2026-10-11 â€” Commit attribution.** The operator asked for the repository to be published
+  with no co-author. The co-author trailer was removed from every commit message before the first
+  push, and later commits do not carry one.
 
 ## Open items
 
@@ -643,4 +673,59 @@ Counts only. No lead names or scraped data are written to this file, so it is sa
 ### 2026-10-11T12:57:27+05:00
 - **Command:** `python src/qualify.py summary --top 15`
 - **Counts:** scored=73, tier_A=20, tier_B=44, tier_C=9
+- **Failures:** none
+
+### 2026-10-11T13:10:43+05:00
+- **Command:** `python src/pack.py build <agency>`
+- **Counts:** prospects=10, files=2
+- **Failures:** none
+
+### 2026-10-11T13:10:44+05:00
+- **Command:** `python src/pack.py build <agency>`
+- **Counts:** prospects=10, files=2
+- **Failures:** none
+
+### 2026-10-11T13:10:45+05:00
+- **Command:** `python src/pack.py build <agency>`
+- **Counts:** prospects=10, files=2
+- **Failures:** none
+
+### 2026-10-11T13:10:45+05:00
+- **Command:** `python src/pack.py build <agency>`
+- **Counts:** prospects=10, files=2
+- **Failures:** none
+
+### 2026-10-11T13:10:46+05:00
+- **Command:** `python src/pack.py build <agency>`
+- **Counts:** prospects=10, files=2
+- **Failures:** none
+
+### 2026-10-11T13:10:46+05:00
+- **Command:** `python src/pack.py build <agency>`
+- **Counts:** prospects=10, files=2
+- **Failures:** none
+
+### 2026-10-11T13:10:47+05:00
+- **Command:** `python src/pack.py build <agency>`
+- **Counts:** prospects=10, files=2
+- **Failures:** none
+
+### 2026-10-11T13:10:47+05:00
+- **Command:** `python src/pack.py build <agency>`
+- **Counts:** prospects=10, files=2
+- **Failures:** none
+
+### 2026-10-11T13:10:48+05:00
+- **Command:** `python src/pack.py build <agency>`
+- **Counts:** prospects=10, files=2
+- **Failures:** none
+
+### 2026-10-11T13:10:49+05:00
+- **Command:** `python src/pack.py build <agency>`
+- **Counts:** prospects=10, files=2
+- **Failures:** none
+
+### 2026-10-11T13:14:52+05:00
+- **Command:** `python src/sample.py --brief <brief>`
+- **Counts:** listings=21, sample_rows=10, fields=6, with_email=9, proposal_words=112
 - **Failures:** none

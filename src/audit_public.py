@@ -124,7 +124,7 @@ def check_readme(online: bool) -> list[str]:
     text = (ROOT / "README.md").read_text(encoding="utf-8")
     for target in re.findall(r"\]\(([^)\s]+)\)", text):
         if target.startswith(("http://", "https://")):
-            if online:
+            if online and "linkedin.com" not in target:  # LinkedIn refuses automated requests
                 import httpx
                 try:
                     status = httpx.get(target, follow_redirects=True, timeout=20).status_code
@@ -138,6 +138,9 @@ def check_readme(online: bool) -> list[str]:
             problems.append(f"README links to {path}, which is not a tracked file")
     if re.search(r"\{\{[A-Z]+\}\}", text):
         problems.append("README still contains unfilled {{...}} placeholders")
+    for path in sorted((ROOT / "examples").glob("northlight*")):
+        if re.search(r"\{\{[A-Z]+\}\}", path.read_text(encoding="utf-8")):
+            problems.append(f"examples/{path.name} still contains unfilled {{{{...}}}} placeholders")
     return problems
 
 

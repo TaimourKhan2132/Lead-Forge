@@ -15,9 +15,10 @@ from __future__ import annotations
 import re
 import sys
 
+from dotenv import dotenv_values
 from rich.console import Console
 
-from common import DRAFTS, US_TRACK, utf8_stdout
+from common import DRAFTS, ROOT, US_TRACK, utf8_stdout
 
 BANNED = ["i hope this finds you well", "i hope this email finds you", "i came across your profile",
           "synergy", "quick question", "touching base", "circle back", "game-changer", "game changer"]
@@ -26,6 +27,8 @@ US_MESSAGE_MAX = 90
 US_PROOF = ("I build scraping, data and automation pipelines. My own tool, LeadForge, discovered 325 agencies "
             "across the UAE, KSA and Qatar and scored the best 70 using evidence from their own sites.")
 US_CTA = "Is there a piece of a current project I could take off your plate?"
+# A draft is signed either with the placeholder or, once `pack.py fill` has run, with the real name.
+SIGN_OFFS = [s for s in ("{{NAME}}", (dotenv_values(ROOT / ".env").get("LEADFORGE_NAME") or "").strip()) if s]
 console = Console()
 
 
@@ -68,8 +71,8 @@ def lint(text: str) -> list[str]:
             problems.append("email 1 contains a link")
         if CTA not in plain:
             problems.append(f"email 1 is missing the call-to-action: {CTA!r}")
-        if "{{NAME}}" not in plain:
-            problems.append("email 1 has no {{NAME}} sign-off")
+        if not any(name in plain for name in SIGN_OFFS):
+            problems.append("email 1 has no sign-off ({{NAME}}, or the name set in .env)")
         if not re.search(r"<!--.*?https?://.*?-->", email, flags=re.S):
             problems.append("email 1 has no evidence comment with a source URL")
 
