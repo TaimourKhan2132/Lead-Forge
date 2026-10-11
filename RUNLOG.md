@@ -246,6 +246,22 @@ Counts only. No lead names or scraped data are written to this file, so it is sa
   does and   reports the page as unread if it stays. - **Tag claims named in emails were checked a
   second way.** All nine were re-run in a visible   browser window and agreed with the headless
   result. - **Ready files** were written for the first two send days of the new plan.
+- - **2026-10-12: the public page.** The README was rebuilt to show the pipeline at work: a
+  banner, three   diagrams, and two GIFs. Every image is made from the fictional example by
+  `docs/make_assets.py`; the   terminal GIF is the real output of three commands, captured when
+  the script runs. No real business   appears in any image, test or example. - **The example now
+  includes an email.** `draft.py` and `lint_drafts.py` can run on any folder, so the   bundled
+  example has an email built by the real builder and a draft written to fail
+  (`examples/rejected.example.md`), which the linter refuses with nine reasons. - **The rules are
+  tests.** `tests/test_rules.py` covers the allowed and retired wording, the footer-year   reader,
+  the median comparisons, the send rules and the builders' refusals. A checks workflow runs   them
+  on every push. - **Licence: MIT.** Chosen as the conventional default for a portfolio project;
+  the operator can change it. - **Releases come from the changelog.** Pushing a `v*` tag runs a
+  workflow that publishes that version's   entry in `CHANGELOG.md` as the release notes. `v0.1.0`
+  marks the first public commit and `v0.2.0` the   rebuild. The workflow uses the token GitHub
+  gives it, so no credential is handled by hand. - **Left for the operator:** the repository's
+  description, topics and social preview image are set in   GitHub's own settings, which need a
+  signed-in browser.
 
 ## Open items
 
