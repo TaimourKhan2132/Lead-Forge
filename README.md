@@ -88,6 +88,7 @@ python src/discover.py queries/validation.txt validation --email
 python src/discover.py queries/agencies_gulf.txt agencies_gulf
 python src/merge_clutch.py data/raw/agencies_gulf.csv      # optional hand-made shortlist
 python src/enrich.py data/raw/agencies_gulf.csv
+python src/enrich.py data/raw/agencies_gulf.csv --only-status dead,http_error   # retry failures later
 
 # 3. Triage, qualify, rank
 python src/shortlist.py --top 80                           # writes digests for the reasoning layer
@@ -136,12 +137,32 @@ src/
   pack.py           render a pack as Markdown and printable HTML
   lint_drafts.py    check outreach drafts against the house rules
   track.py          SQLite outreach tracker
+  us_track.py       a second track: agencies that buy build work, not lead packs
+  audit_public.py   confirm nothing from data/ ever reached git history
 examples/           a sample pack built from fictional data
 outreach/           pricing and (gitignored) drafts
 RUNLOG.md           every run: command, counts, failures
 ```
 
-`data/`, `packs/` and `outreach/drafts/` are gitignored. They hold real businesses.
+`data/`, `packs/`, `outreach/drafts/`, `outreach/us_track/` and `queries/packs/` are gitignored. They
+hold real businesses.
+
+### Before publishing
+
+```bash
+python src/audit_public.py --online
+```
+
+This searches every commit on every ref for each domain, business name and email address held in
+the local `data/` folder, checks the ignore rules, and tests the links in this README. It exits
+non-zero if anything real has leaked.
+
+### A second track
+
+Not every buyer sells to businesses that are on Google Maps. `us_track.py` handles agencies that
+would buy overflow build work instead: it reads each agency's own site for one specific thing to
+open with (a case study, a stack, a new service), records the source, and stops there. No rubric
+score and no sample pack, because neither would mean anything for that buyer.
 
 ## Qualification rubric
 

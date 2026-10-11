@@ -2,6 +2,7 @@
 
     python src/pack.py build <agency-domain>     # needs data/scored/packs/<agency-domain>.pack.json
     python src/pack.py fill                      # fill {{NAME}} etc. in packs, drafts and README from .env
+    python src/pack.py fill --readme-no-email    # same, but keep your email out of the public README
 
 The pack spec is the reasoning layer's selection: which ten candidates, which of their observed
 gaps matter to this agency, why, and an opener line. Names, links, contact details and the gap
@@ -21,7 +22,7 @@ from pathlib import Path
 from dotenv import load_dotenv
 from rich.console import Console
 
-from common import DRAFTS, PACKS, ROOT, SCORED, log_run, utf8_stdout
+from common import DRAFTS, PACKS, ROOT, SCORED, US_TRACK, log_run, utf8_stdout
 
 PLACEHOLDERS = {"{{NAME}}": "LEADFORGE_NAME", "{{EMAIL}}": "LEADFORGE_EMAIL",
                 "{{LINKEDIN}}": "LEADFORGE_LINKEDIN", "{{GITHUB}}": "LEADFORGE_GITHUB"}
@@ -179,14 +180,30 @@ def build(agency: str, spec_dir: Path = SCORED / "packs", out_dir: Path = PACKS)
     return 0
 
 
-def fill() -> int:
+def fill(readme: bool = True, readme_email: bool = True) -> int:
+    """Fill the placeholders. Packs and drafts are private; the README is the one public file."""
+    if not (ROOT / ".env").exists():
+        console.print("[red]No .env file. Copy .env.example to .env and put your details there, not in the example.[/red]")
+        return 2
     load_dotenv(ROOT / ".env")
     values = {token: os.getenv(var, "").strip() for token, var in PLACEHOLDERS.items()}
     missing = [var for token, var in PLACEHOLDERS.items() if not values[token]]
     if missing:
         console.print(f"[yellow]Not set in .env, left as placeholders: {', '.join(missing)}[/yellow]")
     changed = 0
-    for path in [*PACKS.glob("*.md"), *PACKS.glob("*.html"), *DRAFTS.glob("*.md"), ROOT / "README.md"]:
+    targets = [*PACKS.glob("*.md"), *PACKS.glob("*.html"), *DRAFTS.glob("*.md"), *US_TRACK.glob("*.md")]
+    if readme:
+        path = ROOT / "README.md"
+        text = original = path.read_text(encoding="utf-8")
+        if not readme_email:
+            text = text.replace(" · {{EMAIL}}", "")  # keep a personal address out of the public file
+        for token, value in values.items():
+            if value:
+                text = text.replace(token, value)
+        if text != original:
+            path.write_text(text, encoding="utf-8")
+            changed += 1
+    for path in targets:
         text = original = path.read_text(encoding="utf-8")
         for token, value in values.items():
             if value:
@@ -206,10 +223,13 @@ def main() -> int:
     p_build.add_argument("agency")
     p_build.add_argument("--spec-dir", type=Path, default=SCORED / "packs")
     p_build.add_argument("--out-dir", type=Path, default=PACKS)
-    sub.add_parser("fill", help="fill the {{...}} placeholders from .env")
+    p_fill = sub.add_parser("fill", help="fill the {{...}} placeholders from .env")
+    p_fill.add_argument("--skip-readme", action="store_true", help="fill packs and drafts only")
+    p_fill.add_argument("--readme-no-email", action="store_true",
+                        help="fill the README but leave your email address out of it")
     args = ap.parse_args()
     if args.cmd == "fill":
-        return fill()
+        return fill(readme=not args.skip_readme, readme_email=not args.readme_no_email)
     return build(args.agency, args.spec_dir.resolve(), args.out_dir.resolve())
 
 

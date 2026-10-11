@@ -112,16 +112,29 @@ Counts only. No lead names or scraped data are written to this file, so it is sa
   route is confirmed by hand. The hook for each message is tied to a source URL; two hooks are a
   named case study, one is a named service offer, and two are only a list of services, which the
   drafts say plainly.
+- **2026-10-11 â€” Public-safety audit before any push (`src/audit_public.py`).** The script reads
+  everything that must stay private from the local data folder (every domain and business name in
+  the raw files, every address found during enrichment, every lead in the tracker) and searches
+  each commit's patch and message on every ref for it. It also checks that the private folders are
+  ignored and were never committed, and that the README's links resolve. Listing titles made only
+  of generic words ("AI Automation Agency") are not treated as names, and form placeholders are
+  not treated as addresses; both rules are in the script. Nothing was pushed.
 
 ## Open items
 
 - **Docker path is untested.** `discover.py --engine docker` (gosom) is written but has never run
   on this machine, which has no Docker.
-- **No Clutch shortlist yet.** Paste `data/raw/clutch_shortlist.csv` (`name,website`), then run
-  `merge_clutch.py`, `enrich.py`, `shortlist.py` again.
-- **Placeholders are unfilled.** `{{NAME}}`, `{{EMAIL}}`, `{{LINKEDIN}}`, `{{GITHUB}}` remain in the
-  packs, drafts and README. Set them in `.env` and run `python src/pack.py fill`.
+- **No Gulf rows on the Clutch shortlist.** The shortlist that arrived on 2026-10-11 holds only
+  track=us agencies, which went to the US track. Nothing was merged into the Gulf list.
+- **Placeholders are unfilled, and `.env` does not exist.** `{{NAME}}`, `{{EMAIL}}`, `{{LINKEDIN}}`,
+  `{{GITHUB}}` remain in the packs, drafts and README. The operator's details were typed into
+  `.env.example`, which is a tracked file; that edit is uncommitted and must stay that way. Copy it
+  to `.env`, restore the example with `git checkout .env.example`, then run
+  `python src/pack.py fill` (add `--readme-no-email` to keep the address out of the public README).
+- **One US-track draft is blocked** until a way to deliver its message is confirmed by hand.
 - **Agency qualification has no browser pass.** Only pack prospects are re-tested in a browser.
+- **19 agencies are still unreachable** after the re-crawl, and 15 refuse the crawler outright.
+  They are unscored, not mis-described.
 
 ## Runs
 
