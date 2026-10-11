@@ -169,12 +169,17 @@ def main() -> int:
     ap.add_argument("--enriched", type=Path, default=ENRICHED)
     ap.add_argument("--top", type=int, default=80, help="how many leads go forward to qualification")
     ap.add_argument("--batch", type=int, default=10)
+    ap.add_argument("--domains", default="", help="only these domains (comma-separated), e.g. after a re-crawl")
+    ap.add_argument("--name", default="batch", help="prefix for the digest files; use with --domains")
     args = ap.parse_args()
+    only = {d.strip().lower() for d in args.domains.split(",") if d.strip()}
 
     rows, skipped = [], Counter()
     records = {}
     for path in sorted(args.enriched.glob("*.json")):
         rec = json.loads(path.read_text(encoding="utf-8"))
+        if only and (rec.get("domain") or path.stem).lower() not in only:
+            continue
         points, reason = triage(rec)
         if reason:
             skipped[reason.split(":")[0]] += 1
@@ -184,17 +189,19 @@ def main() -> int:
     # Clutch leads are hand-picked by the operator, so they go first whenever they are usable.
     rows.sort(key=lambda r: (bool(r["skip_reason"]), r["source"] != "clutch", -r["triage"]))
     SCORED.mkdir(parents=True, exist_ok=True)
-    pd.DataFrame(rows).to_csv(SCORED / "_triage.csv", index=False, encoding="utf-8")
+    # A partial run must not overwrite the full triage table or the main digest batches.
+    pd.DataFrame(rows).to_csv(SCORED / ("_triage.csv" if not only else f"_triage_{args.name}.csv"),
+                              index=False, encoding="utf-8")
 
     chosen = [r for r in rows if not r["skip_reason"]][:args.top]
     digest_dir = SCORED / "_digests"
     digest_dir.mkdir(exist_ok=True)
-    for old in digest_dir.glob("batch_*.md"):
+    for old in digest_dir.glob(f"{args.name}_*.md"):
         old.unlink()
     for i in range(0, len(chosen), args.batch):
         batch = chosen[i:i + args.batch]
         body = "\n\n".join(digest(records[r["domain"]], r["triage"]) for r in batch)
-        (digest_dir / f"batch_{i // args.batch + 1:02d}.md").write_text(body + "\n", encoding="utf-8")
+        (digest_dir / f"{args.name}_{i // args.batch + 1:02d}.md").write_text(body + "\n", encoding="utf-8")
 
     counts = {"enriched": len(rows), "eligible": sum(not r["skip_reason"] for r in rows),
               "shortlisted": len(chosen), "batches": -(-len(chosen) // args.batch)}

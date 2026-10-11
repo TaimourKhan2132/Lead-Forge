@@ -78,6 +78,12 @@ Counts only. No lead names or scraped data are written to this file, so it is sa
   a closer look: a listing whose website link uses a www host with no DNS record. Two public
   resolvers agreed, and the bare domain resolves, so the pack reports a broken link on the listing
   and not a dead business.
+- **2026-10-11 â€” Re-crawl of the agencies marked dead.** `enrich.py --only-status
+  dead,http_error` re-fetched the 22 dead and 7 erroring agencies with the https retry in place.
+  Three of the 22 are live: one only answers on https, two had failed transiently the first time.
+  19 are still dead and all 7 errors still error. The three were scored through the normal gate:
+  two tier B and one tier C (a development shop with an offshore sales line). None reaches tier A,
+  so the pack order is unchanged. 73 agencies are now scored: 20 A, 44 B, 9 C.
 
 ## Open items
 

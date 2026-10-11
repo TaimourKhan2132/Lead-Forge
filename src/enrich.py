@@ -2,6 +2,7 @@
 
     python src/enrich.py data/raw/agencies_gulf.csv                 # full: up to 6 pages per site
     python src/enrich.py data/raw/pack_x.csv --mode light --out data/enriched/packs/x
+    python src/enrich.py data/raw/agencies_gulf.csv --only-status dead,http_error   # re-crawl failures
 
 Writes one JSON per lead. Every extracted claim is also recorded in `evidence` as
 {field, value, source_url, snippet}, so nothing downstream has to be taken on trust.
@@ -335,7 +336,7 @@ def count_matches(patterns: dict[str, str], text: str) -> dict[str, tuple[int, r
 
 # --------------------------------------------------------------------------- per-site enrichment
 
-async def enrich_site(client, insecure, lead: dict, mode: str) -> dict:
+async def enrich_site(client, insecure, lead: dict, mode: str, kinds: list[str] | None = None) -> dict:
     site_domain = lead.get("root_domain") or root_domain(lead.get("website", ""))
     record = {
         "domain": site_domain, "name": lead.get("title", ""), "source": lead.get("source", "maps"),
@@ -391,7 +392,7 @@ async def enrich_site(client, insecure, lead: dict, mode: str) -> dict:
             return record
 
     home_soup = BeautifulSoup(home.html, "lxml")
-    wanted = ["contact"] if mode == "light" else [k for k, _ in PAGE_KINDS]
+    wanted = ["contact"] if mode == "light" else (kinds or [k for k, _ in PAGE_KINDS])
     links = pick_pages(home.url, home_soup, final_domain or site_domain, wanted)
     fetched: list[tuple[str, Fetched]] = [("home", home)]
     budget = (2 if mode == "light" else MAX_PAGES) - 1
@@ -616,7 +617,8 @@ def output_name(lead: dict) -> str:
     return lead.get("root_domain") or slugify(lead.get("title", "")) + "-" + (lead.get("place_id", "")[-6:] or "x")
 
 
-async def enrich_all(leads: list[dict], out_dir: Path, mode: str, concurrency: int, force: bool) -> tuple[Counter, list[str]]:
+async def enrich_all(leads: list[dict], out_dir: Path, mode: str, concurrency: int, force: bool,
+                     kinds: list[str] | None = None) -> tuple[Counter, list[str]]:
     out_dir.mkdir(parents=True, exist_ok=True)
     counts: Counter = Counter()
     failures: list[str] = []
@@ -631,7 +633,7 @@ async def enrich_all(leads: list[dict], out_dir: Path, mode: str, concurrency: i
             return
         async with sem:
             try:
-                record = await asyncio.wait_for(enrich_site(client, insecure, lead, mode), timeout=150)
+                record = await asyncio.wait_for(enrich_site(client, insecure, lead, mode, kinds), timeout=150)
             except Exception as exc:  # one bad site must not sink the batch
                 failures.append(f"{output_name(lead)}: {type(exc).__name__}: {str(exc)[:80]}")
                 record = {"domain": lead.get("root_domain", ""), "name": lead.get("title", ""),
@@ -686,12 +688,32 @@ def main() -> int:
     ap.add_argument("--limit", type=int, default=0)
     ap.add_argument("--concurrency", type=int, default=8)
     ap.add_argument("--force", action="store_true", help="re-fetch leads that already have a JSON")
+    ap.add_argument("--only-status", default="",
+                    help="re-fetch only leads whose saved JSON has one of these statuses, e.g. dead,http_error")
+    ap.add_argument("--kinds", default="",
+                    help="page kinds to fetch after the homepage, in priority order (full mode), "
+                         "e.g. services,about,work,contact")
     args = ap.parse_args()
 
     leads = pd.read_csv(args.csv, dtype=str).fillna("").to_dict("records")
     if args.limit:
         leads = leads[:args.limit]
-    counts, failures = asyncio.run(enrich_all(leads, args.out, args.mode, min(args.concurrency, 8), args.force))
+    force = args.force
+    if args.only_status:
+        statuses = {x.strip() for x in args.only_status.split(",") if x.strip()}
+
+        def saved_status(lead: dict) -> str:
+            path = args.out / f"{output_name(lead)}.json"
+            return json.loads(path.read_text(encoding="utf-8")).get("status", "") if path.exists() else ""
+
+        leads = [lead for lead in leads if saved_status(lead) in statuses]
+        force = True
+    kinds = [k.strip() for k in args.kinds.split(",") if k.strip()] or None
+    unknown = set(kinds or []) - {k for k, _ in PAGE_KINDS}
+    if unknown:
+        console.print(f"[red]Unknown page kinds: {sorted(unknown)}. Valid: {[k for k, _ in PAGE_KINDS]}[/red]")
+        return 2
+    counts, failures = asyncio.run(enrich_all(leads, args.out, args.mode, min(args.concurrency, 8), force, kinds))
     summary = {"leads": len(leads), **dict(sorted(counts.items()))}
     # Sample-pack runs are named after the agency they are for; keep that out of the public log.
     redact = (args.csv.stem[5:],) if args.csv.stem.startswith("pack_") else ()
