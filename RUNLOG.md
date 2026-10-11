@@ -84,6 +84,13 @@ Counts only. No lead names or scraped data are written to this file, so it is sa
   19 are still dead and all 7 errors still error. The three were scored through the normal gate:
   two tier B and one tier C (a development shop with an offshore sales line). None reaches tier A,
   so the pack order is unchanged. 73 agencies are now scored: 20 A, 44 B, 9 C.
+- **2026-10-11 â€” Recipient check where the brand and the domain differ.** One tier A agency
+  trades under a name that does not match its domain, and its draft goes to an address on that
+  domain. Checked on its own site: the site served at the domain carries the brand name in its
+  title, og:site_name and footer; its Organization structured data names the brand and gives that
+  exact address as the sales contact; the founder's portrait is captioned with his name and the
+  brand; and it is the only address published on the homepage and contact page. Confirmed, so the
+  draft stays ready. The evidence is recorded under the draft.
 
 ## Open items
 
