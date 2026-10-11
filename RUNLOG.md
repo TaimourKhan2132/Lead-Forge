@@ -68,6 +68,16 @@ Counts only. No lead names or scraped data are written to this file, so it is sa
 - **2026-10-10 — Tracker test.** One lead was marked `sent` to confirm the follow-up dates are set
   (day 3 and day 7), then reset to `drafted`. Nothing was sent.
 - **2026-10-10 — Phase 9 not started,** as instructed. It waits until 10 emails have gone out.
+- **2026-10-11 â€” Packs 6 to 10, approved by the operator.** Built for the next five tier A
+  agencies by score, skipping two the operator ruled out: one sells data services itself, one is
+  too large. Same process as packs 1 to 5: the niche comes from the agency's own site (a portfolio
+  project, a case study, a line of homepage copy), then discovery, light enrichment, gaps, two
+  browser passes, and only then selection. One agency's site names no sector, so its pack says so
+  in the first paragraph and explains the niche chosen for it. Across the five packs all 89
+  browser-checkable gaps are confirmed; 27 others were dropped in verification. One finding needed
+  a closer look: a listing whose website link uses a www host with no DNS record. Two public
+  resolvers agreed, and the bare domain resolves, so the pack reports a broken link on the listing
+  and not a dead business.
 
 ## Open items
 
@@ -379,4 +389,205 @@ Counts only. No lead names or scraped data are written to this file, so it is sa
 ### 2026-10-10T19:21:18+05:00
 - **Command:** `python src/qualify.py summary --top 15`
 - **Counts:** scored=70, tier_A=20, tier_B=42, tier_C=8
+- **Failures:** none
+
+### 2026-10-11T12:31:29+05:00
+- **Command:** `python src/discover.py queries/packs/<agency>.txt pack_<agency> --concurrency 2`
+- **Counts:** queries=5, raw_rows=107, unique=89, with_site=79, platform_only=1, no_website=9, with_email=0, with_review_count=87
+- **Failures:** none
+- **Notes:** engine=playwright, output=data/raw/pack_<agency>.csv
+
+### 2026-10-11T12:32:36+05:00
+- **Command:** `python src/enrich.py data/raw/agencies_gulf.csv --only-status dead,http_error`
+- **Counts:** leads=29, dead=19, http_error=7, ok=3
+- **Failures:** none
+
+### 2026-10-11T12:32:57+05:00
+- **Command:** `python src/shortlist.py --domains <3 domains> --name recrawl`
+- **Counts:** enriched=3, eligible=3, shortlisted=3, batches=1
+- **Failures:** none
+- **Notes:** skipped: none
+
+### 2026-10-11T12:33:22+05:00
+- **Command:** `python src/enrich.py data/raw/pack_<agency>.csv --mode light --out data/enriched/packs/<agency>`
+- **Counts:** leads=89, blocked=6, dead=3, no_website=9, ok=69, parked=1, platform_only=1
+- **Failures:** none
+
+### 2026-10-11T12:33:25+05:00
+- **Command:** `python src/prospects.py <agency> --niche car rental --want no_booking,booking_cta_only,low_rating,no_site,platform_site,dead_site,no_meta_description,no_ads_tags --min-reviews 20 --max-reviews 3000 --digest 30`
+- **Counts:** listings=89, candidates=74, dropped=15, median_reviews=206
+- **Failures:** none
+
+### 2026-10-11T12:33:26+05:00
+- **Command:** `python src/qualify.py ingest data/scored/_batches/batch_09_recrawl.json`
+- **Counts:** verdicts=3, written=3, rejected=0
+- **Failures:** none
+
+### 2026-10-11T12:33:29+05:00
+- **Command:** `python src/qualify.py summary --top 15`
+- **Counts:** scored=73, tier_A=20, tier_B=44, tier_C=9
+- **Failures:** none
+
+### 2026-10-11T12:35:47+05:00
+- **Command:** `python src/verify.py <agency> --want no_booking,booking_cta_only,low_rating,no_site,platform_site,dead_site,no_meta_description,no_ads_tags --top 30`
+- **Counts:** rendered=24, render_failed=0, gaps_confirmed=68, gaps_downgraded=1, gaps_removed=3
+- **Failures:** none
+
+### 2026-10-11T12:35:51+05:00
+- **Command:** `python src/us_track.py prepare`
+- **Counts:** shortlist_rows=5, us_rows=5
+- **Failures:** none
+
+### 2026-10-11T12:36:01+05:00
+- **Command:** `python src/enrich.py data/raw/us_track.csv --out data/enriched/us --kinds services,about,work,contact,team`
+- **Counts:** leads=5, ok=5
+- **Failures:** none
+
+### 2026-10-11T12:37:37+05:00
+- **Command:** `python src/verify.py <agency> --want no_booking,booking_cta_only,low_rating,no_site,platform_site,dead_site,no_meta_description,no_ads_tags --top 30 --force`
+- **Counts:** rendered=23, render_failed=0, gaps_confirmed=66, gaps_downgraded=0, gaps_removed=1
+- **Failures:** none
+
+### 2026-10-11T12:38:20+05:00
+- **Command:** `python src/discover.py queries/packs/<agency>.txt pack_<agency> --concurrency 2`
+- **Counts:** queries=5, raw_rows=102, unique=94, with_site=88, platform_only=0, no_website=6, with_email=0, with_review_count=94
+- **Failures:** none
+- **Notes:** engine=playwright, output=data/raw/pack_<agency>.csv
+
+### 2026-10-11T12:39:09+05:00
+- **Command:** `python src/pack.py build <agency>`
+- **Counts:** prospects=10, files=2
+- **Failures:** none
+
+### 2026-10-11T12:39:25+05:00
+- **Command:** `python src/pack.py build <agency>`
+- **Counts:** prospects=10, files=2
+- **Failures:** none
+
+### 2026-10-11T12:39:34+05:00
+- **Command:** `python src/enrich.py data/raw/pack_<agency>.csv --mode light --out data/enriched/packs/<agency>`
+- **Counts:** leads=94, blocked=2, dead=3, http_error=1, no_website=6, ok=82
+- **Failures:** none
+
+### 2026-10-11T12:39:37+05:00
+- **Command:** `python src/prospects.py <agency> --niche real estate agency --want no_ads_tags,no_socials,no_meta_description,stale,no_site,platform_site,dead_site,low_reviews --min-reviews 15 --max-reviews 600 --digest 30`
+- **Counts:** listings=94, candidates=80, dropped=14, median_reviews=89
+- **Failures:** none
+
+### 2026-10-11T12:41:29+05:00
+- **Command:** `python src/verify.py <agency> --want no_ads_tags,no_socials,no_meta_description,stale,no_site,platform_site,dead_site,low_reviews --top 30`
+- **Counts:** rendered=25, render_failed=1, gaps_confirmed=76, gaps_downgraded=1, gaps_removed=5
+- **Failures:** none
+
+### 2026-10-11T12:43:12+05:00
+- **Command:** `python src/verify.py <agency> --want no_ads_tags,no_socials,no_meta_description,stale,no_site,platform_site,dead_site,low_reviews --top 30 --force`
+- **Counts:** rendered=25, render_failed=0, gaps_confirmed=77, gaps_downgraded=0, gaps_removed=0
+- **Failures:** none
+
+### 2026-10-11T12:43:58+05:00
+- **Command:** `python src/discover.py queries/packs/<agency>.txt pack_<agency> --concurrency 2`
+- **Counts:** queries=5, raw_rows=104, unique=102, with_site=71, platform_only=8, no_website=23, with_email=0, with_review_count=102
+- **Failures:** none
+- **Notes:** engine=playwright, output=data/raw/pack_<agency>.csv
+
+### 2026-10-11T12:44:11+05:00
+- **Command:** `python src/pack.py build <agency>`
+- **Counts:** prospects=10, files=2
+- **Failures:** none
+
+### 2026-10-11T12:44:50+05:00
+- **Command:** `python src/enrich.py data/raw/pack_<agency>.csv --mode light --out data/enriched/packs/<agency>`
+- **Counts:** leads=102, blocked=4, dead=3, no_website=23, ok=63, placeholder=1, platform_only=8
+- **Failures:** none
+
+### 2026-10-11T12:44:52+05:00
+- **Command:** `python src/prospects.py <agency> --niche beauty salon --want no_meta_description,no_ads_tags,no_socials,no_site,platform_site,dead_site,low_reviews,no_booking --min-reviews 20 --max-reviews 2500 --digest 30`
+- **Counts:** listings=102, candidates=91, dropped=11, median_reviews=298
+- **Failures:** none
+
+### 2026-10-11T12:46:09+05:00
+- **Command:** `python src/verify.py <agency> --want no_meta_description,no_ads_tags,no_socials,no_site,platform_site,dead_site,low_reviews,no_booking --top 30`
+- **Counts:** rendered=18, render_failed=0, gaps_confirmed=52, gaps_downgraded=0, gaps_removed=6
+- **Failures:** none
+
+### 2026-10-11T12:47:20+05:00
+- **Command:** `python src/verify.py <agency> --want no_meta_description,no_ads_tags,no_socials,no_site,platform_site,dead_site,low_reviews,no_booking --top 30 --force`
+- **Counts:** rendered=17, render_failed=0, gaps_confirmed=51, gaps_downgraded=0, gaps_removed=0
+- **Failures:** none
+
+### 2026-10-11T12:48:14+05:00
+- **Command:** `python src/discover.py queries/packs/<agency>.txt pack_<agency> --concurrency 2`
+- **Counts:** queries=5, raw_rows=104, unique=66, with_site=60, platform_only=0, no_website=6, with_email=0, with_review_count=66
+- **Failures:** none
+- **Notes:** engine=playwright, output=data/raw/pack_<agency>.csv
+
+### 2026-10-11T12:48:25+05:00
+- **Command:** `python src/pack.py build <agency>`
+- **Counts:** prospects=10, files=2
+- **Failures:** none
+
+### 2026-10-11T12:48:52+05:00
+- **Command:** `python src/enrich.py data/raw/pack_<agency>.csv --mode light --out data/enriched/packs/<agency>`
+- **Counts:** leads=66, blocked=2, dead=3, no_website=6, ok=55
+- **Failures:** none
+
+### 2026-10-11T12:48:54+05:00
+- **Command:** `python src/prospects.py <agency> --niche cleaning company --want no_chat,no_ads_tags,no_meta_description,no_booking,low_reviews,no_site,platform_site,dead_site --min-reviews 15 --max-reviews 3000 --digest 30`
+- **Counts:** listings=66, candidates=54, dropped=12, median_reviews=199
+- **Failures:** none
+
+### 2026-10-11T12:50:32+05:00
+- **Command:** `python src/verify.py <agency> --want no_chat,no_ads_tags,no_meta_description,no_booking,low_reviews,no_site,platform_site,dead_site --top 30`
+- **Counts:** rendered=24, render_failed=0, gaps_confirmed=55, gaps_downgraded=0, gaps_removed=4
+- **Failures:** none
+
+### 2026-10-11T12:52:14+05:00
+- **Command:** `python src/verify.py <agency> --want no_chat,no_ads_tags,no_meta_description,no_booking,low_reviews,no_site,platform_site,dead_site --top 30 --force`
+- **Counts:** rendered=24, render_failed=0, gaps_confirmed=55, gaps_downgraded=0, gaps_removed=0
+- **Failures:** none
+
+### 2026-10-11T12:53:10+05:00
+- **Command:** `python src/pack.py build <agency>`
+- **Counts:** prospects=10, files=2
+- **Failures:** none
+
+### 2026-10-11T12:53:11+05:00
+- **Command:** `python src/discover.py queries/packs/<agency>.txt pack_<agency> --concurrency 2`
+- **Counts:** queries=5, raw_rows=78, unique=52, with_site=39, platform_only=2, no_website=11, with_email=0, with_review_count=52
+- **Failures:** none
+- **Notes:** engine=playwright, output=data/raw/pack_<agency>.csv
+
+### 2026-10-11T12:53:38+05:00
+- **Command:** `python src/enrich.py data/raw/pack_<agency>.csv --mode light --out data/enriched/packs/<agency>`
+- **Counts:** leads=52, dead=2, no_website=11, ok=37, platform_only=2
+- **Failures:** none
+
+### 2026-10-11T12:53:40+05:00
+- **Command:** `python src/prospects.py <agency> --niche veterinary and pet care --want no_meta_description,no_ads_tags,no_booking,booking_cta_only,no_site,platform_site,dead_site,low_reviews --min-reviews 15 --max-reviews 3000 --digest 30`
+- **Counts:** listings=52, candidates=50, dropped=2, median_reviews=217
+- **Failures:** none
+
+### 2026-10-11T12:54:54+05:00
+- **Command:** `python src/verify.py <agency> --want no_meta_description,no_ads_tags,no_booking,booking_cta_only,no_site,platform_site,dead_site,low_reviews --top 30`
+- **Counts:** rendered=19, render_failed=0, gaps_confirmed=43, gaps_downgraded=3, gaps_removed=8
+- **Failures:** none
+
+### 2026-10-11T12:56:06+05:00
+- **Command:** `python src/verify.py <agency> --want no_meta_description,no_ads_tags,no_booking,booking_cta_only,no_site,platform_site,dead_site,low_reviews --top 30 --force`
+- **Counts:** rendered=17, render_failed=1, gaps_confirmed=45, gaps_downgraded=0, gaps_removed=0
+- **Failures:** none
+
+### 2026-10-11T12:57:00+05:00
+- **Command:** `python src/pack.py build <agency>`
+- **Counts:** prospects=10, files=2
+- **Failures:** none
+
+### 2026-10-11T12:57:26+05:00
+- **Command:** `python src/qualify.py ingest data/scored/_batches/batch_10_reposition.json`
+- **Counts:** verdicts=1, written=1, rejected=0
+- **Failures:** none
+
+### 2026-10-11T12:57:27+05:00
+- **Command:** `python src/qualify.py summary --top 15`
+- **Counts:** scored=73, tier_A=20, tier_B=44, tier_C=9
 - **Failures:** none
