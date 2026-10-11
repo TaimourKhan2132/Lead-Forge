@@ -148,6 +148,7 @@ src/
   prospects.py      observable gaps and fit signals per prospect, for a sample pack
   verify.py         re-test each gap against the rendered page in a real browser
   pack.py           render a pack as Markdown and printable HTML
+  draft.py          render an outreach draft from a spec, then lint it
   lint_drafts.py    check outreach drafts against the house rules
   track.py          SQLite outreach tracker: send plan, daily cap, follow-ups
   sample.py         a job description in, a 10-row sample and a short proposal out

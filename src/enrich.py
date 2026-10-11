@@ -252,7 +252,9 @@ def find_emails(html: str, soup: BeautifulSoup, text: str) -> list[str]:
     for tag in soup.find_all(attrs={"data-cfemail": True}):
         found.append(_decode_cfemail(tag["data-cfemail"]))
     found += EMAIL_RE.findall(text)
-    found += [m for m in EMAIL_RE.findall(html) if not m.lower().startswith(("u00", "x22", "22"))]
+    # "mailto:%20info@x.com" would otherwise be read as the address "20info@x.com".
+    unquoted = re.sub(r"%(?:20|3[aAeE]|22|27)", " ", html)
+    found += [m for m in EMAIL_RE.findall(unquoted) if not m.lower().startswith(("u00", "x22", "22"))]
     # Form hints ("yourname@gmail.com") are not contact addresses.
     placeholders = {m.lower() for tag in soup.find_all(attrs={"placeholder": True})
                     for m in EMAIL_RE.findall(str(tag["placeholder"]))}
