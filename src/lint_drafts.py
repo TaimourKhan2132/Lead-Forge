@@ -1,6 +1,7 @@
 """Check outreach drafts against the house rules before anything is sent by hand.
 
-    python src/lint_drafts.py
+    python src/lint_drafts.py                    # every draft in outreach/
+    python src/lint_drafts.py <file.md> ...      # just these files, checked as Gulf drafts
 
 Rules for outreach/drafts: subjects of 6 words or fewer; email 1 at 120 words or fewer with no
 links, the fixed call-to-action and a {{NAME}} sign-off; follow-ups at 50 and 40 words; a LinkedIn
@@ -17,6 +18,7 @@ from __future__ import annotations
 
 import re
 import sys
+from pathlib import Path
 
 from dotenv import dotenv_values
 from rich.console import Console
@@ -155,22 +157,24 @@ def lint_us(text: str) -> list[str]:
 def main() -> int:
     utf8_stdout()
     failed = total = blocked = 0
-    for folder, check in ((DRAFTS, lint), (US_TRACK, lint_us)):
-        for path in sorted(folder.glob("*.md")):
-            total += 1
-            text = path.read_text(encoding="utf-8")
-            problems = check(text)
-            label = f"{folder.name}/{path.name}"
-            if is_blocked(text):
-                blocked += 1
-                console.print(f"[yellow]blocked[/yellow] {label}")
-            elif problems:
-                failed += 1
-                console.print(f"[red]FAIL[/red] {label}")
-                for problem in problems:
-                    console.print(f"   - {problem}")
-            else:
-                console.print(f"[green]ok[/green]   {label}")
+    named = [Path(arg) for arg in sys.argv[1:]]
+    jobs = ([(path, lint, path.as_posix()) for path in named] if named else
+            [(path, check, f"{folder.name}/{path.name}")
+             for folder, check in ((DRAFTS, lint), (US_TRACK, lint_us)) for path in sorted(folder.glob("*.md"))])
+    for path, check, label in jobs:
+        total += 1
+        text = path.read_text(encoding="utf-8")
+        problems = check(text)
+        if is_blocked(text):
+            blocked += 1
+            console.print(f"[yellow]blocked[/yellow] {label}")
+        elif problems:
+            failed += 1
+            console.print(f"[red]FAIL[/red] {label}")
+            for problem in problems:
+                console.print(f"   - {problem}")
+        else:
+            console.print(f"[green]ok[/green]   {label}")
     console.print(f"{total - failed - blocked}/{total} drafts pass, {blocked} blocked")
     return 1 if failed else 0
 

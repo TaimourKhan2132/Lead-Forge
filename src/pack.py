@@ -237,7 +237,9 @@ def fill(readme: bool = True, readme_email: bool = True) -> int:
     if missing:
         console.print(f"[yellow]Not set in .env, left as placeholders: {', '.join(missing)}[/yellow]")
     examples = ROOT / "examples"
-    public = [ROOT / "README.md", *examples.glob("*.md"), *examples.glob("*.html")] if readme else []
+    # The draft written to fail keeps its placeholder: it is a fixture, and it is never sent.
+    examples_md = [p for p in examples.glob("*.md") if not p.name.startswith("rejected.")]
+    public = [ROOT / "README.md", *examples_md, *examples.glob("*.html")] if readme else []
     private = [*PACKS.glob("*.md"), *PACKS.glob("*.html"), *DRAFTS.glob("*.md"), *US_TRACK.glob("*.md")]
     changed = 0
     for path in [*public, *private]:

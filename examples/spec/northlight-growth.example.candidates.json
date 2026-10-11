@@ -325,7 +325,7 @@
   "address": "Al Karama, Dubai",
   "niche": "dental clinic",
   "maps_link": "https://maps.example/place/EXAMPLE10",
-  "website": "https://karamadentalpoint.example/",
+  "website": "http://karamadentalpoint.example/",
   "phone": "+971 4 555 0110",
   "emails": [
    "info@karamadentalpoint.example"
@@ -343,7 +343,8 @@
    {
     "key": "not_https",
     "detail": {
-     "https": "does not load"
+     "https": "does not load",
+     "https_url": "https://karamadentalpoint.example/"
     },
     "checked": "2026-10-11",
     "source_url": "https://karamadentalpoint.example/"
@@ -355,7 +356,7 @@
      "line": "© 2018 Karama Dental Point. All rights reserved"
     },
     "checked": "2026-10-11",
-    "source_url": "https://karamadentalpoint.example/"
+    "source_url": "http://karamadentalpoint.example/"
    }
   ]
  }

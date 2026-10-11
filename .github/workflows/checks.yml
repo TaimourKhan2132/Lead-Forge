@@ -1,0 +1,40 @@
+name: checks
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  rules:
+    name: rules hold
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+
+      - name: Install
+        run: pip install -r requirements.txt -r requirements-dev.txt
+
+      - name: Everything compiles
+        run: python -m compileall -q src examples tests
+
+      # The fictional pack and email are built by the same code that builds real ones.
+      - name: Build the example pack and email
+        run: python examples/make_example.py
+
+      - name: The linter refuses the old-style email
+        run: |
+          if python src/lint_drafts.py examples/rejected.example.md; then
+            echo "The linter passed a draft that uses retired signals." && exit 1
+          fi
+
+      - name: Tests
+        run: python -m pytest -q

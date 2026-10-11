@@ -2,6 +2,7 @@
 
     python src/draft.py build <agency-domain>     # needs data/scored/drafts/<agency-domain>.draft.json
     python src/draft.py quotes [<agency-domain>]  # is what line 1 quotes still on the agency's site today?
+    python src/draft.py build <name> --spec-dir examples/spec --out-dir examples   # the bundled example
 
 The spec is the reasoning layer's wording: the subject lines, the opening line about the agency
 (with the evidence for it), which three businesses from the pack to name, and the follow-ups. The
@@ -28,6 +29,7 @@ import os
 import re
 import sys
 from html import unescape as html_unescape
+from pathlib import Path
 
 from dotenv import dotenv_values
 from rich.console import Console
@@ -43,11 +45,11 @@ CTA = "Want the other 7? Just reply yes."
 console = Console()
 
 
-def named(spec: dict) -> list[dict]:
+def named(spec: dict, pack_dir: Path = SCORED / "packs") -> list[dict]:
     """The three businesses the email names: the line about each, and what to open to check it."""
     if not spec.get("picks"):
         return []
-    _, rows = load_pack(spec["domain"], SCORED / "packs")
+    _, rows = load_pack(spec["domain"], pack_dir)
     by_key = {row["key"]: row for row in rows}
     out = []
     for pick in spec["picks"]:
@@ -111,9 +113,11 @@ def claims(gap: dict, row: dict) -> list[tuple[str, str]]:
     return [("the quoted words are on this page", gap["source_url"])]
 
 
-def render(spec: dict) -> str:
+def render(spec: dict, pack_dir: Path = SCORED / "packs", pack_folder: str = "packs") -> str:
     domain = spec["domain"]
-    scored = json.loads((SCORED / f"{domain}.json").read_text(encoding="utf-8"))
+    record = SCORED / f"{domain}.json"
+    # A real draft takes its score from the scored record. The bundled example carries its own.
+    scored = json.loads(record.read_text(encoding="utf-8")) if record.exists() else spec["score"]
     name = (dotenv_values(ROOT / ".env").get("LEADFORGE_NAME") or "").strip() or "{{NAME}}"
     greeting = spec.get("greeting", "Hello,")
     header = [f"# Outreach: {spec['agency']} ({domain})", "", f"- **To:** {spec['to']}",
@@ -121,17 +125,19 @@ def render(spec: dict) -> str:
     if spec.get("status", "").upper().startswith("BLOCKED"):
         header += [f"- **Score:** {scored['score']}, tier {scored['tier']}", f"- **Status:** {spec['status']}", ""]
         return "\n".join(header + spec.get("notes", []) + [""])
-    header += [f"- **Pack:** `packs/{domain}.html` ({spec['pack_note']}). Do not attach it to email 1.",
+    header += [f"- **Pack:** `{pack_folder}/{domain}.html` ({spec['pack_note']}). Do not attach it to email 1.",
                f"- **Score:** {scored['score']}, tier {scored['tier']}"]
     header += [f"- {note}" for note in spec.get("notes", [])]
     header += ["", "Send as plain text." if name != "{{NAME}}" else "Send as plain text. Replace `{{NAME}}` before sending.", ""]
     subjects = ["## Subject lines", ""] + [f"{i}. {s}" for i, s in enumerate(spec["subjects"], 1)] + [""]
-    people = named(spec)
+    people = named(spec, pack_dir)
     items = [p["line"] for p in people] or spec["items"]
     email = ["## Email 1", "", greeting, "", spec["line1"], "", spec["line2"], ""] + items
     email += ([""] + [spec["proof"]] if spec.get("proof") else []) + ["", CTA, "", name, "", "<!--"] + spec["evidence"] + ["-->", ""]
     seen = json.loads(LINE1_RESULTS.read_text(encoding="utf-8")).get(domain) if LINE1_RESULTS.exists() else None
-    if seen is None:
+    if spec.get("line1_note"):
+        state = spec["line1_note"]
+    elif seen is None:
         state = "not checked yet; run `draft.py quotes`"
     elif seen["ok"]:
         state = f"its quoted words were on the page on {seen['checked']}"
@@ -150,24 +156,28 @@ def render(spec: dict) -> str:
     return "\n".join(header + subjects + email + check + follow_ups)
 
 
-def build(domain: str) -> int:
-    spec = json.loads((SPECS / f"{domain}.draft.json").read_text(encoding="utf-8"))
+def build(domain: str, spec_dir: Path = SPECS, out_dir: Path = DRAFTS) -> int:
+    spec = json.loads((spec_dir / f"{domain}.draft.json").read_text(encoding="utf-8"))
+    real = out_dir == DRAFTS  # the bundled example is not a pipeline run, and its pack sits beside it
     try:
-        text = render(spec)
+        text = render(spec) if real else render(spec, spec_dir, out_dir.name)
     except ValueError as exc:
         console.print(f"[red]Draft spec rejected for {domain}:\n{exc}[/red]")
         return 1
-    DRAFTS.mkdir(parents=True, exist_ok=True)
-    (DRAFTS / f"{domain}.md").write_text(text, encoding="utf-8")
+    out_dir.mkdir(parents=True, exist_ok=True)
+    target = out_dir / (f"{domain}.md" if real else f"{domain}.email.md")
+    target.write_text(text, encoding="utf-8")
     problems = lint(text)
-    log_run(f"python src/draft.py build {domain}", {"lint_problems": len(problems)}, redact=(domain,))
+    if real:
+        log_run(f"python src/draft.py build {domain}", {"lint_problems": len(problems)}, redact=(domain,))
+    shown = f"{'outreach/drafts' if real else out_dir.name}/{target.name}"
     if problems:
-        console.print(f"[red]FAIL[/red] outreach/drafts/{domain}.md")
+        console.print(f"[red]FAIL[/red] {shown}")
         for problem in problems:
             console.print(f"   - {problem}")
         return 1
     blocked = spec.get("status", "").upper().startswith("BLOCKED")
-    console.print(f"[{'yellow]blocked' if blocked else 'green]ok'}[/]   outreach/drafts/{domain}.md")
+    console.print(f"[{'yellow]blocked' if blocked else 'green]ok'}[/]   {shown}")
     return 0
 
 
@@ -272,11 +282,15 @@ def main() -> int:
     sub = ap.add_subparsers(dest="cmd", required=True)
     p_build = sub.add_parser("build", help="render and lint one agency's draft")
     p_build.add_argument("agency")
+    p_build.add_argument("--spec-dir", type=Path, default=SPECS)
+    p_build.add_argument("--out-dir", type=Path, default=DRAFTS)
     p_quotes = sub.add_parser("quotes", help="confirm line 1's quoted words on the agency's rendered page")
     p_quotes.add_argument("agency", nargs="*", help="omit to check every draft")
     p_quotes.add_argument("--no-browser", action="store_true", help="plain requests only; report what they could not find")
     args = ap.parse_args()
-    return quotes(args.agency, browser=not args.no_browser) if args.cmd == "quotes" else build(args.agency)
+    if args.cmd == "quotes":
+        return quotes(args.agency, browser=not args.no_browser)
+    return build(args.agency, args.spec_dir.resolve(), args.out_dir.resolve())
 
 
 if __name__ == "__main__":

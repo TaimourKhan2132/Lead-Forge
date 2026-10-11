@@ -121,7 +121,10 @@ python src/us_track.py prepare                               # second track: age
 python src/us_track.py digest                                # what their own sites say, to write from
 python src/sample.py --brief "<job description>"             # a 10-row sample and a short proposal
 python src/audit_public.py --online                          # must pass before every push
-python examples/make_example.py                              # rebuild the fictional example pack
+python examples/make_example.py                              # rebuild the fictional example pack and email
+python src/lint_drafts.py <file.md>                          # lint one file (examples/rejected.example.md must fail)
+python -m pytest                                             # the rules, as tests (needs requirements-dev.txt)
+python docs/make_assets.py                                   # regenerate the README's GIFs from fictional data
 ```
 
 Use `./.venv/Scripts/python.exe` on this machine. There is no Docker, so discovery runs through the
@@ -166,7 +169,10 @@ When this conversation is compacted, keep all of the following word for word in 
 - **Commands:** `discover.py`, `merge_clutch.py`, `enrich.py`, `shortlist.py`, `qualify.py ingest`
   and `summary`, `prospects.py`, `verify.py`, `pack.py build` and `fill`, `draft.py build` and `quotes`,
   `lint_drafts.py`, `track.py sync`, `plan`, `ready`, `today`, `mark` and `list`, `us_track.py prepare`
-  and `digest`, `sample.py --brief`, `audit_public.py --online`, `examples/make_example.py`. Run
+  and `digest`, `sample.py --brief`, `audit_public.py --online`, `examples/make_example.py`, `python -m pytest`,
+  `docs/make_assets.py`. Run
   them with `./.venv/Scripts/python.exe`.
+- The README's images and examples show fictional data only. Never put a real business in a
+  screenshot, GIF, test or example.
 - Also keep: which drafts are `BLOCKED` and why, which emails have been sent and on what date, and
   the path of the current ready file.

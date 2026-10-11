@@ -10,8 +10,8 @@
   "not_https": "Browsers mark the site Not secure before a patient reads a word. Moving it to https is a small first job that opens the door to the rest.",
   "stale": "A footer that still says {year} suggests nobody has touched the site since, which is the redesign conversation.",
   "no_ads_tags": "No Google tag or Meta Pixel means no paid search or paid social is being measured here, so a Google Ads account would start clean.",
-  "low_reviews": "{reviews} reviews against a median of {median} nearby: a local SEO and review-request job.",
-  "low_rating": "A {rating} rating against a median of {median} is the first thing a new patient sees, which is where local SEO work has to start."
+  "low_reviews": "{reviews} reviews against a median of {median} in the same searches: a local SEO and review-request job.",
+  "low_rating": "A {rating} rating, where the median in the same searches is {median}, is the first thing a new patient sees. That is where local SEO work has to start."
  },
  "method": "Illustrative pack: every business is fictional, so nothing was searched or opened. A real pack states here the date of its Maps searches and the date each listing and website was opened in a browser, and what was checked.",
  "prospects": [

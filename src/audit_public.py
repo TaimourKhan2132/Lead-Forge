@@ -136,6 +136,11 @@ def check_readme(online: bool) -> list[str]:
         path = target.split("#")[0]
         if path and path not in tracked:
             problems.append(f"README links to {path}, which is not a tracked file")
+    # Images and links written as HTML: a file the README shows has to be one that is published.
+    for target in re.findall(r"""(?:src|href)=["']([^"']+)["']""", text):
+        path = target.split("#")[0]
+        if path and not target.startswith(("http://", "https://", "mailto:")) and path not in tracked:
+            problems.append(f"README shows {path}, which is not a tracked file")
     if re.search(r"\{\{[A-Z]+\}\}", text):
         problems.append("README still contains unfilled {{...}} placeholders")
     for path in sorted((ROOT / "examples").glob("northlight*")):

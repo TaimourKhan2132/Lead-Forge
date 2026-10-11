@@ -1,0 +1,64 @@
+{
+ "domain": "northlight-growth.example",
+ "agency": "Northlight Growth",
+ "to": "hello@northlight-growth.example",
+ "addressed_to": "Dana Whitfield, Founder (fictional)",
+ "greeting": "Hi Dana,",
+ "pack_note": "10 dental clinics in Dubai",
+ "score": {
+  "score": 81,
+  "tier": "A"
+ },
+ "subjects": [
+  "10 Dubai dental clinics",
+  "Clinics with no website",
+  "Prospects for Northlight Growth"
+ ],
+ "line1": "Your services page lists website builds, Google Ads management and local SEO for clinics.",
+ "line1_checks": [
+  {
+   "url": "https://northlight-growth.example/services",
+   "quotes": [
+    "website builds",
+    "Google Ads management",
+    "local SEO"
+   ]
+  }
+ ],
+ "line1_note": "illustration: the agency is fictional, so there is no page to check",
+ "line2": "I run a lead-research pipeline. It found 10 dental clinics in Dubai that fit what you sell. Three of them:",
+ "picks": [
+  {
+   "key": "listing-01",
+   "name": "Marina Pearl Dental Studio",
+   "gaps": [
+    "no_site"
+   ],
+   "rating": true
+  },
+  {
+   "key": "karamadentalpoint.example",
+   "name": "Karama Dental Point",
+   "gaps": [
+    "not_https",
+    "stale"
+   ]
+  },
+  {
+   "key": "creeksidedental.example",
+   "name": "Creekside Dental & Implant Clinic",
+   "gaps": [
+    "low_rating"
+   ]
+  }
+ ],
+ "evidence": [
+  "Evidence for line 1: in a real draft this comment quotes the words on the agency's own page that the",
+  "opening line relies on, and `draft.py quotes` confirms they are still there on the day.",
+  "Source: https://northlight-growth.example/services",
+  "The three clinics and their signals: examples/northlight-growth.example.md, items 1, 10 and 5."
+ ],
+ "fu1": "The 10 Dubai dental clinics are on one page: name, contact, what the listing or site shows, and the link to check it. Three have no website on their Google listing.",
+ "fu2": "I will leave it here. If a list of Dubai clinics with no website, or one years out of date, would be useful later, reply to this and I will send the pack.",
+ "linkedin": "Hi Dana, I run a lead-research pipeline. It found 10 Dubai dental clinics with no website on their Google listing, no https, or a footer years out of date, which looked like a fit for your website and SEO work. Happy to send the list if it is useful."
+}

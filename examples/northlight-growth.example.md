@@ -35,8 +35,8 @@ Northlight Growth sells website builds, Google Ads management and local SEO to c
 - **What you can check:**
   - 31 Google reviews, against a median of 96 across the 58 dental clinic listings these searches returned. ([open](https://maps.example/place/EXAMPLE02))
   - No Google tag, Tag Manager or Meta Pixel on the homepage: none loaded in the 8 seconds after it opened, and none is named in the page's scripts. ([open](https://jltfamilydentistry.example/))
-- **Why it fits Northlight Growth:** 31 reviews against a median of 96 nearby: a local SEO and review-request job. No Google tag or Meta Pixel means no paid search or paid social is being measured here, so a Google Ads account would start clean.
-- **Suggested opener:** "You have 31 Google reviews where businesses like yours nearby have a median of 96."
+- **Why it fits Northlight Growth:** 31 reviews against a median of 96 in the same searches: a local SEO and review-request job. No Google tag or Meta Pixel means no paid search or paid social is being measured here, so a Google Ads account would start clean.
+- **Suggested opener:** "You have 31 Google reviews. The median for businesses like yours in the same searches is 96."
 
 ## 3. Al Barsha Smile Centre
 
@@ -58,7 +58,7 @@ Northlight Growth sells website builds, Google Ads management and local SEO to c
 - **What you can check:**
   - The Google Maps listing has no Website button. ([open](https://maps.example/place/EXAMPLE04))
   - 17 Google reviews, against a median of 96 across the 58 dental clinic listings these searches returned. ([open](https://maps.example/place/EXAMPLE04))
-- **Why it fits Northlight Growth:** With 17 reviews and no website on the listing, there is no page of its own to rank or to send ad traffic to. A first site is Northlight's entry project. 17 reviews against a median of 96 nearby: a local SEO and review-request job.
+- **Why it fits Northlight Growth:** With 17 reviews and no website on the listing, there is no page of its own to rank or to send ad traffic to. A first site is Northlight's entry project. 17 reviews against a median of 96 in the same searches: a local SEO and review-request job.
 - **Suggested opener:** "17 Google reviews, and no website on your Google listing for any of those people to visit."
 
 ## 5. Creekside Dental & Implant Clinic
@@ -70,8 +70,8 @@ Northlight Growth sells website builds, Google Ads management and local SEO to c
 - **What you can check:**
   - Rated 3.8 on Google from 143 reviews, against a median rating of 4.7 across the 51 dental clinic listings these searches returned. ([open](https://maps.example/place/EXAMPLE05))
   - No Google tag, Tag Manager or Meta Pixel on the homepage: none loaded in the 8 seconds after it opened, and none is named in the page's scripts. ([open](https://creeksidedental.example/))
-- **Why it fits Northlight Growth:** A 3.8 rating against a median of 4.7 is the first thing a new patient sees, which is where local SEO work has to start. No Google tag or Meta Pixel means no paid search or paid social is being measured here, so a Google Ads account would start clean.
-- **Suggested opener:** "Your Google rating is 3.8 from 143 reviews; the median nearby is 4.7."
+- **Why it fits Northlight Growth:** A 3.8 rating, where the median in the same searches is 4.7, is the first thing a new patient sees. That is where local SEO work has to start. No Google tag or Meta Pixel means no paid search or paid social is being measured here, so a Google Ads account would start clean.
+- **Suggested opener:** "Your Google rating is 3.8 from 143 reviews. The median for businesses like yours in the same searches is 4.7."
 
 ## 6. Palm View Dental
 
@@ -104,7 +104,7 @@ Northlight Growth sells website builds, Google Ads management and local SEO to c
 - **What you can check:**
   - The Google Maps listing has no Website button. ([open](https://maps.example/place/EXAMPLE08))
   - 22 Google reviews, against a median of 96 across the 58 dental clinic listings these searches returned. ([open](https://maps.example/place/EXAMPLE08))
-- **Why it fits Northlight Growth:** With 22 reviews and no website on the listing, there is no page of its own to rank or to send ad traffic to. A first site is Northlight's entry project. 22 reviews against a median of 96 nearby: a local SEO and review-request job.
+- **Why it fits Northlight Growth:** With 22 reviews and no website on the listing, there is no page of its own to rank or to send ad traffic to. A first site is Northlight's entry project. 22 reviews against a median of 96 in the same searches: a local SEO and review-request job.
 - **Suggested opener:** "22 Google reviews, and no website on your Google listing for any of those people to visit."
 
 ## 9. Jumeirah Aesthetic Dentistry
@@ -122,12 +122,12 @@ Northlight Growth sells website builds, Google Ads management and local SEO to c
 ## 10. Karama Dental Point
 
 - **Maps:** https://maps.example/place/EXAMPLE10
-- **Website:** https://karamadentalpoint.example/
+- **Website:** http://karamadentalpoint.example/
 - **Contact:** +971 4 555 0110 · info@karamadentalpoint.example
 - **Google profile:** 4.2★ from 157 Google reviews · Dental clinic
 - **What you can check:**
   - The site opens over plain http, and its https address does not load. ([open](https://karamadentalpoint.example/))
-  - The footer copyright reads 2018: "© 2018 Karama Dental Point. All rights reserved". ([open](https://karamadentalpoint.example/))
+  - The footer copyright reads 2018: "© 2018 Karama Dental Point. All rights reserved". ([open](http://karamadentalpoint.example/))
 - **Why it fits Northlight Growth:** Browsers mark the site Not secure before a patient reads a word. Moving it to https is a small first job that opens the door to the rest. A footer that still says 2018 suggests nobody has touched the site since, which is the redesign conversation.
 - **Suggested opener:** "157 Google reviews, and your website opens as Not secure because it has no https."
 
