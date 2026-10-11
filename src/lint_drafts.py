@@ -2,9 +2,13 @@
 
     python src/lint_drafts.py
 
-Rules: subjects of 6 words or fewer; email 1 at 120 words or fewer with no links, the fixed
-call-to-action and a {{NAME}} sign-off; follow-ups at 50 and 40 words; a LinkedIn note of 280
-characters or fewer; an evidence comment under email 1; and none of the banned phrases.
+Rules for outreach/drafts: subjects of 6 words or fewer; email 1 at 120 words or fewer with no
+links, the fixed call-to-action and a {{NAME}} sign-off; follow-ups at 50 and 40 words; a LinkedIn
+note of 280 characters or fewer; an evidence comment under email 1; and none of the banned phrases.
+
+Rules for outreach/us_track: a contact-form message of 90 words or fewer with no links, the fixed
+LeadForge sentence, a fixed-price offer and the fixed call-to-action; a source URL for the hook, or
+a header that says no specific hook was found; a LinkedIn note of 280 characters or fewer.
 """
 from __future__ import annotations
 
@@ -13,11 +17,15 @@ import sys
 
 from rich.console import Console
 
-from common import DRAFTS, utf8_stdout
+from common import DRAFTS, US_TRACK, utf8_stdout
 
 BANNED = ["i hope this finds you well", "i hope this email finds you", "i came across your profile",
           "synergy", "quick question", "touching base", "circle back", "game-changer", "game changer"]
 CTA = "Want the other 7? Just reply yes."
+US_MESSAGE_MAX = 90
+US_PROOF = ("I build scraping, data and automation pipelines. My own tool, LeadForge, discovered 325 agencies "
+            "across the UAE, KSA and Qatar and scored the best 70 using evidence from their own sites.")
+US_CTA = "Is there a piece of a current project I could take off your plate?"
 console = Console()
 
 
@@ -83,20 +91,68 @@ def lint(text: str) -> list[str]:
     return problems
 
 
+def lint_us(text: str) -> list[str]:
+    """US track: one contact-form message and one LinkedIn note per agency."""
+    problems = []
+    secs = sections(text)
+    header = text.split("\n## ", 1)[0]
+
+    def find(prefix: str) -> str | None:
+        return next((v for k, v in secs.items() if k.startswith(prefix)), None)
+
+    for field in ("Agency", "Channel", "To", "Hook"):
+        if not re.search(rf"^- \*\*{field}:\*\* *\S", header, flags=re.M):
+            problems.append(f"header is missing '- **{field}:**'")
+    channel = re.search(r"^- \*\*Channel:\*\* *(\w+)", header, flags=re.M)
+    if channel and channel.group(1).lower() not in ("form", "email"):
+        problems.append(f"channel must be form or email, got {channel.group(1)!r}")
+
+    message = find("contact form message")
+    if message is None:
+        problems.append("missing 'Contact form message' section")
+    else:
+        plain = body(message)
+        if words(plain) > US_MESSAGE_MAX:
+            problems.append(f"message is {words(plain)} words (max {US_MESSAGE_MAX})")
+        if re.search(r"https?://|www\.", plain):
+            problems.append("message contains a link")
+        for required, label in ((US_PROOF, "the LeadForge sentence"), (US_CTA, "the call-to-action")):
+            if required not in " ".join(plain.split()):
+                problems.append(f"message is missing {label}: {required!r}")
+        if "fixed price" not in plain or "accept" not in plain:
+            problems.append("message must offer one scoped task at a fixed price, paid only once accepted")
+        # The hook needs a source, unless the header says plainly that none was found.
+        has_source = re.search(r"<!--.*?https?://.*?-->", message, flags=re.S)
+        if not has_source and "no specific hook" not in header.lower():
+            problems.append("no evidence comment with a source URL, and the header does not say 'No specific hook found'")
+
+    note = find("linkedin")
+    if note is None:
+        problems.append("missing LinkedIn note")
+    elif len(body(note)) > 280:
+        problems.append(f"LinkedIn note is {len(body(note))} characters (max 280)")
+
+    lowered = body(text).lower()
+    problems += [f"banned phrase: {phrase!r}" for phrase in BANNED if phrase in lowered]
+    return problems
+
+
 def main() -> int:
     utf8_stdout()
-    drafts = sorted(DRAFTS.glob("*.md"))
-    failed = 0
-    for path in drafts:
-        problems = lint(path.read_text(encoding="utf-8"))
-        if problems:
-            failed += 1
-            console.print(f"[red]FAIL[/red] {path.name}")
-            for problem in problems:
-                console.print(f"   - {problem}")
-        else:
-            console.print(f"[green]ok[/green]   {path.name}")
-    console.print(f"{len(drafts) - failed}/{len(drafts)} drafts pass")
+    failed = total = 0
+    for folder, check in ((DRAFTS, lint), (US_TRACK, lint_us)):
+        for path in sorted(folder.glob("*.md")):
+            total += 1
+            problems = check(path.read_text(encoding="utf-8"))
+            label = f"{folder.name}/{path.name}"
+            if problems:
+                failed += 1
+                console.print(f"[red]FAIL[/red] {label}")
+                for problem in problems:
+                    console.print(f"   - {problem}")
+            else:
+                console.print(f"[green]ok[/green]   {label}")
+    console.print(f"{total - failed}/{total} drafts pass")
     return 1 if failed else 0
 
 

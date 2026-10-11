@@ -1,6 +1,6 @@
 """Outreach tracker: who to email today, which follow-ups are due, who has replied.
 
-    python src/track.py sync                      # pick up every agency that has a pack and a draft
+    python src/track.py sync                      # pick up every drafted lead (Gulf packs and the US track)
     python src/track.py today                     # today's sends (max 15), follow-ups due, replies waiting
     python src/track.py mark <domain> sent        # sets the day-3 and day-7 follow-up dates
     python src/track.py mark <domain> fu1         # follow-up 1 went out (fu2 likewise)
@@ -14,13 +14,14 @@ from __future__ import annotations
 import argparse
 import datetime as dt
 import json
+import re
 import sqlite3
 import sys
 
 from rich.console import Console
 from rich.table import Table
 
-from common import DATA, DRAFTS, PACKS, ROOT, SCORED, utf8_stdout
+from common import DATA, DRAFTS, PACKS, ROOT, SCORED, US_TRACK, utf8_stdout
 
 DB = DATA / "tracker.db"
 STATUSES = ("drafted", "sent", "replied", "won", "lost", "no_reply")
@@ -44,9 +45,13 @@ CREATE TABLE IF NOT EXISTS leads (
     fu2_due     TEXT,
     fu1_sent_at TEXT,
     fu2_sent_at TEXT,
-    notes       TEXT NOT NULL DEFAULT ''
+    notes       TEXT NOT NULL DEFAULT '',
+    channel     TEXT NOT NULL DEFAULT 'email',
+    blocked     TEXT NOT NULL DEFAULT ''
 );
 """
+# Columns added after the first release, for databases created before them.
+MIGRATIONS = {"channel": "TEXT NOT NULL DEFAULT 'email'", "blocked": "TEXT NOT NULL DEFAULT ''"}
 
 
 def connect() -> sqlite3.Connection:
@@ -54,6 +59,10 @@ def connect() -> sqlite3.Connection:
     conn = sqlite3.connect(DB)
     conn.row_factory = sqlite3.Row
     conn.execute(SCHEMA)
+    have = {row["name"] for row in conn.execute("PRAGMA table_info(leads)")}
+    for column, ddl in MIGRATIONS.items():
+        if column not in have:
+            conn.execute(f"ALTER TABLE leads ADD COLUMN {column} {ddl}")
     return conn
 
 
@@ -61,9 +70,31 @@ def today() -> str:
     return dt.date.today().isoformat()
 
 
+def header_field(text: str, name: str) -> str:
+    """Value of a '- **Name:** value' line in a draft's header, or ''."""
+    header = text.split("\n## ", 1)[0]
+    match = re.search(rf"^- \*\*{re.escape(name)}[^*]*:\*\* *(.+)$", header, flags=re.M)
+    return match.group(1).strip() if match else ""
+
+
+def blocked_reason(text: str) -> str:
+    status = header_field(text, "Status")
+    return status if status.upper().startswith("BLOCKED") else ""
+
+
 def sync(conn: sqlite3.Connection) -> int:
-    """Add every scored agency that has both a pack and a draft. Existing rows keep their status."""
+    """Add every drafted lead. Existing rows keep their status; the blocked flag follows the draft."""
     added = 0
+    for draft in sorted(US_TRACK.glob("*.md")):
+        text = draft.read_text(encoding="utf-8")
+        channel = header_field(text, "Channel").split()[0].lower() if header_field(text, "Channel") else "form"
+        cur = conn.execute(
+            "INSERT OR IGNORE INTO leads (domain, agency, email, tier, draft_path, channel) VALUES (?,?,?,?,?,?)",
+            (draft.stem, header_field(text, "Agency") or draft.stem, header_field(text, "To"), "US",
+             draft.relative_to(ROOT).as_posix(), channel))
+        added += cur.rowcount
+        conn.execute("UPDATE leads SET blocked = ?, channel = ?, email = ? WHERE domain = ?",
+                     (blocked_reason(text), channel, header_field(text, "To"), draft.stem))
     for draft in sorted(DRAFTS.glob("*.md")):
         domain = draft.stem
         pack = PACKS / f"{domain}.html"
@@ -77,6 +108,8 @@ def sync(conn: sqlite3.Connection) -> int:
             (domain, rec["agency"], rec.get("contact_email", "unknown"), rec["tier"], rec["score"],
              pack.relative_to(ROOT).as_posix(), draft.relative_to(ROOT).as_posix()))
         added += cur.rowcount
+        conn.execute("UPDATE leads SET blocked = ? WHERE domain = ?",
+                     (blocked_reason(draft.read_text(encoding="utf-8")), domain))
     conn.commit()
     console.print(f"[bold]sync[/bold] added={added}, total={conn.execute('SELECT COUNT(*) FROM leads').fetchone()[0]}")
     return 0
@@ -126,7 +159,8 @@ def show_today(conn: sqlite3.Connection) -> int:
     sent_today = conn.execute("SELECT COUNT(*) FROM leads WHERE sent_at = ?", (now,)).fetchone()[0]
     room = max(0, DAILY_CAP - sent_today)
     to_send = conn.execute(
-        "SELECT * FROM leads WHERE status='drafted' ORDER BY tier, score DESC LIMIT ?", (room,)).fetchall()
+        "SELECT * FROM leads WHERE status='drafted' AND blocked='' ORDER BY tier, score DESC LIMIT ?", (room,)).fetchall()
+    blocked = conn.execute("SELECT * FROM leads WHERE status='drafted' AND blocked<>'' ORDER BY tier, domain").fetchall()
     fu1 = conn.execute("SELECT * FROM leads WHERE status='sent' AND fu1_sent_at IS NULL AND fu1_due <= ? ORDER BY fu1_due", (now,)).fetchall()
     fu2 = conn.execute("SELECT * FROM leads WHERE status='sent' AND fu1_sent_at IS NOT NULL AND fu2_sent_at IS NULL AND fu2_due <= ? ORDER BY fu2_due", (now,)).fetchall()
     stale = conn.execute("SELECT * FROM leads WHERE status='sent' AND fu2_sent_at IS NOT NULL AND fu2_sent_at <= ?",
@@ -134,8 +168,10 @@ def show_today(conn: sqlite3.Connection) -> int:
     replies = conn.execute("SELECT * FROM leads WHERE status='replied' ORDER BY sent_at").fetchall()
 
     console.print(f"[bold]{now}[/bold]  sent today: {sent_today}/{DAILY_CAP}")
-    _table("Send today", to_send, [("Agency", "agency"), ("Email", "email"), ("Tier", "tier"), ("Score", "score"),
-                                   ("Draft", "draft_path"), ("Pack", "pack_path")])
+    _table("Send today", to_send, [("Agency", "agency"), ("Tier", "tier"), ("Channel", "channel"), ("To", "email"),
+                                   ("Score", "score"), ("Draft", "draft_path"), ("Pack", "pack_path")])
+    _table("Blocked: do not send until resolved", blocked, [("Agency", "agency"), ("Tier", "tier"), ("Reason", "blocked"),
+                                                            ("Draft", "draft_path")])
     _table("Follow-up 1 due", fu1, [("Agency", "agency"), ("Email", "email"), ("Sent", "sent_at"), ("Due", "fu1_due"), ("Draft", "draft_path")])
     _table("Follow-up 2 due", fu2, [("Agency", "agency"), ("Email", "email"), ("Sent", "sent_at"), ("Due", "fu2_due"), ("Draft", "draft_path")])
     _table("Replies waiting on you", replies, [("Agency", "agency"), ("Email", "email"), ("Sent", "sent_at"), ("Notes", "notes")])
@@ -146,7 +182,8 @@ def show_today(conn: sqlite3.Connection) -> int:
 def show_list(conn: sqlite3.Connection) -> int:
     rows = conn.execute("SELECT * FROM leads ORDER BY status, tier, score DESC").fetchall()
     _table("All leads", rows, [("Domain", "domain"), ("Agency", "agency"), ("Status", "status"), ("Tier", "tier"),
-                               ("Sent", "sent_at"), ("FU1 due", "fu1_due"), ("FU2 due", "fu2_due")])
+                               ("Channel", "channel"), ("Blocked", "blocked"), ("Sent", "sent_at"),
+                               ("FU1 due", "fu1_due"), ("FU2 due", "fu2_due")])
     return 0
 
 

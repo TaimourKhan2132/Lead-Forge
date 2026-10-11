@@ -17,6 +17,7 @@ ENRICHED = DATA / "enriched"
 SCORED = DATA / "scored"
 PACKS = ROOT / "packs"
 DRAFTS = ROOT / "outreach" / "drafts"
+US_TRACK = ROOT / "outreach" / "us_track"
 RUNLOG = ROOT / "RUNLOG.md"
 
 USER_AGENT = (

@@ -38,6 +38,13 @@ def main() -> int:
         console.print("[red]clutch_shortlist.csv needs the columns: name,website[/red]")
         return 2
 
+    # Rows on another track (track=us, say) are not Gulf leads and are handled by us_track.py.
+    if "track" in shortlist.columns:
+        other = ~shortlist["track"].str.strip().str.lower().isin(["", "gulf"])
+        if other.any():
+            console.print(f"[dim]Skipping {int(other.sum())} shortlist row(s) on another track.[/dim]")
+        shortlist = shortlist[~other]
+
     retagged = added = skipped = 0
     for row in shortlist.to_dict("records"):
         website = clean_url(row["website"])

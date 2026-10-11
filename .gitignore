@@ -7,6 +7,7 @@ packs/*
 !packs/.gitkeep
 outreach/drafts/*
 !outreach/drafts/.gitkeep
+outreach/us_track/
 # Per-agency query lists are named after the agency being pitched.
 queries/packs/
 
