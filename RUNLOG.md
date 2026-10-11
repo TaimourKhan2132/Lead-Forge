@@ -162,11 +162,11 @@ Counts only. No lead names or scraped data are written to this file, so it is sa
   on this machine, which has no Docker.
 - **No Gulf rows on the Clutch shortlist.** The shortlist that arrived on 2026-10-11 holds only
   track=us agencies, which went to the US track. Nothing was merged into the Gulf list.
-- **Placeholders are unfilled, and `.env` does not exist.** `{{NAME}}`, `{{EMAIL}}`, `{{LINKEDIN}}`,
-  `{{GITHUB}}` remain in the packs, drafts and README. The operator's details were typed into
-  `.env.example`, which is a tracked file; that edit is uncommitted and must stay that way. Copy it
-  to `.env`, restore the example with `git checkout .env.example`, then run
-  `python src/pack.py fill` (add `--readme-no-email` to keep the address out of the public README).
+- **The send plan exceeds the daily cap from its fourth day.** Ten new sends a day plus day-3
+  follow-ups is 20 messages on Thursday 15 October and 19 on Friday against a cap of 15. The
+  tracker holds the overflow of new sends over to the next day. The operator has to choose between
+  fewer new sends on those days, a higher cap, or a later follow-up.
+- **Three later batches are planned but not built.** Each is built one send day ahead.
 - **One US-track draft is blocked** until a way to deliver its message is confirmed by hand.
 - **Agency qualification has no browser pass.** Only pack prospects are re-tested in a browser.
 - **19 agencies are still unreachable** after the re-crawl, and 15 refuse the crawler outright.
