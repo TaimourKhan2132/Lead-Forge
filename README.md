@@ -11,11 +11,11 @@
 <img src="https://img.shields.io/badge/browser-Playwright-2EAD33?logo=playwright&logoColor=white" alt="Playwright">
 <img src="docs/assets/sends-nothing.svg" alt="Sends nothing">
 
-<br><br>
+<br>
 
 <a href="https://taimourkhan2132.github.io/Lead-Forge/"><img src="docs/assets/live-page.svg" alt="Open the live page" height="48"></a>
 
-<br><br>
+<br>
 
 <b>
 <a href="#see-it-work">See it work</a> &nbsp;·&nbsp;
