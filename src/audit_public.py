@@ -6,8 +6,9 @@
 It builds a list of everything that must never appear in git from the local, gitignored data: every
 domain and business name in data/raw/*.csv, every email address found during enrichment, and every
 lead in the tracker. Then it searches the full history (every commit's patch and message, on every
-ref) for each of them. It also confirms that data/ and .env are ignored and untracked, that nothing
-under an ignored folder has been committed, and that the README's links resolve.
+ref) for each of them, and the built page in _site/ if there is one, since that is published too. It
+also confirms that data/ and .env are ignored and untracked, that nothing under an ignored folder has
+been committed, and that the README's links resolve.
 
 Exit code 0 means clean. The script names no business itself: it reads them from data/ at run time.
 """
@@ -31,6 +32,8 @@ ALLOWED_DOMAINS = {"example.com", "anthropic.com", "github.com", "google.com", "
                    "hotmail.com", "outlook.com", "icloud.com", "live.com", "ymail.com", "sentry.io",
                    "wixpress.com", "domain.com", "email.com", "company.com", "test.com", "mail.com"}
 PRIVATE_PATHS = ["data", ".env", "packs", "outreach/drafts", "outreach/ready", "outreach/us_track", "queries/packs", "samples"]
+SITE = ROOT / "_site"  # the live page, built by docs/make_site.py
+SITE_TEXT = {".html", ".css", ".js", ".svg", ".json", ".txt", ".xml", ".md"}
 GENERIC_WORDS = set("""a ai agency agencies and app apps arabia automation beauty best branding business car
     center centre clinic clinics cleaning company consultancy consultant consulting content crm data dental design
     development dhabi abu digital doha dubai ecommerce estate generation group growth house hubspot in it jeddah
@@ -90,7 +93,18 @@ def sensitive_terms() -> tuple[set[str], set[str], set[str]]:
 
 def scan_history(domains: set[str], names: set[str], emails: set[str]) -> list[str]:
     history = git("log", "--all", "-p", "--format=commit %H%n%an <%ae>%n%B")
-    lowered = history.lower()
+    return find_terms(history, domains, names, emails)
+
+
+def scan_site(domains: set[str], names: set[str], emails: set[str]) -> list[str]:
+    """The built page is published from the gh-pages branch, so it is searched like the history is."""
+    text = "\n".join(path.read_text(encoding="utf-8", errors="replace") for path in sorted(SITE.rglob("*"))
+                     if path.is_file() and ".git" not in path.parts and path.suffix in SITE_TEXT)
+    return find_terms(text, domains, names, emails)
+
+
+def find_terms(text: str, domains: set[str], names: set[str], emails: set[str]) -> list[str]:
+    lowered = text.lower()
     hits = []
     for domain in sorted(domains):
         if domain in lowered and re.search(rf"(?<![\w.@-]){re.escape(domain)}(?![\w-])", lowered):
@@ -161,12 +175,15 @@ def main() -> int:
                   f"{len(names)} business names and {len(emails)} email addresses from data/")
     sections = {
         "Real businesses in git history": scan_history(domains, names, emails),
+        "Real businesses in the built page (_site/)": scan_site(domains, names, emails) if SITE.exists() else None,
         "Ignore rules": check_ignored(),
         "README": check_readme(args.online),
     }
     dirty = 0
     for title, problems in sections.items():
-        if problems:
+        if problems is None:  # not checked is not the same as clean
+            console.print(f"[dim]skip {title}: not built, so nothing was searched[/dim]")
+        elif problems:
             dirty += len(problems)
             console.print(f"[red]FAIL[/red] {title} ({len(problems)})")
             for problem in problems[:40]:

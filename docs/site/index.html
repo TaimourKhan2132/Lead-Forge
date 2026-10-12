@@ -1,0 +1,507 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>LeadForge · Lead research that only says what it can prove</title>
+<meta name="description" content="An open-source pipeline that finds small agencies, builds each one a free sample of ten prospects, and confirms every claim in a real browser before a person sends anything.">
+<meta name="theme-color" content="#070c16">
+<link rel="canonical" href="[[site_url]]">
+<link rel="icon" href="favicon.svg" type="image/svg+xml">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="LeadForge">
+<meta property="og:title" content="LeadForge · Lead research that only says what it can prove">
+<meta property="og:description" content="Finds small agencies, builds each one a free sample of ten prospects, and confirms every claim in a real browser. A person sends.">
+<meta property="og:url" content="[[site_url]]">
+<meta property="og:image" content="[[site_url]]social-preview.png">
+<meta property="og:image:width" content="1280">
+<meta property="og:image:height" content="640">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="stylesheet" href="site.css">
+<script>document.documentElement.classList.add('js')</script>
+</head>
+<body>
+
+<svg class="sprite" aria-hidden="true">
+  <symbol id="i-star" viewBox="0 0 34 34"><path d="M17 0 L21.5 12.5 L34 17 L21.5 21.5 L17 34 L12.5 21.5 L0 17 L12.5 12.5 Z" fill="currentColor"/></symbol>
+  <symbol id="i-github" viewBox="0 0 16 16"><path fill="currentColor" d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27s1.36.09 2 .27c1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.01 8.01 0 0 0 16 8c0-4.42-3.58-8-8-8Z"/></symbol>
+  <symbol id="i-arrow" viewBox="0 0 16 16"><path d="M3 8h9M8.5 4.5 12 8l-3.5 3.5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+  <symbol id="i-out" viewBox="0 0 16 16"><path d="M6 4h6v6M12 4 4.5 11.5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+  <symbol id="i-check" viewBox="0 0 20 20"><path d="M5 10.5 8.6 14 15 6.5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+  <symbol id="i-x" viewBox="0 0 20 20"><path d="M6 6l8 8M14 6l-8 8" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></symbol>
+  <symbol id="i-phone" viewBox="0 0 24 24"><rect x="7" y="2.5" width="10" height="19" rx="2.5" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M11 18.5h2" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></symbol>
+  <symbol id="i-desktop" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4.5" width="18" height="12" rx="2"/><path d="M9 20h6M12 16.5V20"/></g></symbol>
+  <symbol id="s-no_site" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><circle cx="12" cy="12" r="8.5"/><path d="M3.5 12h17M12 3.5c-3 3.2-3 13.800 0 17M12 3.500c3 3.200 3 13.800 0 17"/></g></symbol>
+  <symbol id="s-dead_site" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M9.500 14.500 7.800 16.200a3.200 3.200 0 0 1-4.500-4.500l2.700-2.700"/><path d="M14.500 9.500l1.700-1.700a3.200 3.200 0 0 1 4.500 4.500l-2.700 2.700"/><path d="M9 4.500v-2M4.500 9h-2M15 19.500v2M19.500 15h2"/></g></symbol>
+  <symbol id="s-not_https" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="4.500" y="10.500" width="15" height="10" rx="2.200"/><path d="M8 10.500V7a4 4 0 0 1 7.700-1.500"/><path d="M12 14.500v2"/></g></symbol>
+  <symbol id="s-stale" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="8.500"/><path d="M12 7v5.200l3.200 1.900"/></g></symbol>
+  <symbol id="s-no_ads_tags" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M3.500 11.500V4.500a1 1 0 0 1 1-1h7l9 9a1.400 1.400 0 0 1 0 2l-6 6a1.400 1.400 0 0 1-2 0z"/><circle cx="8" cy="8" r="1.300"/></g></symbol>
+  <symbol id="s-low_reviews" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M4 5.500a1.500 1.500 0 0 1 1.500-1.500h13A1.500 1.500 0 0 1 20 5.500v9a1.500 1.500 0 0 1-1.500 1.500H10l-4.500 4v-4A1.500 1.500 0 0 1 4 14.500z"/><path d="M8.500 10h7"/></g></symbol>
+  <symbol id="s-low_rating" viewBox="0 0 24 24"><path d="M12 3.500l2.600 5.400 5.900.8-4.300 4.100 1 5.900L12 16.900l-5.200 2.800 1-5.900L3.500 9.700l5.900-.8z" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/></symbol>
+  <symbol id="s-quote" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M5 7h4.500v4.500c0 2.800-1.500 4.700-4 5.500"/><path d="M13.500 7H18v4.500c0 2.800-1.500 4.700-4 5.500"/></g></symbol>
+</svg>
+
+<a class="skip" href="#main">Skip to the content</a>
+
+<header class="nav">
+  <div class="wrap nav-in">
+    <a class="brand" href="./" aria-label="LeadForge, home"><svg><use href="#i-star"/></svg><span>LeadForge</span></a>
+    <nav aria-label="Sections">
+      <a href="#pack">The pack</a>
+      <a href="#email">The email</a>
+      <a href="#story">The story</a>
+      <a href="#signals">Signals</a>
+      <a href="#verify">Verification</a>
+      <a href="#pipeline">Pipeline</a>
+      <a href="#run">Run it</a>
+    </nav>
+    <a class="btn small ghost" href="[[repo]]"><svg><use href="#i-github"/></svg>GitHub</a>
+  </div>
+</header>
+
+<main id="main">
+
+<!-- Hero -->
+<section class="hero">
+  <div class="wrap hero-in">
+    <div class="hero-copy">
+      <p class="eyebrow"><span class="pill">[[version]]</span>Open-source lead research pipeline</p>
+      <h1>Lead research that only says <span class="ink">what it can prove.</span></h1>
+      <p class="lede">LeadForge finds small marketing and automation agencies, works out who their buyers are, and builds each one a free sample: ten prospects in its own niche and city. Every line in that sample can be confirmed in ten seconds on a phone, and comes with the link to open. Then it drafts the outreach. A person sends it.</p>
+      <div class="cta">
+        <a class="btn" href="pack.html">Open the example pack <svg><use href="#i-arrow"/></svg></a>
+        <a class="btn ghost" href="[[repo]]"><svg><use href="#i-github"/></svg>View the source</a>
+      </div>
+      <p class="fine">The agency and every business on this site are fictional. No scraped data is published anywhere.</p>
+    </div>
+
+    <div class="sheet" role="img" aria-label="A list of claims. Three are confirmed with a tick. The fourth, no booking system on its site, is struck out and marked retired.">
+      <div class="bar"><span class="dots"><i></i><i></i><i></i></span><span>claims · checked in a browser today</span></div>
+      <ul>
+        <li class="ok"><span class="mark"><svg><use href="#i-check"/></svg></span>no website on its Google listing</li>
+        <li class="ok"><span class="mark"><svg><use href="#i-check"/></svg></span>footer still says 2018</li>
+        <li class="ok"><span class="mark"><svg><use href="#i-check"/></svg></span>its https address fails to load</li>
+        <li class="no"><span class="mark"><svg><use href="#i-x"/></svg></span><span class="struck">“no booking system on its site”</span><em>retired</em></li>
+      </ul>
+      <p class="sheet-note">The fourth cannot be checked in ten seconds, so it is never said.</p>
+    </div>
+  </div>
+
+  <div class="wrap">
+    <dl class="stats">
+      <div><dt>agencies discovered</dt><dd data-count="325">325</dd></div>
+      <div><dt>scored against the rubric</dt><dd data-count="73">73</dd></div>
+      <div><dt>packs that survived re-verification</dt><dd>19 <small>of 20</small></dd></div>
+      <div><dt>signals it is allowed to use</dt><dd data-count="7">7</dd></div>
+      <div><dt>messages it has ever sent</dt><dd class="zero">0</dd></div>
+    </dl>
+  </div>
+</section>
+
+<!-- The pack -->
+<section id="pack" class="band">
+  <div class="wrap">
+    <header class="head reveal">
+      <p class="kicker">The deliverable</p>
+      <h2>The page an agency receives when it says yes.</h2>
+      <p>Ten prospects in the agency’s own niche and city. Each card says what can be checked, why it fits what that agency sells, and a first line the agency could send. This one was built by the same <code>pack.py</code> that builds real packs, from invented businesses on reserved <code>.example</code> domains.</p>
+    </header>
+
+    <div class="frame reveal">
+      <div class="bar">
+        <span class="dots"><i></i><i></i><i></i></span>
+        <span class="url">pack.html<em>example · fictional data</em></span>
+        <a class="open" href="pack.html">Open the full page <svg><use href="#i-out"/></svg></a>
+      </div>
+      <iframe src="pack.html" title="The example pack: ten fictional dental clinics in Dubai" loading="lazy"></iframe>
+    </div>
+
+    <ul class="trio reveal">
+      <li><h3>One claim, one link</h3><p>Every line under “What you can check” ends in the page that shows it.</p></li>
+      <li><h3>Wording it cannot exceed</h3><p><code>signals.py</code> writes each sentence from what the browser saw. Nothing is phrased by hand.</p></li>
+      <li><h3>Prints as it is</h3><p>The builder’s output is one HTML file with no scripts. The copy here adds only the bar at the top and a note when a link is clicked, because these businesses do not exist.</p></li>
+    </ul>
+  </div>
+</section>
+
+<!-- The email -->
+<section id="email" class="band alt">
+  <div class="wrap">
+    <header class="head reveal">
+      <p class="kicker">The outreach</p>
+      <h2>And the email that earns that yes.</h2>
+      <p>The three lines about businesses are not typed by anyone. <code>draft.py</code> generates them from signals a browser confirmed that day. Beside every email sits the list a person works through before sending it.</p>
+    </header>
+
+    <div class="mail-grid reveal" data-picks>
+      <div class="mail">
+        <div class="tabs" role="tablist" aria-label="The drafted messages">
+          <button role="tab" id="t-email1" aria-controls="m-email1" aria-selected="true">Email 1</button>
+          <button role="tab" id="t-fu1" aria-controls="m-fu1" aria-selected="false" tabindex="-1">Follow-up · day 3</button>
+          <button role="tab" id="t-fu2" aria-controls="m-fu2" aria-selected="false" tabindex="-1">Follow-up · day 7</button>
+          <button role="tab" id="t-linkedin" aria-controls="m-linkedin" aria-selected="false" tabindex="-1">LinkedIn note</button>
+        </div>
+[[mail_panels]]
+      </div>
+
+      <aside class="checks" aria-label="Check before sending">
+        <h3>Check before sending</h3>
+        <p class="sub">One line per claim, one URL per line. <span class="hint">Point at a line in the email to see what has to be true.</span></p>
+[[checklist]]
+      </aside>
+    </div>
+  </div>
+</section>
+
+<!-- The story -->
+<section id="story" class="band">
+  <div class="wrap story">
+    <div class="reveal">
+      <p class="kicker">Why it works this way</p>
+      <h2>It got this wrong first.</h2>
+      <p>The first version told agencies that businesses had “no booking system”, “no WhatsApp” and “no chat”. A manual check found <strong>most of those claims were false</strong>. A page scan sees tools embedded in a page. It does not see a “Book now” button that opens another site, or a chat widget a script injects two seconds later.</p>
+      <blockquote>“None found” had been reported as “none there”.</blockquote>
+      <p>So the pipeline was rebuilt around one question: <em>can a person check this in ten seconds?</em></p>
+    </div>
+
+    <div class="retired reveal" aria-label="Retired for good">
+      <h3>Retired for good</h3>
+      <ul>
+        <li>no booking</li>
+        <li>no online booking</li>
+        <li>book button with no booking system</li>
+        <li>no WhatsApp</li>
+        <li>no chat</li>
+        <li>no enquiry chat</li>
+        <li>no social profiles linked</li>
+      </ul>
+      <p>Not in any pack, email, follow-up or note. <code>lint_drafts.py</code> rejects the wording wherever it turns up, comments included.</p>
+    </div>
+  </div>
+
+  <div class="wrap">
+    <ol class="steps reveal">
+      <li><span>01</span><h3>Retired</h3><p>Every claim that something is missing from a site was withdrawn. What remains is there to be seen.</p></li>
+      <li><span>02</span><h3>Rebuilt</h3><p>Of 20 packs, 19 were rebuilt from signals verified in a browser that day.</p></li>
+      <li><span>03</span><h3>Blocked, not stretched</h3><p>One pool had 8 prospects with a signal that agency could act on. A pack needs 10, so it was held back.</p></li>
+      <li><span>04</span><h3>Checked by hand</h3><p>The operator spot-checked 7 rebuilt claims. 5 were right and 2 were wrong. Three rules were tightened that evening.</p></li>
+    </ol>
+    <p class="after reveal">The history is in the <a href="[[repo]]/blob/main/CHANGELOG.md">changelog</a> and, run by run, in the <a href="[[repo]]/blob/main/RUNLOG.md">run log</a>.</p>
+  </div>
+</section>
+
+<!-- The seven signals -->
+<section id="signals" class="band alt">
+  <div class="wrap">
+    <header class="head reveal">
+      <p class="kicker">What it may say</p>
+      <h2>Seven signals. Each one is there to be seen.</h2>
+      <p>A pack or an email may say only this about a business. <code>signals.py</code> is the single list, and it writes the wording too, so nothing can be phrased more strongly than it was checked.</p>
+    </header>
+
+    <ol class="signals reveal">
+      <li>
+        <div class="top"><span class="num">1</span><svg><use href="#s-no_site"/></svg></div>
+        <h3>[[headline_no_site]]</h3>
+        <p>The live listing has no Website button.</p>
+        <p class="how"><svg><use href="#i-phone"/></svg>Open the listing.</p>
+        <p class="says"><span>In an email</span>[[phrase_no_site]]</p>
+      </li>
+      <li>
+        <div class="top"><span class="num">2</span><svg><use href="#s-dead_site"/></svg></div>
+        <h3>[[headline_dead_site]]</h3>
+        <p>DNS says the name does not exist, the server answers 404 or 410, or the page says the account is suspended or the domain is for sale. A timeout is never proof.</p>
+        <p class="how"><svg><use href="#i-phone"/></svg>Tap Website on the listing.</p>
+        <p class="says"><span>In an email</span>[[phrase_dead_site]]</p>
+      </li>
+      <li>
+        <div class="top"><span class="num">3</span><svg><use href="#s-not_https"/></svg></div>
+        <h3>[[headline_not_https]]</h3>
+        <p>The https version of the same URL fails to load or has an invalid certificate. One that answers and redirects is not a failure.</p>
+        <p class="how"><svg><use href="#i-phone"/></svg>Open the https address.</p>
+        <p class="says"><span>In an email</span>[[phrase_not_https]]</p>
+      </li>
+      <li>
+        <div class="top"><span class="num">4</span><svg><use href="#s-stale"/></svg></div>
+        <h3>[[headline_stale]]</h3>
+        <p>The newest year beside a copyright mark is [[stale_year]] or older.</p>
+        <p class="how"><svg><use href="#i-phone"/></svg>Scroll to the footer.</p>
+        <p class="says"><span>In an email</span>[[phrase_stale]]</p>
+      </li>
+      <li>
+        <div class="top"><span class="num">5</span><svg><use href="#s-no_ads_tags"/></svg></div>
+        <h3>[[headline_no_ads_tags]]</h3>
+        <p>After 8 seconds in a real browser: no <code>dataLayer</code>, <code>gtag</code> or <code>fbq</code> in any frame, no tag script, no tag request, on two separate visits.</p>
+        <p class="how"><svg><use href="#i-desktop"/></svg>Desktop only: type the three names in the console.</p>
+        <p class="says"><span>In an email</span>[[phrase_no_ads_tags]]</p>
+      </li>
+      <li>
+        <div class="top"><span class="num">6</span><svg><use href="#s-low_reviews"/></svg></div>
+        <h3>[[headline_low_reviews]]</h3>
+        <p>Under half the median review count of the listings the same searches returned.</p>
+        <p class="how"><svg><use href="#i-phone"/></svg>Read the count on the listing.</p>
+        <p class="says"><span>In an email</span>[[phrase_low_reviews]]</p>
+      </li>
+      <li>
+        <div class="top"><span class="num">7</span><svg><use href="#s-low_rating"/></svg></div>
+        <h3>[[headline_low_rating]]</h3>
+        <p>Under 4.0 and at least 0.4 below the median rating of those listings.</p>
+        <p class="how"><svg><use href="#i-phone"/></svg>Read the rating on the listing.</p>
+        <p class="says"><span>In an email</span>[[phrase_low_rating]]</p>
+      </li>
+      <li class="plus">
+        <div class="top"><span class="num">+</span><svg><use href="#s-quote"/></svg></div>
+        <h3>Its own words</h3>
+        <p>And one thing more: text quoted from the business’s own site, re-read on the rendered page on the day.</p>
+        <p class="how"><svg><use href="#i-phone"/></svg>Open the page and find the words.</p>
+        <p class="says"><span>In an email</span>the quoted words, and nothing added</p>
+      </li>
+    </ol>
+  </div>
+</section>
+
+<!-- Verification -->
+<section id="verify" class="band">
+  <div class="wrap">
+    <header class="head reveal">
+      <p class="kicker">How a claim survives</p>
+      <h2>Nothing is believed because a crawler said so.</h2>
+      <p><code>verify.py</code> opens the live Google listing and the website in the installed browser, on the day. A signal has to get through every gate below. Pick a claim and follow it down.</p>
+    </header>
+
+    <div class="lab reveal" data-lab>
+      <div class="cases" role="group" aria-label="Claims to follow">
+        <button class="case" aria-pressed="true"><b>no website on its Google listing</b><span>a claim about the listing</span></button>
+        <button class="case" aria-pressed="false"><b>footer still says 2018</b><span>something on the site, there to be seen</span></button>
+        <button class="case" aria-pressed="false"><b>no Google tag or Meta Pixel on its site</b><span>something missing from the site</span></button>
+        <button class="case" aria-pressed="false"><b>no Google tag or Meta Pixel on its site</b><span>but the site opens with a cookie banner</span></button>
+        <button class="case" aria-pressed="false"><b>site has no https</b><span>but the listing’s link lands on another domain</span></button>
+        <button class="case" aria-pressed="false"><b>“no booking system on its site”</b><span>what the first version used to say</span></button>
+        <p class="lab-note">The gates are the ones <code>verify.py</code> applies. The six cases are invented.</p>
+      </div>
+
+      <div class="run">
+        <ol class="gates">
+          <li class="gate">
+            <span class="node"></span>
+            <div class="what"><h3>Is it one of the seven?</h3><p><code>signals.py</code> is the only list.</p><p class="out"></p></div>
+            <p class="drop">Anything else never reaches a browser.</p>
+          </li>
+          <li class="gate">
+            <span class="node"></span>
+            <div class="what"><h3>Open the live Google listing</h3><p>In the installed browser, on the day.</p><p class="out"></p></div>
+            <p class="drop">It does not load: the business is not used at all.</p>
+          </li>
+          <li class="gate">
+            <span class="node"></span>
+            <div class="what"><h3>Can the page be read?</h3><p>For a claim about the website: open it, wait 8 seconds, scroll.</p><p class="out"></p></div>
+            <p class="drop">Bot check, timeout or consent banner: dropped as unread, never guessed.</p>
+          </li>
+          <li class="gate">
+            <span class="node"></span>
+            <div class="what"><h3>Is it their own site?</h3><p>Where the browser ends up has to be the domain on the listing.</p><p class="out"></p></div>
+            <p class="drop">It lands on another domain: dropped.</p>
+          </li>
+          <li class="gate">
+            <span class="node"></span>
+            <div class="what"><h3>Does it show today?</h3><p>On the listing or on the rendered page, whichever the claim is about.</p><p class="out"></p></div>
+            <p class="drop">Not there today: dropped.</p>
+          </li>
+          <li class="gate">
+            <span class="node"></span>
+            <div class="what"><h3>Missing or broken? Look twice.</h3><p>A missing tag, a dead link and no https each need a second visit.</p><p class="out"></p></div>
+            <p class="drop">A different answer the second time: dropped.</p>
+          </li>
+          <li class="gate end">
+            <span class="node"></span>
+            <div class="what"><h3>Kept, with the URL to open</h3><p><code>signals.py</code> writes the wording. <code>pack.py</code> and <code>draft.py</code> refuse anything else.</p></div>
+          </li>
+        </ol>
+        <p class="verdict" aria-live="polite"></p>
+      </div>
+    </div>
+
+    <p class="after reveal">A dropped signal costs a prospect. A wrong one costs the sender their credibility with the first reader who checks, so the trade is always made the same way.</p>
+  </div>
+</section>
+
+<!-- Pipeline -->
+<section id="pipeline" class="band alt">
+  <div class="wrap">
+    <header class="head reveal">
+      <p class="kicker">Architecture</p>
+      <h2>Four stages, and the third is the product.</h2>
+      <p>Once an agency qualifies, discovery and enrichment run again against <em>that agency’s</em> customers, and the result is its sample pack.</p>
+    </header>
+
+    <ol class="lanes reveal">
+      <li>
+        <p class="lane-n">1</p><h3>Find agencies</h3>
+        <ul>
+          <li><code>queries/*.txt</code><span>the searches to run</span></li>
+          <li><code>discover.py</code><span>Google Maps</span></li>
+          <li><code>enrich.py</code><span>evidence for every fact</span></li>
+        </ul>
+      </li>
+      <li>
+        <p class="lane-n">2</p><h3>Qualify them</h3>
+        <ul>
+          <li><code>shortlist.py</code><span>rule-based triage</span></li>
+          <li class="model"><code>an LLM</code><span>scores the rubric</span></li>
+          <li><code>qualify.py</code><span>rejects unsourced verdicts</span></li>
+        </ul>
+      </li>
+      <li class="key">
+        <p class="lane-n">3</p><h3>Find their buyers, and prove it</h3>
+        <ul>
+          <li><code>discover + enrich</code><span>again, in the agency’s own niche and city</span></li>
+          <li><code>prospects.py</code><span>candidate signals</span></li>
+          <li class="browser"><code>verify.py</code><span>a real browser, today</span></li>
+        </ul>
+      </li>
+      <li>
+        <p class="lane-n">4</p><h3>Deliver</h3>
+        <ul>
+          <li><code>pack.py</code><span>ten prospects</span></li>
+          <li><code>draft.py</code><span>email from verified signals</span></li>
+          <li><code>track.py</code><span>plan, caps, follow-ups</span></li>
+          <li class="human"><code>a person</code><span>sends</span></li>
+        </ul>
+      </li>
+    </ol>
+
+    <p class="maxim reveal"><strong>The model judges, the code checks.</strong> Scoring an agency is a judgement call, so a model makes it. Arithmetic, tier boundaries, evidence, wording and send rules are not, so code owns those.</p>
+  </div>
+</section>
+
+<!-- Guardrails -->
+<section id="guardrails" class="band">
+  <div class="wrap">
+    <header class="head reveal">
+      <p class="kicker">Guardrails</p>
+      <h2>Each rule is enforced by code, not by remembering it.</h2>
+    </header>
+
+    <div class="guard reveal">
+      <dl class="rules">
+        <div><dt>Nothing is ever sent</dt><dd>There is no sending code. <code>track.py</code> only records what a person did.</dd></div>
+        <div><dt>Only the seven signals, plus quoted text</dt><dd><code>signals.py</code> is the single list. <code>pack.py</code> and <code>draft.py</code> refuse anything else.</dd></div>
+        <div><dt>Wording cannot outrun the check</dt><dd><code>signals.py</code> writes every phrase. The email’s business lines are generated, not typed.</dd></div>
+        <div><dt>A check goes stale</dt><dd><code>pack.py</code> refuses a business not verified in the last three days.</dd></div>
+        <div><dt>An opening line says only what the agency’s page says</dt><dd><code>draft.py quotes</code> re-reads the page and records the result beside the link.</dd></div>
+        <div><dt>No real business ever reaches git</dt><dd><code>audit_public.py</code> searches every commit on every ref for each name, domain and email in the private data folder.</dd></div>
+      </dl>
+
+      <div class="side">
+        <div class="term" data-term>
+          <div class="bar"><span class="dots"><i></i><i></i><i></i></span><span>an email written the old way</span><button type="button" class="replay" hidden>Replay</button></div>
+          <pre>[[terminal]]</pre>
+        </div>
+        <p class="cap">Real output, captured when this page was built. The draft it refuses is <a href="[[repo]]/blob/main/examples/rejected.example.md">in the repository</a>, written to fail.</p>
+        <p class="tested"><a href="[[repo]]/actions/workflows/checks.yml"><img src="[[repo]]/actions/workflows/checks.yml/badge.svg" alt="The checks workflow's current status" height="20" loading="lazy"></a><span><b>[[tests]] tests</b> hold the rules that can run offline, on every push.</span></p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Sending -->
+<section id="sending" class="band alt">
+  <div class="wrap">
+    <header class="head reveal">
+      <p class="kicker">Sending</p>
+      <h2>The tool drafts. A person sends.</h2>
+      <p>The tracker schedules a new email only on a day where its two follow-ups will also fit.</p>
+    </header>
+
+    <div class="send reveal">
+      <ul class="caps">
+        <li><b>[[new_cap]]</b><span>new emails a day, at most</span></li>
+        <li><b>[[daily_cap]]</b><span>messages a day with follow-ups, and follow-ups go first</span></li>
+        <li><b>3 · 7</b><span>the days a follow-up is due after the first email</span></li>
+        <li><b>0</b><span>sends on a Saturday or Sunday. A weekend follow-up moves to Monday</span></li>
+      </ul>
+
+      <figure class="week">
+[[week_grid]]
+        <figcaption>Computed by the tracker’s own date rule. Wednesday, Thursday and Friday sends all come due on the same Monday, which is why the plan sends less late in the week.</figcaption>
+      </figure>
+    </div>
+
+    <ol class="life reveal" aria-label="A lead's life">
+      <li>drafted</li><li>sent by hand</li><li>follow-up 1</li><li>follow-up 2</li><li>replied</li><li class="won">won or lost</li>
+      <li class="blocked"><b>blocked</b> when the signals do not fit the agency’s offer, or there is no contact route. It is never stretched to fit.</li>
+    </ol>
+  </div>
+</section>
+
+<!-- Run it -->
+<section id="run" class="band">
+  <div class="wrap runit">
+    <header class="head reveal">
+      <p class="kicker">Run it</p>
+      <h2>Start with the example. It needs no network and no data.</h2>
+      <p>Python 3.10 or newer, and an installed Edge or Chrome for the stages that open a browser. The full pipeline, stage by stage, is in the <a href="[[repo]]#run-it">README</a>.</p>
+      <div class="cta">
+        <a class="btn" href="[[repo]]"><svg><use href="#i-github"/></svg>Get the source</a>
+        <a class="btn ghost" href="[[repo]]/releases/latest">Latest release · [[version]]</a>
+      </div>
+    </header>
+
+    <div class="code reveal">
+      <div class="bar"><span class="dots"><i></i><i></i><i></i></span><span>shell</span><button type="button" class="copy" data-copy="#run-code" hidden>Copy</button></div>
+<pre id="run-code"><span class="p">$</span> git clone [[repo]].git
+<span class="p">$</span> cd Lead-Forge
+<span class="p">$</span> python -m venv .venv
+<span class="c"># on Windows: .venv/Scripts/activate</span>
+<span class="p">$</span> source .venv/bin/activate
+<span class="p">$</span> pip install -r requirements.txt -r requirements-dev.txt
+
+<span class="c"># build the fictional pack and email</span>
+<span class="p">$</span> python examples/make_example.py
+<span class="c"># watch an email written the old way be refused</span>
+<span class="p">$</span> python src/lint_drafts.py examples/rejected.example.md
+<span class="c"># the rules, as tests</span>
+<span class="p">$</span> python -m pytest</pre>
+    </div>
+  </div>
+</section>
+
+<!-- Limits -->
+<section id="limits" class="band alt">
+  <div class="wrap">
+    <header class="head reveal">
+      <p class="kicker">Limits</p>
+      <h2>Stated plainly, because this page is about not overclaiming.</h2>
+    </header>
+    <ul class="limits reveal">
+      <li><h3>The tag signal is the weakest of the seven</h3><p>It is the only one that cannot be confirmed on a phone. It is checked in a headless browser, and dropped whenever a consent tool is present. A site that serves a headless browser different code would still fool it, so emails prefer the other six.</p></li>
+      <li><h3>Quoted text can change</h3><p>It is re-read on the day, but a site can still be edited before the email goes out. The check list beside each email is there for that.</p></li>
+      <li><h3>Heavy runs trip browser checks</h3><p>Several hundred page loads in an evening made one host show a holding page for about two hours. Those pages are recorded as unread and re-run later. Nothing is worked around.</p></li>
+      <li><h3>Qualification reads server-rendered HTML</h3><p>A site that renders entirely in the browser is flagged and scored on less evidence. Team size is a hint, never a headcount.</p></li>
+      <li><h3>Booking tools, chat widgets and social links are not checked at all</h3><p>Their absence cannot be established this way, which is the whole point.</p></li>
+    </ul>
+  </div>
+</section>
+
+</main>
+
+<footer class="foot">
+  <div class="wrap foot-in">
+    <div>
+      <a class="brand" href="./"><svg><use href="#i-star"/></svg><span>LeadForge</span></a>
+      <p>Built by Taimour Khan. Released under the <a href="[[repo]]/blob/main/LICENSE">MIT licence</a>.</p>
+      <p class="fine">Every business shown on this site is fictional. Built from <a href="[[repo]]/commit/[[sha]]">[[sha_short]]</a> on [[built_on]].</p>
+    </div>
+    <nav aria-label="Elsewhere">
+      <a href="[[repo]]">GitHub</a>
+      <a href="[[repo]]/releases">Releases</a>
+      <a href="[[repo]]/blob/main/CHANGELOG.md">Changelog</a>
+      <a href="pack.html">Example pack</a>
+      <a href="https://www.linkedin.com/in/taimour-khan-869476382">LinkedIn</a>
+    </nav>
+  </div>
+</footer>
+
+<script src="site.js" defer></script>
+</body>
+</html>

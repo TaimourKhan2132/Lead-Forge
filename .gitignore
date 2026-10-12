@@ -25,3 +25,6 @@ __pycache__/
 Thumbs.db
 .vscode/
 .idea/
+
+# The live page, built by docs/make_site.py and published from the gh-pages branch.
+_site/

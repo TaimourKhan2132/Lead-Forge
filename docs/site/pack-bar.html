@@ -1,0 +1,47 @@
+<style>
+.lf-bar{position:sticky;top:0;z-index:10;display:flex;align-items:center;gap:8px 18px;flex-wrap:wrap;padding:10px 20px;background:#0b1220;color:#cbd5e1;font:13.5px/1.4 'Segoe UI',Helvetica,Arial,sans-serif;border-bottom:1px solid #1e293b}
+.lf-bar a{color:#fbbf24;text-decoration:none;font-weight:600}
+.lf-bar a:hover{text-decoration:underline}
+.lf-bar .lf-name{display:inline-flex;align-items:center;gap:8px;color:#f8fafc;font-weight:700;font-size:15px}
+.lf-bar .lf-name svg{width:15px;height:15px;color:#f59e0b}
+.lf-bar .lf-what{flex:1;min-width:220px}
+.lf-bar button{font:600 13px 'Segoe UI',Helvetica,Arial,sans-serif;color:#f8fafc;background:rgba(148,163,184,.14);border:1px solid rgba(148,163,184,.3);border-radius:8px;padding:6px 12px;cursor:pointer}
+.lf-bar button:hover{background:rgba(148,163,184,.24)}
+.lf-toast{position:fixed;left:50%;bottom:24px;transform:translate(-50%,16px);width:max-content;max-width:min(460px,calc(100vw - 32px));padding:12px 16px;border-radius:12px;background:#0b1220;color:#e2e8f0;font:14px/1.5 'Segoe UI',Helvetica,Arial,sans-serif;box-shadow:0 18px 50px rgba(0,0,0,.35);opacity:0;pointer-events:none;transition:opacity .2s,transform .2s;z-index:20}
+.lf-toast.on{opacity:1;transform:translate(-50%,0)}
+.lf-embedded .lf-bar{display:none}
+@media print{.lf-bar,.lf-toast{display:none}}
+</style>
+<div class="lf-bar">
+  <a class="lf-name" href="./"><svg viewBox="0 0 34 34" aria-hidden="true"><path d="M17 0 L21.5 12.5 L34 17 L21.5 21.5 L17 34 L12.5 21.5 L0 17 L12.5 12.5 Z" fill="currentColor"/></svg>LeadForge</a>
+  <span class="lf-what">An example pack. The agency and every business in it are fictional.</span>
+  <a href="./">About the project</a>
+  <button type="button" onclick="window.print()">Print</button>
+</div>
+<div class="lf-toast" role="status" aria-live="polite"></div>
+<script>
+(function () {
+  var embedded = window.self !== window.top;
+  if (embedded) document.documentElement.classList.add('lf-embedded');
+  var toast = document.querySelector('.lf-toast'), timer;
+  document.addEventListener('click', function (event) {
+    var link = event.target.closest && event.target.closest('a[href]');
+    if (!link) return;
+    var host = '';
+    try { host = new URL(link.href).hostname; } catch (error) { return; }
+    if (/\.example$/.test(host)) {
+      // Reserved .example names resolve nowhere. Say what the link does in a real pack instead.
+      event.preventDefault();
+      toast.textContent = host.indexOf('maps.') === 0
+        ? 'In a real pack this opens the business’s Google Maps listing. This business is invented, so there is nothing to open.'
+        : 'In a real pack this opens the business’s own website. This business is invented, so there is nothing to open.';
+      toast.classList.add('on');
+      clearTimeout(timer);
+      timer = setTimeout(function () { toast.classList.remove('on'); }, 4200);
+    } else if (embedded && host && host !== location.hostname) {
+      link.target = '_blank';
+      link.rel = 'noopener';
+    }
+  });
+})();
+</script>

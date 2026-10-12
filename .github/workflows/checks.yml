@@ -24,7 +24,11 @@ jobs:
         run: pip install -r requirements.txt -r requirements-dev.txt
 
       - name: Everything compiles
-        run: python -m compileall -q src examples tests
+        run: python -m compileall -q src examples tests docs
+
+      # Before the example is rebuilt below: the page is made from the committed, signed example.
+      - name: The live page builds
+        run: python docs/make_site.py --check
 
       # The fictional pack and email are built by the same code that builds real ones.
       - name: Build the example pack and email

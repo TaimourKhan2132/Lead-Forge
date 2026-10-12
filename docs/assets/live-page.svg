@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="268" height="48" viewBox="0 0 268 48" role="img" aria-label="Open the live page">
+  <title>Open the live page</title>
+  <defs>
+    <linearGradient id="fill" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#fcd34d"/>
+      <stop offset="1" stop-color="#f59e0b"/>
+    </linearGradient>
+  </defs>
+  <rect x="1" y="1" width="266" height="46" rx="13" fill="url(#fill)"/>
+  <rect x="1.500" y="1.500" width="265" height="45" rx="12.500" fill="none" stroke="#ffffff" stroke-opacity="0.35"/>
+  <path d="M33 13 L35.900 21.100 L44 24 L35.900 26.900 L33 35 L30.100 26.900 L22 24 L30.100 21.100 Z" fill="#1a1204"/>
+  <text x="56" y="30" font-family="'Segoe UI', 'Helvetica Neue', Helvetica, Arial, sans-serif" font-size="17" font-weight="600" fill="#1a1204">Open the live page</text>
+  <path d="M222 24 h20 M235 17 l7 7 l-7 7" fill="none" stroke="#1a1204" stroke-width="2.200" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>
