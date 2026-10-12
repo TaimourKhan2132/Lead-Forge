@@ -125,7 +125,12 @@ python examples/make_example.py                              # rebuild the ficti
 python src/lint_drafts.py <file.md>                          # lint one file (examples/rejected.example.md must fail)
 python -m pytest                                             # the rules, as tests (needs requirements-dev.txt)
 python docs/make_assets.py                                   # regenerate the README's GIFs from fictional data
+python docs/make_site.py --check                             # build the live page into _site/ and check its links
 ```
+
+The live page is served by GitHub Pages from the `gh-pages` branch. The pages workflow rebuilds and
+publishes it on every push to `main`, so it is never edited or pushed by hand. Its source is
+`docs/site/`, and `make_site.py` fills it from the committed example, so it shows fictional data only.
 
 Use `./.venv/Scripts/python.exe` on this machine. There is no Docker, so discovery runs through the
 Playwright engine and the installed Edge. Log every run in `RUNLOG.md` (the scripts do this) and
@@ -170,9 +175,10 @@ When this conversation is compacted, keep all of the following word for word in 
   and `summary`, `prospects.py`, `verify.py`, `pack.py build` and `fill`, `draft.py build` and `quotes`,
   `lint_drafts.py`, `track.py sync`, `plan`, `ready`, `today`, `mark` and `list`, `us_track.py prepare`
   and `digest`, `sample.py --brief`, `audit_public.py --online`, `examples/make_example.py`, `python -m pytest`,
-  `docs/make_assets.py`. Run
+  `docs/make_assets.py`, `docs/make_site.py --check`. Run
   them with `./.venv/Scripts/python.exe`.
-- The README's images and examples show fictional data only. Never put a real business in a
-  screenshot, GIF, test or example.
+- The README's images, the live page and the examples show fictional data only. Never put a real
+  business in a screenshot, GIF, test, example or on the page. The page is published from `gh-pages`
+  by a workflow on every push to `main`.
 - Also keep: which drafts are `BLOCKED` and why, which emails have been sent and on what date, and
   the path of the current ready file.

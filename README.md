@@ -13,6 +13,10 @@
 
 <br><br>
 
+<a href="https://taimourkhan2132.github.io/Lead-Forge/"><img src="docs/assets/live-page.svg" alt="Open the live page" height="48"></a>
+
+<br><br>
+
 <b>
 <a href="#see-it-work">See it work</a> &nbsp;·&nbsp;
 <a href="#the-seven-signals">The seven signals</a> &nbsp;·&nbsp;
@@ -88,7 +92,10 @@ Under every email sits the list a human works through before sending it. One lin
    - the footer copyright says 2018 (scroll to the bottom): http://karamadentalpoint.example/
 ```
 
-Browse the full example:
+**[See all of this on the live page](https://taimourkhan2132.github.io/Lead-Forge/)**, where the pack is
+served as the page an agency would open and each line of the email lights up the checks it depends on.
+
+Or browse the files:
 [the pack](examples/northlight-growth.example.md) ·
 [the printable page](examples/northlight-growth.example.html) ·
 [the email, follow-ups and check list](examples/northlight-growth.example.email.md) ·
@@ -241,7 +248,7 @@ Each rule is enforced by code, not by remembering it.
 | A check goes stale | `pack.py` refuses a business not verified in the last three days |
 | Retired claims stay retired | `lint_drafts.py`, over the whole draft |
 | An opening line says only what the agency's page says | `draft.py quotes` re-reads the page and records the result beside the link |
-| No real business ever reaches git | `audit_public.py` searches every commit on every ref for each name, domain and email in the private data folder |
+| No real business ever reaches git | `audit_public.py` searches every commit on every ref, and the built live page, for each name, domain and email in the private data folder |
 | The send rules | `track.py plan` and `track.py today` |
 
 The rules that can run offline are under test: `python -m pytest`.
@@ -421,7 +428,7 @@ src/
   audit_public.py     prove nothing from data/ ever reached git history
 examples/             a fictional pack, its email, and an email the linter refuses
 tests/                the rules, as tests
-docs/                 the images on this page, and the script that regenerates them
+docs/                 the images on this page, the live page's source, and the scripts that build both
 outreach/pricing.md   what is offered once someone replies
 RUNLOG.md             every run: command, counts, failures, decisions
 CLAUDE.md             the standing rules, for an AI coding agent working in this repository

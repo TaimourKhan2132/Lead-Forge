@@ -24,6 +24,7 @@ import json
 import os
 import re
 import shutil
+import stat
 import subprocess
 import sys
 from pathlib import Path
@@ -221,6 +222,12 @@ def pack_page(page: str | None = None) -> str:
     return page.replace("<body>", "<body>" + bar, 1)
 
 
+def _writable(function, path, _error) -> None:
+    """Windows marks a .git folder's files read-only; clear that and remove the file again."""
+    os.chmod(path, stat.S_IWRITE)
+    function(path)
+
+
 def build(out: Path = OUT) -> Path:
     sha = commit()
     values = {
@@ -231,7 +238,7 @@ def build(out: Path = OUT) -> Path:
         **mail(), **wording(),
     }
     if out.exists():
-        shutil.rmtree(out)
+        shutil.rmtree(out, onerror=_writable)
     out.mkdir(parents=True)
     for name in ("index.html", "404.html"):
         page = (SITE / name).read_text(encoding="utf-8")

@@ -2,6 +2,34 @@
 
 Notable changes to LeadForge. No real business is named here or anywhere else in this repository.
 
+## [0.3.0] - 2026-10-13 · A live page
+
+The project now has a page of its own, served by GitHub Pages:
+https://taimourkhan2132.github.io/Lead-Forge/
+
+It shows the deliverable instead of its source, and it is filled from the repository, so it cannot
+drift from the code.
+
+### Added
+- A live page: the example pack served as the page an agency would open, the email beside the list a
+  person checks before sending it, the seven signals with the wording `signals.py` writes for each,
+  and six invented claims walked through the gates `verify.py` applies.
+- `docs/make_site.py`, which builds the page from the committed example pack and email, the linter's
+  real output on the draft written to fail, the tracker's caps and its follow-up date rule, the
+  version in this file and the number of tests.
+- A pages workflow that rebuilds the page on every push to `main` and publishes it to the `gh-pages`
+  branch as a single commit attributed to whoever pushed.
+- Tests for the page's build, and a step in the checks workflow that builds it.
+
+### Changed
+- `audit_public.py` also searches the built page for every name, domain and email in the private data
+  folder, since the page is published too. A page that has not been built is reported as skipped,
+  not as clean.
+- `RUNLOG.md`: decisions that had been run together into one bullet are separate again, and dashes
+  saved in the wrong encoding are fixed. No wording changed.
+
+Every business on the page is fictional, as everywhere else in this repository.
+
 ## [0.2.0] - 2026-10-11 · Seven signals
 
 The rebuild. A manual check of the first packs found that most "no booking", "no WhatsApp" and "no
@@ -61,5 +89,6 @@ First public version.
 Its packs relied on signals that 0.2.0 retired. It is kept in the history as the starting point, not
 as something to use.
 
+[0.3.0]: https://github.com/TaimourKhan2132/Lead-Forge/compare/v0.2.0...v0.3.0
 [0.2.0]: https://github.com/TaimourKhan2132/Lead-Forge/compare/v0.1.0...v0.2.0
 [0.1.0]: https://github.com/TaimourKhan2132/Lead-Forge/releases/tag/v0.1.0
