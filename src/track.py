@@ -608,7 +608,11 @@ def job_files(day: dt.date, rows: list, total: str, first: str) -> tuple[str, st
                 f"- **Evidence URL:** {record['evidence_url']}",
                 f"- **Hiring:** {hiring}" + (f" ({page})" if hiring.startswith("yes") else f" (careers page: {page})"),
                 f"- **Opener names the role:** {record['names_the_role']}",
-                f"- **Score:** {row['score']}, tier {row['tier']}", "", "```text", record["body"], "```", "",
+                f"- **Score:** {row['score']}, tier {row['tier']}",
+                # Anything the draft flags for the person sending it, such as a careers page worth a second look.
+                *(f"- **Note:** {line[2:]}" for line in text.split("\n## ", 1)[0].splitlines()
+                  if line.startswith("- ") and not line.startswith("- **")),
+                "", "```text", record["body"], "```", "",
                 "**Open these to confirm:**", "", _section(text, "check before sending").strip(), ""]
     return "\n".join(out), table.getvalue()
 
