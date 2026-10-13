@@ -11,6 +11,12 @@ scores them against a 100-point rubric, and wins a reply by giving each one a fr
 qualified prospects in that agency's own niche and city. It then drafts the outreach that leads
 with the sample and tracks sends and follow-ups. The operator sends every message by hand.
 
+The region is a config value, not a branch: one file per region in `config/regions/`, and the same
+code for all of them. `gulf` is the default. `uk` (London, Manchester, Birmingham, Leeds, Bristol)
+is discovered and scored with the same rubric, and is marked `outreach: false`: no pack, email or
+job ask is drafted for it until the operator says so. Germany and the rest of the EU are left out
+for now, because their cold-email rules are stricter.
+
 Stages: `discover` (Google Maps) → `enrich` (each site, with evidence) → `shortlist` and `qualify`
 (rubric, tier A at 70 and above, B at 50 to 69) → `prospects` and `verify` (signals, confirmed in a
 browser) → `pack` → `draft` → `track`.
@@ -131,13 +137,16 @@ words and 40). `jobs.py build` writes it from the wording file and the agency's 
 ## Commands
 
 ```bash
-python src/discover.py queries/<list>.txt <name>             # Maps searches to data/raw/<name>.csv
+python src/discover.py --region <region>                     # a region's searches to data/raw/agencies_<region>.csv
+python src/discover.py queries/<list>.txt <name>             # any list of Maps searches to data/raw/<name>.csv
 python src/merge_clutch.py data/raw/<name>.csv               # merge a hand-made shortlist
 python src/enrich.py data/raw/<name>.csv                     # crawl each site, record evidence
 python src/enrich.py data/raw/<name>.csv --only-status dead,http_error   # retry failed sites
 python src/shortlist.py --top 80                             # triage and write digests to score from
+python src/shortlist.py --region uk --top 40                 # another region; its files carry the region's name
 python src/qualify.py ingest data/scored/_batches/<batch>.json   # validate verdicts, compute scores
 python src/qualify.py summary --top 15                       # ranked list to data/scored/summary.csv
+python src/qualify.py summary --region uk                    # another region's ranking, to summary_uk.csv
 python src/discover.py queries/packs/<agency>.txt pack_<agency>  # an agency's own niche and city
 python src/enrich.py data/raw/pack_<agency>.csv --mode light --out data/enriched/packs/<agency>
 python src/prospects.py <agency> --niche "<niche>" --want <signals>   # candidate signals, unverified
@@ -190,6 +199,10 @@ When this conversation is compacted, keep all of the following word for word in 
   prospects in the agency's own niche and city. Real names, domains and emails are only in `data/`,
   `packs/` and `outreach/`; none may reach git, `RUNLOG.md` or a commit message.
 - **Offer:** $59 for 50 leads; $99 a month for 25 a week; custom work quoted. Prices only after a reply.
+- **Regions are config, not branches:** `config/regions/gulf.yaml` (the default) and `uk.yaml`, used
+  with `--region` on `discover.py`, `shortlist.py` and `qualify.py summary`. The UK is scored only
+  (`outreach: false`): draft nothing for it until the operator says so. No Germany or other EU
+  country for now; their cold-email rules are stricter.
 - **A second offer, the job ask** (`jobs.py`), asks an agency for part-time remote work. An agency
   gets one offer: a job ask goes only to one never emailed, not skipped, with no lead-pack draft
   waiting. Its opener is one factual sentence resting on words quoted from the agency's own site,

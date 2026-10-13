@@ -40,7 +40,7 @@ from dotenv import dotenv_values
 from rich.console import Console
 
 import draft
-from common import ENRICHED, JOBS, ROOT, SCORED, job_wording, log_run, root_domain, utf8_stdout
+from common import ENRICHED, JOBS, ROOT, SCORED, job_wording, log_run, outreach_open, root_domain, utf8_stdout
 from lint_drafts import lint_job
 from track import connect, skipped_domains
 
@@ -56,6 +56,9 @@ def refusal(domain: str, conn) -> str:
     """Why this agency may not be sent a job ask, or ''."""
     if domain in skipped_domains():
         return "it is on the skip list"
+    scored = SCORED / f"{domain}.json"
+    if scored.exists() and not outreach_open(json.loads(scored.read_text(encoding="utf-8"))):
+        return "its region is scored only: nothing is drafted for it yet"
     lead = conn.execute("SELECT * FROM leads WHERE domain = ?", (domain,)).fetchone()
     if lead and lead["status"] != "drafted":
         return f"it has already been emailed (status: {lead['status']})"

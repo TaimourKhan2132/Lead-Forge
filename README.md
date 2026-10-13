@@ -204,7 +204,7 @@ who checks, so the trade is always made the same way.
 flowchart TB
     subgraph FIND ["1 · Find agencies"]
         direction LR
-        Q["queries/*.txt"] --> D["discover.py<br/>Google Maps"] --> E["enrich.py<br/>evidence for<br/>every fact"]
+        Q["config/regions/*.yaml"] --> D["discover.py<br/>Google Maps"] --> E["enrich.py<br/>evidence for<br/>every fact"]
     end
     subgraph JUDGE ["2 · Qualify them"]
         direction LR
@@ -325,8 +325,8 @@ pip install -r requirements-dev.txt && python -m pytest  # the rules, as tests
 # 1. Validate with a single query before running a full list
 python src/discover.py queries/validation.txt validation --email
 
-# 2. Discover and enrich the target list
-python src/discover.py queries/agencies_gulf.txt agencies_gulf
+# 2. Discover and enrich the target list. A region is one file in config/regions/
+python src/discover.py --region gulf
 python src/merge_clutch.py data/raw/agencies_gulf.csv      # optional hand-made shortlist
 python src/enrich.py data/raw/agencies_gulf.csv
 python src/enrich.py data/raw/agencies_gulf.csv --only-status dead,http_error   # retry failures later
@@ -433,11 +433,12 @@ tests/                the rules, as tests
 docs/                 the images on this page, the live page's source, and the scripts that build both
 outreach/pricing.md   what is offered once someone replies
 RUNLOG.md             every run: command, counts, failures, decisions
+config/regions/       one file per region: where it is, what to search for, whether outreach is drafted
 CLAUDE.md             the standing rules, for an AI coding agent working in this repository
 ```
 
-`data/`, `packs/`, `samples/`, `outreach/drafts/`, `outreach/ready/`, `outreach/us_track/` and
-`queries/packs/` are gitignored. They hold real businesses.
+`data/`, `packs/`, `samples/`, `outreach/drafts/`, `outreach/jobs/`, `outreach/ready/`,
+`outreach/us_track/` and `queries/packs/` are gitignored. They hold real businesses.
 
 <details>
 <summary><b>The qualification rubric</b></summary>

@@ -394,6 +394,39 @@ Counts only. No lead names or scraped data are written to this file, so it is sa
 - **The send file became three.** Follow-ups due on a day get their own file, with the "Re:"
   subject of the email they answer. Lead-pack emails keep theirs. Job asks get a page and a CSV
   with the same fields.
+- **2026-10-13: the region became a config value.** One file per region in `config/regions/` says
+  which countries it covers, what to search for and whether outreach is drafted for it.
+  `discover.py`, `shortlist.py` and `qualify.py summary` take `--region`. The Gulf search list
+  moved out of `queries/` into the Gulf's file, and the Gulf stays the default, so every earlier
+  command behaves as it did.
+- **A scored record carries its region.** `qualify.py ingest` stamps it from the listing's
+  country, so it cannot be set wrongly by hand. The send plan reads only the first region's
+  ranking, and another region's ranking goes to a file of its own. A record with no region on it
+  belongs to the Gulf: all 73 scored before today.
+- **The UK was added as "scored only".** Its file sets `outreach: false`. `jobs.py` refuses to
+  draft for an agency in such a region and `track.py sync` will not take a draft for one, so
+  nothing can reach a send file by accident. Germany and the rest of the EU were left out on the
+  operator's instruction, because their cold-email rules are stricter. One Gulf candidate was
+  dropped from the job ask for the same reason: its operating company is registered in the EU.
+- **UK discovery ran on search pages only.** Fifteen searches (five cities, three kinds of agency)
+  returned 276 listings, 253 after duplicates. The pass that opens every listing for its review
+  count was skipped: about two hundred listings had already been opened that day and a few had
+  failed to load. Review counts came from the search results instead, and 235 of the 253 have one.
+  Nothing was blocked.
+- **192 of the 253 sites could be read.** 30 refused the crawler and were left alone, 19 listings
+  have no website, and the rest were dead or errored. 26 listings carried neither a country nor an
+  address and could not be placed in the region, so they were left out.
+- **40 UK agencies were scored with the same rubric:** 19 in tier A and 21 in tier B. The rubric
+  still favours 2 to 15 people, so agencies of 20 to 30 lose points on size although the
+  operator's range for this region runs to 30. Four of the 40 are outside that range and are kept
+  for the record: one shows 73 people, one calls itself a large agency, one is a solo freelancer
+  and one has offices in three EU capitals.
+- **The crawl's guess at a founder was wrong five times in 40, and each was corrected before
+  ingest.** In every case the name belonged to a client quoted in a testimonial. Names were
+  checked against the page text wherever the snippet did not carry a title.
+- **"Hiring" in the UK records is the crawl's reading, not a confirmed open role.** Each verdict
+  says so. It would be checked in a browser on the day, as it was for the Gulf job asks, before
+  anything was drafted.
 
 ## Open items
 
@@ -432,6 +465,10 @@ Counts only. No lead names or scraped data are written to this file, so it is sa
   whom. Until it is marked, that agency's follow-ups still appear in the send files.
 - **The job ask's first follow-up waits on a recording.** Until the link is set in `.env` it uses
   a proof line the first email did not.
+- **The size criterion and the UK's size range disagree.** The rubric gives full marks at 2 to 15
+  people; the operator's range for the UK is 2 to 30. The scores follow the rubric.
+- **UK discovery is one pass of fifteen searches at depth 1.** London returned 54 listings and one
+  of them reached the 40 scored, because the triage favours small teams with a named founder.
 
 ## Runs
 
@@ -3077,4 +3114,56 @@ Counts only. No lead names or scraped data are written to this file, so it is sa
 ### 2026-10-13T18:34:11+05:00
 - **Command:** `python src/draft.py followups`
 - **Counts:** drafts=25, rewritten=23, failed=0
+- **Failures:** none
+
+### 2026-10-13T18:43:55+05:00
+- **Command:** `python src/discover.py --region uk --no-reviews --concurrency 2`
+- **Counts:** queries=15, raw_rows=276, unique=253, with_site=230, platform_only=2, no_website=21, with_email=0, with_review_count=235
+- **Failures:** none
+- **Notes:** engine=playwright, output=data/raw/agencies_uk.csv
+
+### 2026-10-13T18:51:22+05:00
+- **Command:** `python src/enrich.py data/raw/agencies_uk.csv --concurrency 4`
+- **Counts:** leads=253, blocked=30, cached=2, dead=3, http_error=4, no_website=19, ok=192, placeholder=1, platform_only=2
+- **Failures:** none
+
+### 2026-10-13T18:51:45+05:00
+- **Command:** `python src/shortlist.py --region uk --top 40`
+- **Counts:** enriched=227, eligible=161, shortlisted=40, batches=4
+- **Failures:** none
+- **Notes:** skipped: site blocked=27, site no_website=19, no relevant services found in site copy=7, big-company signal=7, site dead=3, site http_error=3
+
+### 2026-10-13T18:52:54+05:00
+- **Command:** `python src/qualify.py ingest data/scored/_batches/uk_01.json`
+- **Counts:** verdicts=10, written=10, rejected=0
+- **Failures:** none
+
+### 2026-10-13T18:53:43+05:00
+- **Command:** `python src/qualify.py ingest data/scored/_batches/uk_02.json`
+- **Counts:** verdicts=10, written=10, rejected=0
+- **Failures:** none
+
+### 2026-10-13T18:54:35+05:00
+- **Command:** `python src/qualify.py ingest data/scored/_batches/uk_01.json`
+- **Counts:** verdicts=10, written=10, rejected=0
+- **Failures:** none
+
+### 2026-10-13T18:54:37+05:00
+- **Command:** `python src/qualify.py ingest data/scored/_batches/uk_02.json`
+- **Counts:** verdicts=10, written=10, rejected=0
+- **Failures:** none
+
+### 2026-10-13T18:55:08+05:00
+- **Command:** `python src/qualify.py ingest data/scored/_batches/uk_03.json`
+- **Counts:** verdicts=10, written=10, rejected=0
+- **Failures:** none
+
+### 2026-10-13T18:56:07+05:00
+- **Command:** `python src/qualify.py ingest data/scored/_batches/uk_04.json`
+- **Counts:** verdicts=10, written=10, rejected=0
+- **Failures:** none
+
+### 2026-10-13T18:56:09+05:00
+- **Command:** `python src/qualify.py summary --top 12 --region uk`
+- **Counts:** scored=40, tier_A=19, tier_B=21, tier_C=0
 - **Failures:** none

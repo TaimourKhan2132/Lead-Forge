@@ -1,0 +1,22 @@
+# The United Kingdom: digital marketing, web development and automation agencies of roughly 2 to
+# 30 people, scored with the same rubric as every other region.
+#
+#   python src/discover.py --region uk --no-reviews
+#   python src/enrich.py data/raw/agencies_uk.csv
+#   python src/shortlist.py --region uk --top 40
+#   python src/qualify.py summary --region uk
+
+label: the United Kingdom
+
+countries: [GB]
+address_words: [united kingdom, england, scotland, wales, london, manchester, birmingham, leeds, bristol]
+
+# Scored only. No pack, email or job ask is drafted for this region until this is set to true.
+outreach: false
+
+# Every search is run in every city, as "<search> in <city>".
+cities: [London, Manchester, Birmingham, Leeds, Bristol]
+searches:
+  - digital marketing agency
+  - web development agency
+  - AI automation agency

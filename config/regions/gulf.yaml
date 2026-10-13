@@ -1,0 +1,44 @@
+# A region is a value, not a branch of the code. One file per region:
+#
+#   python src/discover.py --region gulf       # the searches below, to data/raw/agencies_gulf.csv
+#   python src/shortlist.py --region gulf      # only agencies whose listing is inside the region
+#   python src/qualify.py summary --region gulf
+#
+# This is the region LeadForge started with, and the default when no --region is given.
+
+label: the UAE, Saudi Arabia and Qatar
+
+# A Maps listing belongs to the region by its country code. When a listing carries none, its
+# address is searched for these words instead.
+countries: [AE, SA, QA]
+address_words: [united arab emirates, dubai, abu dhabi, sharjah, ajman, saudi, riyadh, jeddah, qatar, doha, uae, ksa]
+
+# false means "discover and score only": no pack, email or job ask is drafted for the region.
+outreach: true
+
+# One Google Maps search per line.
+queries:
+  # AI and automation
+  - AI automation agency in Dubai
+  - AI automation agency in Abu Dhabi
+  - AI automation agency in Riyadh
+  - AI automation agency in Doha
+  # Digital marketing
+  - digital marketing agency in Dubai
+  - digital marketing agency in Abu Dhabi
+  - digital marketing agency in Sharjah
+  - digital marketing agency in Riyadh
+  - digital marketing agency in Jeddah
+  - digital marketing agency in Doha
+  # Web
+  - web development company in Dubai
+  - web development company in Riyadh
+  # Growth, lead generation, CRM, software
+  - growth marketing agency in Dubai
+  - lead generation agency in Dubai
+  - CRM consultant in Dubai
+  - software house in Dubai
+  - performance marketing agency in Dubai
+  - marketing automation agency in Dubai
+  - HubSpot partner agency in Dubai
+  - SEO agency in Abu Dhabi

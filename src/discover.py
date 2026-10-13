@@ -1,7 +1,8 @@
 """Discovery: Google Maps queries -> data/raw/<name>.csv (stable schema, deduped by root domain).
 
-    python src/discover.py queries/agencies_gulf.txt agencies_gulf
-    python src/discover.py queries/one.txt validation --email
+    python src/discover.py --region gulf                  # the region's own searches, to data/raw/agencies_gulf.csv
+    python src/discover.py --region uk --no-reviews       # another region: same code, another config file
+    python src/discover.py queries/one.txt validation --email   # any list of searches, one per line
 
 Engines:
     docker      gosom/google-maps-scraper in Docker (the preferred engine)
@@ -23,7 +24,7 @@ from dotenv import load_dotenv
 from rich.console import Console
 from rich.table import Table
 
-from common import RAW, ROOT, clean_url, is_platform, log_run, now_iso, root_domain, slugify, utf8_stdout
+from common import RAW, ROOT, clean_url, is_platform, log_run, now_iso, region, root_domain, slugify, utf8_stdout
 
 SCHEMA = [
     "title", "category", "categories", "website", "root_domain", "website_kind", "phone", "emails",
@@ -165,8 +166,9 @@ def main() -> int:
     utf8_stdout()
     load_dotenv(ROOT / ".env")
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
-    ap.add_argument("queries", type=Path, help="text file, one Maps query per line")
-    ap.add_argument("name", help="output name: writes data/raw/<name>.csv")
+    ap.add_argument("queries", type=Path, nargs="?", help="text file, one Maps query per line")
+    ap.add_argument("name", nargs="?", help="output name: writes data/raw/<name>.csv")
+    ap.add_argument("--region", help="run the searches in config/regions/<region>.yaml; writes data/raw/agencies_<region>.csv")
     ap.add_argument("--engine", choices=["auto", "docker", "playwright"],
                     default=os.getenv("LEADFORGE_ENGINE", "auto"))
     ap.add_argument("--depth", type=int, default=1, help="scroll depth per query (default 1)")
@@ -176,9 +178,16 @@ def main() -> int:
     ap.add_argument("--source", default="maps", help="value for the source column")
     args = ap.parse_args()
 
-    queries = read_queries(args.queries)
+    if args.region:
+        if args.queries or args.name:
+            ap.error("give --region, or a queries file and a name, not both")
+        queries, args.name = region(args.region)["queries"], f"agencies_{args.region.lower()}"
+    elif args.queries and args.name:
+        queries = read_queries(args.queries)
+    else:
+        ap.error("give --region, or a queries file and a name")
     if not queries:
-        console.print(f"[red]No queries in {args.queries}[/red]")
+        console.print(f"[red]No queries in {args.queries or 'that region'}[/red]")
         return 2
     engine = args.engine
     if engine == "auto":

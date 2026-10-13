@@ -22,6 +22,8 @@ US_TRACK = ROOT / "outreach" / "us_track"
 JOBS = ROOT / "outreach" / "jobs"
 JOB_WORDING = ROOT / "outreach" / "job_ask.json"  # the operator's own wording; gitignored
 RUNLOG = ROOT / "RUNLOG.md"
+REGIONS = ROOT / "config" / "regions"
+DEFAULT_REGION = "gulf"  # what a record with no region on it belongs to: the first one LeadForge worked
 
 USER_AGENT = (
     "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) "
@@ -84,6 +86,46 @@ def root_domain(url: str | None) -> str:
 
 def is_platform(domain: str) -> bool:
     return domain in PLATFORM_DOMAINS or any(domain.endswith("." + p) for p in PLATFORM_DOMAINS)
+
+
+def region(name: str | None = None) -> dict:
+    """One region's settings: where it is, what to search for, and whether outreach is drafted for it.
+
+    The region is a value read from config/regions/<name>.yaml. The code is the same for all of them.
+    """
+    import yaml
+
+    name = (name or DEFAULT_REGION).lower()
+    path = REGIONS / f"{name}.yaml"
+    if not path.exists():
+        raise SystemExit(f"No region {name!r}. Known regions: {', '.join(region_names())}")
+    cfg = yaml.safe_load(path.read_text(encoding="utf-8"))
+    cfg["name"] = name
+    cfg["countries"] = {code.upper() for code in cfg["countries"]}
+    cfg["queries"] = list(cfg.get("queries") or []) + [
+        f"{search} in {city}" for search in cfg.get("searches") or [] for city in cfg.get("cities") or []]
+    return cfg
+
+
+def region_names() -> list[str]:
+    return sorted(path.stem for path in REGIONS.glob("*.yaml"))
+
+
+def in_region(maps: dict, cfg: dict) -> bool:
+    """Is a Maps listing inside the region? By its country when it carries one, otherwise by its address."""
+    if maps.get("country"):
+        return maps["country"].upper() in cfg["countries"]
+    return any(word in (maps.get("address") or "").lower() for word in cfg["address_words"])
+
+
+def region_of(maps: dict) -> str | None:
+    """The region a listing falls in, or None when it is in none of them."""
+    return next((name for name in region_names() if in_region(maps, region(name))), None)
+
+
+def outreach_open(record: dict) -> bool:
+    """May anything be drafted for this scored agency? Not while its region is "scored only"."""
+    return bool(region(record.get("region") or DEFAULT_REGION).get("outreach"))
 
 
 def job_wording(path: Path = JOB_WORDING) -> dict:

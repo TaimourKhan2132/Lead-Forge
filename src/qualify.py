@@ -2,11 +2,15 @@
 
     python src/qualify.py ingest data/scored/_batches/batch_01.json
     python src/qualify.py summary --top 15
+    python src/qualify.py summary --region uk     # another region's ranking, in summary_uk.csv
 
 The reasoning layer (an LLM, or a person) reads the digests from shortlist.py and returns one
 verdict per lead. This script is the gate between that judgement and the rest of the pipeline:
 it recomputes the score from the rubric, and rejects any verdict whose "why it fits" bullets
 cite a URL the enrichment step never actually fetched. Evidence, or it does not get in.
+
+Every scored record is stamped with the region its listing is in, so one region's agencies never
+turn up in another's ranking or send plan.
 """
 from __future__ import annotations
 
@@ -20,7 +24,7 @@ import pandas as pd
 from rich.console import Console
 from rich.table import Table
 
-from common import ENRICHED, SCORED, log_run, now_iso, utf8_stdout
+from common import DEFAULT_REGION, ENRICHED, SCORED, log_run, now_iso, region, region_of, utf8_stdout
 
 RUBRIC = {"service_fit": 25, "size_fit": 20, "growth": 20, "reachability": 15, "geo_lang": 10, "hook": 10}
 PENALTIES = {"offshore_dev_shop": -15, "outdated_site": -10, "no_contact_route": -20}
@@ -91,6 +95,7 @@ def ingest(batch_path: Path) -> int:
         maps = enriched.get("maps", {})
         record = {
             "domain": domain, "agency": verdict.get("agency") or enriched.get("name", ""),
+            "region": region_of(maps) or DEFAULT_REGION,
             "score": score, "tier": tier_for(score), "source": enriched.get("source", "maps"),
             "scores": verdict["scores"], "penalties": verdict.get("penalties", []),
             "city": verdict.get("city", "unknown"), "their_icp": verdict["their_icp"],
@@ -112,15 +117,18 @@ def ingest(batch_path: Path) -> int:
     return 1 if failures else 0
 
 
-def load_scored() -> list[dict]:
+def load_scored(where: str = DEFAULT_REGION) -> list[dict]:
     records = [json.loads(p.read_text(encoding="utf-8")) for p in SCORED.glob("*.json")]
+    records = [r for r in records if (r.get("region") or DEFAULT_REGION) == where]
     # Ties go to hand-picked Clutch leads, then to the stronger service fit.
     records.sort(key=lambda r: (-r["score"], r["source"] != "clutch", -r["scores"]["service_fit"], r["domain"]))
     return records
 
 
-def summary(top: int) -> int:
-    records = load_scored()
+def summary(top: int, where: str = DEFAULT_REGION) -> int:
+    where = region(where)["name"]
+    records = load_scored(where)
+    home = where == DEFAULT_REGION
     rows = [{
         "rank": i, "domain": r["domain"], "agency": r["agency"], "score": r["score"], "tier": r["tier"],
         "source": r["source"], "city": r["city"], "their_icp": r["their_icp"], "best_angle": r["best_angle"],
@@ -129,9 +137,11 @@ def summary(top: int) -> int:
         "why_fit": " | ".join(f"{w['point']} ({w['source_url']})" for w in r["why_fit"]),
         "website": r["website"], "maps_link": r["maps_link"],
     } for i, r in enumerate(records, 1)]
-    pd.DataFrame(rows).to_csv(SCORED / "summary.csv", index=False, encoding="utf-8")
+    # The send plan reads summary.csv, so only the first region is ever written there.
+    pd.DataFrame(rows).to_csv(SCORED / ("summary.csv" if home else f"summary_{where}.csv"), index=False, encoding="utf-8")
     tiers = {t: sum(r["tier"] == t for r in records) for t in "ABC"}
-    log_run(f"python src/qualify.py summary --top {top}", {"scored": len(records), **{f"tier_{k}": v for k, v in tiers.items()}})
+    log_run(f"python src/qualify.py summary --top {top}" + ("" if home else f" --region {where}"),
+            {"scored": len(records), **{f"tier_{k}": v for k, v in tiers.items()}})
 
     table = Table(title=f"Top {min(top, len(records))} of {len(records)} scored agencies  (A={tiers['A']} B={tiers['B']} C={tiers['C']})",
                   show_lines=True)
@@ -152,8 +162,9 @@ def main() -> int:
     p_ingest.add_argument("batch", type=Path)
     p_summary = sub.add_parser("summary", help="write data/scored/summary.csv and print the top leads")
     p_summary.add_argument("--top", type=int, default=15)
+    p_summary.add_argument("--region", default=DEFAULT_REGION, help="a region in config/regions/ (default: %(default)s)")
     args = ap.parse_args()
-    return ingest(args.batch) if args.cmd == "ingest" else summary(args.top)
+    return ingest(args.batch) if args.cmd == "ingest" else summary(args.top, args.region)
 
 
 if __name__ == "__main__":

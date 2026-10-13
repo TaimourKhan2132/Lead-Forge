@@ -16,10 +16,15 @@ Notable changes to LeadForge. No real business is named here or anywhere else in
 - `track.py plan <date> --keep` places only the leads that have no date, so a day's files do not
   change under the person sending from them.
 - `draft.py followups` rewrites only the follow-up sections of a draft that is already built.
+- Regions as config. `config/regions/<name>.yaml` says where a region is, what to search for and
+  whether outreach is drafted for it; `discover.py`, `shortlist.py` and `qualify.py summary` take
+  `--region`. Two are defined: `gulf`, the default, and `uk`, which is scored only. A scored
+  record carries its region, so one region's agencies stay out of another's ranking and send plan.
 - `track.py ready <date>` writes the follow-ups due that day to their own file, ahead of the new
   emails, each with its "Re:" subject. Job asks get a page and a CSV with the same fields.
 
 ### Changed
+- The Gulf search list moved from `queries/agencies_gulf.txt` into `config/regions/gulf.yaml`.
 - Send rules: at most 25 new emails a weekday and 30 messages a day with follow-ups. They were 10
   and 15.
 - A follow-up has to add something. The linter rejects "just following up", "circling back",

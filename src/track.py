@@ -40,7 +40,8 @@ from collections import Counter
 from rich.console import Console
 from rich.table import Table
 
-from common import DATA, DRAFTS, JOB_WORDING, JOBS, PACKS, ROOT, SCORED, US_TRACK, job_wording, utf8_stdout
+from common import (DATA, DRAFTS, JOB_WORDING, JOBS, PACKS, ROOT, SCORED, US_TRACK, job_wording, outreach_open,
+                    utf8_stdout)
 from pack import MAX_AGE_DAYS
 
 DB = DATA / "tracker.db"
@@ -168,6 +169,9 @@ def sync(conn: sqlite3.Connection) -> int:
             console.print(f"[yellow]skip {domain}: needs a pack and a scored record as well as a draft[/yellow]")
             continue
         rec = json.loads(scored.read_text(encoding="utf-8"))
+        if not outreach_open(rec):
+            console.print(f"[yellow]skip {domain}: its region is scored only, so nothing is sent to it yet[/yellow]")
+            continue
         pack_path = pack.relative_to(ROOT).as_posix() if pack.exists() else None
         cur = conn.execute(
             "INSERT OR IGNORE INTO leads (domain, agency, email, tier, score, pack_path, draft_path) VALUES (?,?,?,?,?,?,?)",
@@ -191,6 +195,9 @@ def sync(conn: sqlite3.Connection) -> int:
             console.print(f"[yellow]skip jobs/{domain}: it already has a lead-pack email, and an agency gets one offer[/yellow]")
             continue
         rec = json.loads(scored.read_text(encoding="utf-8"))
+        if not outreach_open(rec):
+            console.print(f"[yellow]skip jobs/{domain}: its region is scored only, so nothing is sent to it yet[/yellow]")
+            continue
         path = draft.relative_to(ROOT).as_posix()
         cur = conn.execute(
             "INSERT OR IGNORE INTO leads (domain, agency, email, tier, score, draft_path, offer) VALUES (?,?,?,?,?,?,'job_ask')",

@@ -4,6 +4,7 @@ lxml
 pandas
 dnspython
 python-dotenv
+pyyaml
 tldextract
 rich
 # Fallback Maps engine, used when Docker is unavailable. Drives the system's

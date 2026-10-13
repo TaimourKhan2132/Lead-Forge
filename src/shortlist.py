@@ -1,6 +1,7 @@
 """Shortlist: rank enriched leads with cheap rules and write digests for the reasoning layer.
 
     python src/shortlist.py --top 80
+    python src/shortlist.py --region uk --top 40     # another region; its files carry the region's name
 
 The rule-based number here is only a triage order. It decides which leads are worth an LLM's
 (or a human's) attention and nothing else: the real score comes from qualify.py. Each digest
@@ -19,23 +20,13 @@ from pathlib import Path
 import pandas as pd
 from rich.console import Console
 
-from common import ENRICHED, SCORED, log_run, utf8_stdout
+from common import DEFAULT_REGION, ENRICHED, SCORED, in_region, log_run, region, utf8_stdout
 
-GULF = {"AE", "SA", "QA"}
-GULF_WORDS = ("united arab emirates", "dubai", "abu dhabi", "sharjah", "ajman", "saudi", "riyadh",
-              "jeddah", "qatar", "doha", "uae", "ksa")
 FIT_SERVICES = {"seo", "paid_ads", "social_media", "web_design_dev", "ecommerce", "lead_generation", "crm",
                 "automation", "ai", "chatbots", "email_marketing", "content", "branding", "software_dev",
                 "app_dev", "data_analytics"}
 THIS_YEAR = dt.date.today().year
 console = Console()
-
-
-def in_gulf(rec: dict) -> bool:
-    maps = rec.get("maps", {})
-    if maps.get("country"):
-        return maps["country"] in GULF
-    return any(word in (maps.get("address") or "").lower() for word in GULF_WORDS)
 
 
 def months_since(date_str: str | None) -> float | None:
@@ -46,12 +37,13 @@ def months_since(date_str: str | None) -> float | None:
     return (dt.date.today() - then).days / 30.4
 
 
-def triage(rec: dict) -> tuple[int, str]:
+def triage(rec: dict, where: dict | None = None) -> tuple[int, str]:
     """Return (points, skip_reason). A non-empty skip_reason removes the lead from the shortlist."""
+    where = where or region()
+    if not in_region(rec.get("maps", {}), where):
+        return 0, f"outside {where['label']}"
     if rec.get("status") != "ok":
         return 0, f"site {rec.get('status')}"
-    if not in_gulf(rec):
-        return 0, "outside UAE/KSA/Qatar"
     big = {b["signal"] for b in rec.get("big_company", [])}
     if staff_counter(rec) > 50:
         big.add("staff_over_50")
@@ -170,8 +162,13 @@ def main() -> int:
     ap.add_argument("--top", type=int, default=80, help="how many leads go forward to qualification")
     ap.add_argument("--batch", type=int, default=10)
     ap.add_argument("--domains", default="", help="only these domains (comma-separated), e.g. after a re-crawl")
-    ap.add_argument("--name", default="batch", help="prefix for the digest files; use with --domains")
+    ap.add_argument("--name", help="prefix for the digest files; use with --domains")
+    ap.add_argument("--region", default=DEFAULT_REGION, help="a region in config/regions/ (default: %(default)s)")
     args = ap.parse_args()
+    where = region(args.region)
+    # The first region keeps the file names it always had. Any other carries its name in them.
+    home = where["name"] == DEFAULT_REGION
+    args.name = args.name or ("batch" if home else where["name"])
     only = {d.strip().lower() for d in args.domains.split(",") if d.strip()}
 
     rows, skipped = [], Counter()
@@ -180,7 +177,7 @@ def main() -> int:
         rec = json.loads(path.read_text(encoding="utf-8"))
         if only and (rec.get("domain") or path.stem).lower() not in only:
             continue
-        points, reason = triage(rec)
+        points, reason = triage(rec, where)
         if reason:
             skipped[reason.split(":")[0]] += 1
         records[rec["domain"] or path.stem] = rec
@@ -190,7 +187,7 @@ def main() -> int:
     rows.sort(key=lambda r: (bool(r["skip_reason"]), r["source"] != "clutch", -r["triage"]))
     SCORED.mkdir(parents=True, exist_ok=True)
     # A partial run must not overwrite the full triage table or the main digest batches.
-    pd.DataFrame(rows).to_csv(SCORED / ("_triage.csv" if not only else f"_triage_{args.name}.csv"),
+    pd.DataFrame(rows).to_csv(SCORED / ("_triage.csv" if home and not only else f"_triage_{args.name}.csv"),
                               index=False, encoding="utf-8")
 
     chosen = [r for r in rows if not r["skip_reason"]][:args.top]
@@ -203,7 +200,9 @@ def main() -> int:
         body = "\n\n".join(digest(records[r["domain"]], r["triage"]) for r in batch)
         (digest_dir / f"{args.name}_{i // args.batch + 1:02d}.md").write_text(body + "\n", encoding="utf-8")
 
-    counts = {"enriched": len(rows), "eligible": sum(not r["skip_reason"] for r in rows),
+    outside = sum(r["skip_reason"].startswith("outside ") for r in rows)
+    skipped = Counter({k: v for k, v in skipped.items() if not k.startswith("outside ")})
+    counts = {"enriched": len(rows) - outside, "eligible": sum(not r["skip_reason"] for r in rows),
               "shortlisted": len(chosen), "batches": -(-len(chosen) // args.batch)}
     command = "python " + " ".join(["src/shortlist.py"] + sys.argv[1:])
     if args.domains:  # the public log must not name the agencies being looked at
