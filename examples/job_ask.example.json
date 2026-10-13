@@ -15,5 +15,7 @@
  "follow_up_lead": "One more example of my work.",
  "follow_up_demo": "Here is a short recording of the pipeline running from start to finish: {url}",
  "follow_up_2": "Should I close this off on my side? If the timing's wrong, no problem, and if a small task comes up later, I'm one email away.",
- "pivot": "If prospect lists aren't useful for you, I also take on Python automation and data work part-time, small paid trial first. My work: code.example/your-name"
+ "pivot": "If prospect lists aren't useful for you, I also take on Python automation and data work part-time, small paid trial first. My work: code.example/your-name",
+ "undated_opener": "I saw the {role} role on your careers page.",
+ "talent_pool_opener": "I saw {role} listed among the roles on your careers page."
 }

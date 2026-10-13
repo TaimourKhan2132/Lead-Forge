@@ -16,6 +16,15 @@ Notable changes to LeadForge. No real business is named here or anywhere else in
 - `track.py plan <date> --keep` places only the leads that have no date, so a day's files do not
   change under the person sending from them.
 - `draft.py followups` rewrites only the follow-up sections of a draft that is already built.
+- Hiring signals (`hiring.py`, and `track.py discover --by-hiring --region <region>`). It finds each
+  discovered company's careers page, recognises seven job systems by their board addresses, and
+  reads Greenhouse, Lever, Workable and Recruitee through their public board APIs. Every role is
+  recorded with its title, URL, posting date, location, working mode, employment type and the text
+  it was read from, then given a status (fresh, undated, talent pool) and a relevance (strong,
+  adjacent, none). It obeys robots.txt, makes one request at a time per site and keeps results for
+  7 days. It writes `data/scored/hiring_<region>.csv` and a list of roles to apply for by hand.
+- A job ask's opener is worded to match the role's status. Only a role posted in the last 60 days
+  is called "hiring", and the linter refuses any other wording.
 - Regions as config. `config/regions/<name>.yaml` says where a region is, what to search for and
   whether outreach is drafted for it; `discover.py`, `shortlist.py` and `qualify.py summary` take
   `--region`. Two are defined: `gulf`, the default, and `uk`, which is scored only. A scored

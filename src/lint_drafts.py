@@ -17,9 +17,11 @@ Rules for outreach/jobs (the job ask): the header names the offer, the proof typ
 is hiring and the quoted evidence for the opener; one subject line; email 1 carries the operator's
 pitch, exactly one proof line (the one the header names), the trial question, the link to the work
 and the P.S., word for word from outreach/job_ask.json, and no other link; the opener is one sentence
-with no compliment and no remark that the agency lacks something; the line about an open role is
-there only when the header says the opener names the role; follow-up 1 at 60 words or fewer, ending
-on the trial question; follow-up 2 at 40; and no mention of n8n, Docker or Looker Studio.
+with no compliment and no remark that the agency lacks something; when the opener names a role it
+is worded to match the role's status, and only a role with a recent posting date is called
+"hiring"; the line offering help before the hire is there for a fresh or undated role and nowhere
+else; follow-up 1 at 60 words or fewer, ending on the trial question; follow-up 2 at 40; and no
+mention of n8n, Docker or Looker Studio.
 
 Rules for outreach/us_track: a contact-form message of 90 words or fewer with no links, the fixed
 LeadForge sentence, a fixed-price offer and the fixed call-to-action; a source URL for the hook, or
@@ -50,6 +52,7 @@ US_CTA = "Is there a piece of a current project I could take off your plate?"
 SIGN_OFFS = [s for s in ("{{NAME}}", (dotenv_values(ROOT / ".env").get("LEADFORGE_NAME") or "").strip()) if s]
 JOB_NEVER = ("n8n", "docker", "looker studio")  # tools the job ask never mentions
 JOB_FU1_MAX, JOB_FU2_MAX = 60, 40
+JOB_OPENERS = {"fresh": "hiring_opener", "undated": "undated_opener", "talent_pool": "talent_pool_opener"}
 PRAISE = re.compile(r"\b(love[ds]?|impress\w*|amazing|awesome|great|beautiful|stunning|admir\w*|fantastic|excellent|"
                     r"incredible|brilliant|outstanding)\b", re.I)
 FAULT = re.compile(r"\b(missing|lacks?|lacking|weak|outdated|slow|broken|poor|without|doesn['’]?t|does not|isn['’]?t|"
@@ -196,12 +199,15 @@ def lint_job(text: str, wording: dict) -> list[str]:
     if kind not in wording["proof"]:
         problems.append(f"header needs '- **Proof:**' with one of {', '.join(wording['proof'])}")
     hiring, names_role = field("Hiring"), field("Names the role") == "yes"
-    if not re.match(r"yes, \S|no$", hiring):
-        problems.append("header needs '- **Hiring:**' as 'no' or 'yes, <role as the careers page words it>'")
-    if hiring.startswith("yes") and not field("Careers page").startswith("http"):
-        problems.append("hiring is yes but the header gives no careers page URL")
-    if names_role and not hiring.startswith("yes"):
-        problems.append("the opener names a role but the header does not say the agency is hiring")
+    role, state = hiring.partition(", ")[2], field("Role status").split(" ")[0]
+    if not re.match(r"(yes|talent pool), \S|no$", hiring):
+        problems.append("header needs '- **Hiring:**' as 'no', 'yes, <role>' or 'talent pool, <role>'")
+    if role and not field("Careers page").startswith("http"):
+        problems.append("a role is named but the header gives no careers page URL")
+    if (state == "talent_pool") != hiring.startswith("talent pool") or (state == "none") != (hiring == "no"):
+        problems.append("'- **Role status:**' and '- **Hiring:**' disagree")
+    if names_role and state not in JOB_OPENERS:
+        problems.append("the opener names a role, so its status must be fresh, undated or talent_pool")
     if '"' not in field("Opener quote") or not field("Evidence").startswith("http"):
         problems.append("the opener needs its quoted words and the URL of the page they are on")
 
@@ -221,8 +227,8 @@ def lint_job(text: str, wording: dict) -> list[str]:
         used = [k for k, line in wording["proof"].items() if line in plain]
         if used != [kind]:
             problems.append(f"email 1 must carry proof line {kind} and no other; found {', '.join(used) or 'none'}")
-        if (wording["hiring_line"] in plain) != names_role:
-            problems.append("the line about the open role belongs in email 1 only when the opener names the role")
+        if (wording["hiring_line"] in plain) != (names_role and state in ("fresh", "undated")):
+            problems.append("the line about the open role belongs in email 1 only when the opener names a fresh or undated role")
         if plain.count(wording["link"]) != 1 or OTHER_LINK.search(plain.replace(wording["link"], "")):
             problems.append("email 1 may hold one link, the one to the work")
         if not any(name in plain for name in SIGN_OFFS):
@@ -231,6 +237,12 @@ def lint_job(text: str, wording: dict) -> list[str]:
         opener = paragraphs[1] if len(paragraphs) > 1 else ""
         if len(re.findall(r"[.!?](?=\s|$)", opener)) != 1:
             problems.append("the opener must be one sentence")
+        if names_role and state in JOB_OPENERS:
+            a = "an" if role[:1].lower() in "aeiou" else "a"
+            if opener != wording[JOB_OPENERS[state]].format(a=a, role=role):
+                problems.append(f"the opener is not the wording for a {state} role")
+        if "hiring" in opener.lower() and state != "fresh":
+            problems.append("only a role with a posting date in the last 60 days may be called hiring")
         for pattern, what in ((PRAISE, "compliments the agency"), (FAULT, "says the agency lacks something")):
             found = pattern.search(opener)
             if found:

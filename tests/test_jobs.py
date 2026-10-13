@@ -22,7 +22,8 @@ SPEC = {
     "line1_checks": [{"url": "https://harbourline.example/", "quotes": ["SEO, paid search and web design"]}],
     "hiring": {"open": False, "url": ""}, "score": {"score": 71, "tier": "A"},
 }
-OPEN_ROLE = {"open": True, "url": "https://harbourline.example/careers", "role": "Automation Engineer", "fits": True}
+OPEN_ROLE = {"url": "https://harbourline.example/careers", "role": "Automation Engineer", "status": "undated",
+             "relevance": "strong", "fits": True, "score": 5}
 
 
 def rendered(**changes) -> str:
@@ -56,11 +57,11 @@ def test_a_job_ask_passes_its_linter():
 
 def test_the_opener_names_a_role_only_when_the_role_is_work_on_offer():
     fits = rendered(hiring=OPEN_ROLE)
-    assert "I saw you're hiring an Automation Engineer." in fits and WORDING["hiring_line"] in fits
+    assert "I saw the Automation Engineer role on your careers page." in fits and WORDING["hiring_line"] in fits
     assert SPEC["opener"] not in fits
     other = rendered(hiring={**OPEN_ROLE, "role": "Account Manager", "fits": False})
     assert "- **Hiring:** yes, Account Manager" in other
-    assert SPEC["opener"] in other and WORDING["hiring_line"] not in other and "I saw you're hiring" not in other
+    assert SPEC["opener"] in other and WORDING["hiring_line"] not in other and "I saw the" not in other
 
 
 @pytest.mark.parametrize("kind", ["A", "B", "C"])

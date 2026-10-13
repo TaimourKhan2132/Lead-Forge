@@ -427,6 +427,53 @@ Counts only. No lead names or scraped data are written to this file, so it is sa
 - **"Hiring" in the UK records is the crawl's reading, not a confirmed open role.** Each verdict
   says so. It would be checked in a browser on the day, as it was for the Gulf job asks, before
   anything was drafted.
+- **2026-10-14: the operator's review of the first job asks was applied before anything went
+  out.** The agency that replied was recorded, so no follow-up goes to it. One lead-pack draft was
+  held: one of its three businesses has a listing that links to a site on another country's
+  domain, and another's site loads once www is dropped. The third proof line was shortened in the
+  operator's wording file.
+- **A job ask's opener now prefers a named case study, client or project.** Fifteen openers that
+  do not name a role were looked at again. Nine now rest on a named client, case study or project
+  quoted from the agency's site. Six still rest on the services listed, because nothing else on
+  those sites could be quoted. Every quote was read on its page again the same day.
+- **Hiring became a signal with a status, not a yes or no.** `hiring.py` reads roles from a
+  company's own careers page, or from the public board API of a job system the page points at. A
+  role with a posting date in the last 60 days is fresh. One with no date is undated. A list of
+  roles a company "would like to hear about" is a talent pool, not an opening. A role posted
+  earlier than that, or past its closing date, is dropped.
+- **The email says no more than the status allows.** Only a fresh role is called hiring. An
+  undated one is "the role on your careers page". A talent-pool one is "listed among the roles",
+  and the line about helping before the hire is left out, because no hire has been announced. The
+  linter refuses any other pairing. That last omission was a judgement; the operator's brief did
+  not rule on it.
+- **Three of yesterday's readings changed under the new rules.** One role is undated, so its email
+  no longer says the agency is hiring. One page is a talent pool, as the operator said. One role
+  was posted ten months ago and was dropped, and that email now opens on a named client instead.
+- **Yesterday's log was wrong about one site.** It said two sites that had seemed to list roles
+  showed none. One of them does list roles, in a section that opens when clicked, which the
+  reading of the visible text had missed. One of those roles is a strong match, and that agency's
+  email now names it.
+- **Both regions were scanned: 427 companies, every one whose site could be read.** 165 have a
+  careers page. 59 list at least one role. Three use a job system, none of them one with a public
+  API, so those boards were recorded to be read by hand. 13 sites could not be read and were left
+  alone; one homepage is disallowed by its robots.txt, which was obeyed.
+- **Roles found: 8 fresh, 187 undated and 12 in talent pools; 6 were dropped as stale.** Most are
+  undated because a role's own page was not opened: the scan stops at the careers page, to keep
+  the crawl small, and the date is usually one click further in. 11 roles are a strong match and
+  19 are adjacent, at 16 companies.
+- **Five companies found only through their openings were given job asks**, each naming an undated
+  role. None had been scored. Two more matches were left without a draft because the only address
+  on the site is on a different domain. Two agencies with matching roles are already in the
+  lead-pack track, and an agency gets one offer. No draft was written for the UK, which is still
+  scored only.
+- **Searching job boards for companies never seen before was skipped.** Greenhouse, Lever and
+  Workable publish no directory of their boards, and none can be searched by city. Finding boards
+  would mean scraping a search engine or a job site, whose terms are unclear or forbid it.
+  `track.py discover --by-hiring` reads any board named in a region's file; none is named yet.
+- **The parser was corrected four times against real pages, and the pages with roles were read
+  again each time.** It had taken a row's whole text for a title, counted staff testimonials as
+  vacancies, cited a social network's jobs tab as a role's own page, and listed a declared role
+  twice. Those 66 sites were fetched three times in the day. Everything else was fetched once.
 
 ## Open items
 
@@ -461,14 +508,20 @@ Counts only. No lead names or scraped data are written to this file, so it is sa
 - **The repository's About box is still empty.** Description, topics, the social preview image and
   now the page's address are set in GitHub's own settings, which need the operator's signed-in
   browser.
-- **Which agency replied is not recorded.** The operator reported one reply and did not say from
-  whom. Until it is marked, that agency's follow-ups still appear in the send files.
 - **The job ask's first follow-up waits on a recording.** Until the link is set in `.env` it uses
   a proof line the first email did not.
 - **The size criterion and the UK's size range disagree.** The rubric gives full marks at 2 to 15
   people; the operator's range for the UK is 2 to 30. The scores follow the rubric.
 - **UK discovery is one pass of fifteen searches at depth 1.** London returned 54 listings and one
   of them reached the 40 scored, because the triage favours small teams with a named founder.
+- **Most roles are undated.** Opening each role's own page would date many of them, at one more
+  request per role. The operator has not asked for it.
+- **The role parser still makes mistakes.** It reads titles from page structure, and a few entries
+  in the hiring tables are not vacancies. Every role an email names is checked by hand and then
+  confirmed on its page by `jobs.py quotes`.
+- **Two cases that held a draft are not yet rules.** A listing that links to another country's
+  domain, and a site that loads without www, are both still allowed by `verify.py`. They were
+  handled by hand this time.
 
 ## Runs
 
@@ -3166,4 +3219,111 @@ Counts only. No lead names or scraped data are written to this file, so it is sa
 ### 2026-10-13T18:56:09+05:00
 - **Command:** `python src/qualify.py summary --top 12 --region uk`
 - **Counts:** scored=40, tier_A=19, tier_B=21, tier_C=0
+- **Failures:** none
+
+### 2026-10-14T00:26:17+05:00
+- **Command:** `python src/draft.py build <agency>`
+- **Counts:** lint_problems=0
+- **Failures:** none
+
+### 2026-10-14T00:35:16+05:00
+- **Command:** `python src/jobs.py quotes`
+- **Counts:** drafts=17, failed=1
+- **Failures:** none
+
+### 2026-10-14T00:35:17+05:00
+- **Command:** `python src/jobs.py build`
+- **Counts:** drafts=17, refused=0
+- **Failures:** none
+
+### 2026-10-14T00:35:38+05:00
+- **Command:** `python src/jobs.py quotes`
+- **Counts:** drafts=1, failed=0
+- **Failures:** none
+
+### 2026-10-14T00:35:52+05:00
+- **Command:** `python src/jobs.py build`
+- **Counts:** drafts=17, refused=0
+- **Failures:** none
+
+### 2026-10-14T00:39:51+05:00
+- **Command:** `python src/hiring.py scan <companies>`
+- **Counts:** companies=8, read_now=8, from_cache=0, careers_page=6, unread=2, job_system=0, with_roles=2, fresh=0, undated=14, talent_pool=0, stale_dropped=1, strong=2, adjacent=2
+- **Failures:** none
+- **Notes:** One request at a time per site, robots.txt respected, results kept for 7 days.
+
+### 2026-10-14T00:40:46+05:00
+- **Command:** `python src/hiring.py scan <companies>`
+- **Counts:** companies=3, read_now=3, from_cache=0, careers_page=3, unread=0, job_system=0, with_roles=2, fresh=0, undated=4, talent_pool=10, stale_dropped=0, strong=2, adjacent=2
+- **Failures:** none
+- **Notes:** One request at a time per site, robots.txt respected, results kept for 7 days.
+
+### 2026-10-14T00:41:21+05:00
+- **Command:** `python src/hiring.py scan <companies>`
+- **Counts:** companies=4, read_now=4, from_cache=0, careers_page=4, unread=0, job_system=0, with_roles=4, fresh=0, undated=10, talent_pool=11, stale_dropped=0, strong=2, adjacent=2
+- **Failures:** none
+- **Notes:** One request at a time per site, robots.txt respected, results kept for 7 days.
+
+### 2026-10-14T00:56:43+05:00
+- **Command:** `python src/hiring.py scan --region gulf`
+- **Counts:** companies=252, read_now=245, from_cache=7, careers_page=90, unread=10, job_system=1, with_roles=34, fresh=4, undated=145, talent_pool=11, stale_dropped=5, strong=10, adjacent=14
+- **Failures:** none
+- **Notes:** One request at a time per site, robots.txt respected, results kept for 7 days.
+
+### 2026-10-14T01:05:34+05:00
+- **Command:** `python src/hiring.py scan --region uk`
+- **Counts:** companies=175, read_now=174, from_cache=1, careers_page=75, unread=3, job_system=2, with_roles=28, fresh=4, undated=54, talent_pool=1, stale_dropped=1, strong=1, adjacent=9
+- **Failures:** none
+- **Notes:** One request at a time per site, robots.txt respected, results kept for 7 days.
+
+### 2026-10-14T01:08:09+05:00
+- **Command:** `python src/hiring.py scan <companies>`
+- **Counts:** companies=66, read_now=66, from_cache=0, careers_page=66, unread=0, job_system=0, with_roles=60, fresh=8, undated=191, talent_pool=12, stale_dropped=6, strong=11, adjacent=22
+- **Failures:** none
+- **Notes:** One request at a time per site, robots.txt respected, results kept for 7 days.
+
+### 2026-10-14T01:08:10+05:00
+- **Command:** `python src/hiring.py scan --region gulf`
+- **Counts:** companies=252, read_now=0, from_cache=252, careers_page=90, unread=10, job_system=1, with_roles=34, fresh=4, undated=140, talent_pool=11, stale_dropped=5, strong=10, adjacent=13
+- **Failures:** none
+- **Notes:** One request at a time per site, robots.txt respected, results kept for 7 days.
+
+### 2026-10-14T01:08:12+05:00
+- **Command:** `python src/hiring.py scan --region uk`
+- **Counts:** companies=175, read_now=0, from_cache=175, careers_page=75, unread=3, job_system=2, with_roles=26, fresh=4, undated=51, talent_pool=1, stale_dropped=1, strong=1, adjacent=9
+- **Failures:** none
+- **Notes:** One request at a time per site, robots.txt respected, results kept for 7 days.
+
+### 2026-10-14T01:12:03+05:00
+- **Command:** `python src/hiring.py scan <companies>`
+- **Counts:** companies=64, read_now=64, from_cache=0, careers_page=64, unread=0, job_system=0, with_roles=59, fresh=8, undated=187, talent_pool=12, stale_dropped=6, strong=11, adjacent=19
+- **Failures:** none
+- **Notes:** One request at a time per site, robots.txt respected, results kept for 7 days.
+
+### 2026-10-14T01:12:04+05:00
+- **Command:** `python src/hiring.py scan --region gulf`
+- **Counts:** companies=252, read_now=0, from_cache=252, careers_page=90, unread=10, job_system=1, with_roles=34, fresh=4, undated=140, talent_pool=11, stale_dropped=5, strong=10, adjacent=13
+- **Failures:** none
+- **Notes:** One request at a time per site, robots.txt respected, results kept for 7 days.
+
+### 2026-10-14T01:12:05+05:00
+- **Command:** `python src/hiring.py scan --region uk`
+- **Counts:** companies=175, read_now=0, from_cache=175, careers_page=75, unread=3, job_system=2, with_roles=25, fresh=4, undated=47, talent_pool=1, stale_dropped=1, strong=1, adjacent=6
+- **Failures:** none
+- **Notes:** One request at a time per site, robots.txt respected, results kept for 7 days.
+
+### 2026-10-14T01:12:19+05:00
+- **Command:** `python src/hiring.py scan --region gulf`
+- **Counts:** companies=252, read_now=0, from_cache=252, careers_page=90, unread=10, job_system=1, with_roles=34, fresh=4, undated=140, talent_pool=11, stale_dropped=5, strong=10, adjacent=13
+- **Failures:** none
+- **Notes:** One request at a time per site, robots.txt respected, results kept for 7 days.
+
+### 2026-10-14T01:15:05+05:00
+- **Command:** `python src/jobs.py quotes`
+- **Counts:** drafts=22, failed=0
+- **Failures:** none
+
+### 2026-10-14T01:15:06+05:00
+- **Command:** `python src/jobs.py build`
+- **Counts:** drafts=22, refused=0
 - **Failures:** none

@@ -11,15 +11,22 @@ The wording is the operator's own and is not in this repository. outreach/job_as
 subject, the pitch, the three proof lines and the follow-ups; examples/job_ask.example.json shows the
 shape. What is written per agency is the spec, data/scored/jobs/<agency-domain>.job.json:
 
-    opener        one factual sentence about the agency, saying no more than the quoted words do
+    opener        one factual sentence about the agency, saying no more than the quoted words do. Prefer a
+                  named case study, client or project; fall back to the services it lists only when
+                  nothing else on the site can be quoted
     line1_checks  [{"url", "quotes"}]: the exact words the opener rests on and the page they are on
     type          the proof line to use: A marketing, B AI and software, C web development
-    hiring        {"open", "url", "role", "fits"}: is an open role listed on the agency's own careers
-                  page, and is it data, automation, scraping, reporting or development work
+    hiring        {"url", "role", "status", "relevance", "fits", "posted", "score"}: a role on the agency's
+                  own careers page or job system, as hiring.py read it. status is fresh (a posting date in
+                  the last 60 days), undated, or talent_pool (a list of roles the agency would like to hear
+                  about, not an opening)
     first_name    only with full_name and name_source, the page on the agency's site that names the person
 
-When the open role fits, the opener names the role instead and one line is added before the ask. An
-agency with no quotable fact gets no email: `build` refuses a spec without quoted evidence.
+When the role fits, the opener names it instead, worded to match its status: only a fresh role is
+"hiring"; an undated one is "the role on your careers page"; a talent-pool one is "listed among the
+roles". The line offering help before the hire is added for a fresh or undated role, not for a
+talent pool, where no hire has been announced. An agency with no quotable fact gets no email:
+`build` refuses a spec without quoted evidence.
 
 Nothing is sent. Each file is for a person to read, check, copy and send by hand.
 """
@@ -40,13 +47,16 @@ from dotenv import dotenv_values
 from rich.console import Console
 
 import draft
-from common import ENRICHED, JOBS, ROOT, SCORED, job_wording, log_run, outreach_open, root_domain, utf8_stdout
+from common import (ENRICHED, JOBS, ROOT, SCORED, job_wording, log_run, outreach_open, region_of, root_domain,
+                    utf8_stdout)
 from lint_drafts import lint_job
 from track import connect, skipped_domains
 
 SPECS = SCORED / "jobs"
 TYPES = {"A": "marketing, SEO, ads", "B": "AI, automation, software", "C": "web development"}
 NEXT_PROOF = {"A": "B", "B": "C", "C": "B"}  # follow-up 1 shows a proof line the first email did not
+OPENERS = {"fresh": "hiring_opener", "undated": "undated_opener", "talent_pool": "talent_pool_opener"}
+FRESH_DAYS = 60  # a role is "hiring" only with a posting date this recent
 CAREERS_LINK = re.compile(r"career|\bjobs?\b|join[-_ ]?(?:us|our)|vacanc|hiring|work[-_ ]?(?:with|for)[-_ ]?us|open[-_ ]?(?:positions|roles)", re.I)
 TEXT_CAP = 12_000
 console = Console()
@@ -56,8 +66,7 @@ def refusal(domain: str, conn) -> str:
     """Why this agency may not be sent a job ask, or ''."""
     if domain in skipped_domains():
         return "it is on the skip list"
-    scored = SCORED / f"{domain}.json"
-    if scored.exists() and not outreach_open(json.loads(scored.read_text(encoding="utf-8"))):
+    if not outreach_open(region_record(domain)):
         return "its region is scored only: nothing is drafted for it yet"
     lead = conn.execute("SELECT * FROM leads WHERE domain = ?", (domain,)).fetchone()
     if lead and lead["status"] != "drafted":
@@ -65,6 +74,15 @@ def refusal(domain: str, conn) -> str:
     if lead and lead["offer"] == "lead_pack" and not lead["blocked"]:
         return "it has a lead-pack draft waiting to go, and an agency gets one offer"
     return ""
+
+
+def region_record(domain: str) -> dict:
+    """The scored record, or for a company that was never scored, the region its listing is in."""
+    scored, enriched = SCORED / f"{domain}.json", ENRICHED / f"{domain}.json"
+    if scored.exists():
+        return json.loads(scored.read_text(encoding="utf-8"))
+    maps = json.loads(enriched.read_text(encoding="utf-8")).get("maps", {}) if enriched.exists() else {}
+    return {"region": region_of(maps)}
 
 
 def candidates() -> list[str]:
@@ -155,10 +173,22 @@ def article(role: str) -> str:
     return "an" if role[:1].lower() in "aeiou" else "a"
 
 
-def variant(spec: dict) -> bool:
-    """The opener names the open role only when that role is work the operator could take on."""
+def status(spec: dict) -> str:
+    """fresh, undated or talent_pool for a role the careers page shows; none when it shows no role."""
     hiring = spec.get("hiring") or {}
-    return bool(hiring.get("open") and hiring.get("fits"))
+    return hiring.get("status", "undated") if hiring.get("role") else "none"
+
+
+def variant(spec: dict) -> bool:
+    """The opener names the role only when that role is work the operator could take on."""
+    hiring = spec.get("hiring") or {}
+    return bool(hiring.get("role") and hiring.get("fits") and status(spec) in OPENERS)
+
+
+def named_opener(spec: dict, wording: dict) -> str:
+    """Only a fresh role is "hiring". An undated one is on the careers page; a talent-pool one is listed."""
+    role = spec["hiring"]["role"]
+    return wording[OPENERS[status(spec)]].format(a=article(role), role=role)
 
 
 def opener_checks(spec: dict) -> list[dict]:
@@ -168,9 +198,9 @@ def opener_checks(spec: dict) -> list[dict]:
 
 
 def checks(spec: dict) -> list[dict]:
-    """Everything the email relies on: the opener's words, an open role, and the name it greets."""
+    """Everything the email relies on: the opener's words, a listed role, and the name it greets."""
     hiring = spec.get("hiring") or {}
-    role = [{"url": hiring["url"], "quotes": [hiring["role"]]}] if hiring.get("open") and not variant(spec) else []
+    role = [{"url": hiring["url"], "quotes": [hiring["role"]]}] if hiring.get("role") and not variant(spec) else []
     name = [{"url": spec["name_source"], "quotes": [spec["full_name"]]}] if spec.get("first_name") else []
     return opener_checks(spec) + role + name
 
@@ -191,8 +221,17 @@ def problems(spec: dict, conn) -> list[str]:
     if spec.get("first_name") and not (spec.get("name_source", "").startswith("http") and spec.get("full_name")):
         out.append("first_name needs full_name and name_source: the page on the agency's site that names the person")
     hiring = spec.get("hiring") or {}
-    if hiring.get("open") and not (hiring.get("url", "").startswith("http") and hiring.get("role")):
-        out.append("an open role needs the careers page URL and the role's title as written there")
+    if hiring.get("role") and not hiring.get("url", "").startswith("http"):
+        out.append("a role needs the URL of the page it is on")
+    if hiring.get("role") and status(spec) not in OPENERS:
+        out.append(f"a role's status must be one of {', '.join(OPENERS)}")
+    if status(spec) == "fresh":
+        try:
+            age = (dt.date.today() - dt.date.fromisoformat(hiring.get("posted", "")[:10])).days
+        except ValueError:
+            age = None
+        if age is None or not 0 <= age <= FRESH_DAYS:
+            out.append(f"a role is fresh only with a posting date in the last {FRESH_DAYS} days; otherwise it is undated")
     if not variant(spec):
         if not spec.get("opener"):
             out.append("no opener")
@@ -204,31 +243,36 @@ def problems(spec: dict, conn) -> list[str]:
 def render(spec: dict, wording: dict, results: Path | None = None) -> str:
     domain, hiring, named = spec["domain"], spec.get("hiring") or {}, variant(spec)
     record = SCORED / f"{domain}.json"
-    scored = json.loads(record.read_text(encoding="utf-8")) if record.exists() else spec["score"]
+    scored = json.loads(record.read_text(encoding="utf-8")) if record.exists() else spec.get("score")
+    state = status(spec)
     env = dotenv_values(ROOT / ".env")
     name = (env.get("LEADFORGE_NAME") or "").strip() or "{{NAME}}"
     demo = (env.get("LEADFORGE_DEMO_URL") or "").strip()
     greeting = f"Hi {spec.get('first_name') or 'there'},"
-    opener = wording["hiring_opener"].format(a=article(hiring["role"]), role=hiring["role"]) if named else spec["opener"]
-    ask = (wording["hiring_line"] + " " if named else "") + f"{wording['ask']} {wording['work']}"
+    opener = named_opener(spec, wording) if named else spec["opener"]
+    # A talent pool announces no hire, so there is no hire to offer help ahead of.
+    ask = (wording["hiring_line"] + " " if named and state != "talent_pool" else "") + f"{wording['ask']} {wording['work']}"
     quoted = " | ".join(f'"{q}"' for check in opener_checks(spec) for q in check["quotes"])
     header = [
         f"# Job ask: {spec['agency']} ({domain})", "", f"- **To:** {spec['to']}",
         "- **Addressed to:** " + (f"{spec['full_name']}, named on {spec['name_source']}" if spec.get("first_name")
                                   else "no named contact on the site"),
         "- **Offer:** job_ask", f"- **Proof:** {spec['type']} ({TYPES[spec['type']]})",
-        "- **Hiring:** " + (f"yes, {hiring['role']}" if hiring.get("open") else "no"),
+        "- **Hiring:** " + (f"talent pool, {hiring['role']}" if state == "talent_pool" else
+                            f"yes, {hiring['role']}" if state != "none" else "no"),
+        f"- **Role status:** {state}" + (f" ({hiring['relevance']})" if hiring.get("relevance") else ""),
+        f"- **Hiring score:** {hiring.get('score', 0)}",
         f"- **Careers page:** {hiring.get('url') or 'none found'}",
         f"- **Names the role:** {'yes' if named else 'no'}",
         f"- **Opener quote:** {quoted}", f"- **Evidence:** {opener_checks(spec)[0]['url']}",
-        f"- **Score:** {scored['score']}, tier {scored['tier']}"]
+        "- **Score:** " + (f"{scored['score']}, tier {scored['tier']}" if scored else "unscored")]
     header += [f"- {note}" for note in spec.get("notes", [])]
     header += ["", "Send as plain text, with no attachment." + ("" if name != "{{NAME}}" else " Replace `{{NAME}}` before sending."), ""]
     subject = ["## Subject", "", wording["subject"].format(agency=spec["agency"]), ""]
     email = ["## Email 1", "", greeting, "", opener, "", f"{wording['pitch']} {wording['proof'][spec['type']]}", "", ask, "",
              name, "", wording["ps"], ""]
-    state = draft.line1_state(domain, results or SPECS / "_line1.json", "jobs.py quotes")
-    check = ["## Check before sending", "", f"What the email rests on ({state}). Open each page and find the words:", ""]
+    read = draft.line1_state(domain, results or SPECS / "_line1.json", "jobs.py quotes")
+    check = ["## Check before sending", "", f"What the email rests on ({read}). Open each page and find the words:", ""]
     check += [f"- {c['url']} : " + ", ".join(f'"{q}"' for q in c["quotes"]) for c in checks(spec)] + [""]
     new = (wording["follow_up_demo"].format(url=demo) if demo
            else f"{wording['follow_up_lead']} {wording['proof'][NEXT_PROOF[spec['type']]]}")
@@ -247,6 +291,11 @@ def build(domains: list[str], spec_dir: Path = SPECS, out_dir: Path = JOBS, word
         for path in paths:
             spec = json.loads(path.read_text(encoding="utf-8"))
             target = out_dir / f"{spec['domain']}.md"
+            lead = conn.execute("SELECT status FROM leads WHERE domain = ?", (spec["domain"],)).fetchone()
+            if lead and lead["status"] != "drafted" and target.exists():
+                # It has gone out. The draft is the record of what was sent, and its follow-ups are read from it.
+                console.print(f"[dim]sent[/dim] outreach/jobs/{target.name} left as it is")
+                continue
             found = problems(spec, conn)
             if not found:
                 text = render(spec, wording, spec_dir / "_line1.json")

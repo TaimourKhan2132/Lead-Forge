@@ -42,3 +42,12 @@ queries:
   - marketing automation agency in Dubai
   - HubSpot partner agency in Dubai
   - SEO agency in Abu Dhabi
+
+# Companies found by their openings, not by a Maps search: public job boards to read with
+# `track.py discover --by-hiring`. Name a board by the last part of its address, for example
+# boards.greenhouse.io/<name>. Only roles located in this region, or remote, are kept.
+job_boards:
+  greenhouse: []
+  lever: []
+  workable: []
+  recruitee: []

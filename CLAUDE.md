@@ -81,19 +81,36 @@ to use is in `outreach/pricing.md`.
 15. Banned in outreach: "I hope this finds you well", "I came across your profile", flattery,
     "synergy", "quick question", made-up statistics.
 16. **The job ask opens with one factual sentence about the agency**, resting on words quoted from
-    its own site, with the page's URL: a service it sells, a case study, a client it names, or an
-    open role. No compliments. Nothing about the agency's product being weak or missing something.
-    No quotable fact, no email: drop the agency and say why. Never guess.
+    its own site, with the page's URL. Prefer a named case study, client or project. Fall back to
+    the services it lists only when nothing else can be quoted. No compliments. Nothing about the
+    agency's product being weak or missing something. No quotable fact, no email: drop the agency
+    and say why. Never guess.
 17. **Everything the job ask says about the operator comes word for word from his wording file**,
     `outreach/job_ask.json` (gitignored): the pitch, one of three proof lines chosen by agency type
     (A marketing, SEO and ads; B AI, automation and software; C web development), the trial question
     and the P.S. Never write a new proof line. No attachments, and no link except the one in that
     file. Never mention n8n, Docker or Looker Studio.
-18. **"Hiring" means an open role on the agency's own careers or jobs page today**, with the page
-    recorded. The opener names the role only when it is data, automation, scraping, reporting or
-    development work; otherwise the normal opener is used.
+18. **A role has a status, and the email says no more than the status allows.** `hiring.py` reads
+    roles from a company's own careers page or its public job system and records the exact text.
+    - `fresh`: a posting date in the last 60 days. Only this may be called hiring: "I saw you're
+      hiring a {title}".
+    - `undated`: listed as open with no date. "I saw the {title} role on your careers page".
+    - `talent_pool`: "roles we'd like to hear about", "disciplines we want to meet". Not an
+      opening. "I saw {title} listed among the roles on your careers page", and no line about
+      helping before the hire.
+    - A posting date older than 60 days, or a closing date that has passed, drops the role.
+    The opener names a role only when it is `strong` (data, automation, Python, scraping,
+    reporting and BI, backend, ML) or `adjacent` (full-stack, web developer, CRM or marketing
+    operations). A role that is on site only or needs a visa is flagged and ranked lower, not
+    dropped.
 19. **An agency gets one offer.** A job ask goes only to an agency that has never been emailed, is
     not in `data/skip.txt` and has no lead-pack draft waiting to go.
+20. **Careers pages are read politely, and nothing is ever applied for.** Public pages only.
+    `robots.txt` is obeyed. One request at a time per site, results kept for 7 days, the browser
+    only for a page that shows nothing without JavaScript. A job system is read through its
+    public board API where it has one (Greenhouse, Lever, Workable, Recruitee). Never LinkedIn,
+    Indeed or Bayt. If a source's terms are unclear, skip it and say so. An Apply link goes in
+    `outreach/apply_by_hand.md` for the operator to use himself; never submit a form.
 
 ## Send rules
 
@@ -156,6 +173,10 @@ python src/pack.py fill --readme-no-email                    # fill name and lin
 python src/draft.py build <agency>                           # render and lint the outreach draft
 python src/draft.py quotes [<agency>]                        # is what line 1 quotes on the agency's page today?
 python src/draft.py followups [<agency> ...]                 # rewrite only the follow-ups of drafts already built
+python src/hiring.py scan --region <region>                  # careers pages and job systems of every discovered company
+python src/hiring.py report --region <region>                # data/scored/hiring_<region>.csv and outreach/apply_by_hand.md
+python src/hiring.py drafts --region <region>                # job-ask specs for the strong and adjacent matches
+python src/track.py discover --by-hiring --region <region>   # the three above, in one go
 python src/jobs.py scan [<agency> ...]                       # the job ask: read each candidate's homepage and careers page
 python src/jobs.py build [<agency> ...]                      # render and lint the job-ask drafts in outreach/jobs/
 python src/jobs.py quotes [<agency> ...]                     # are the opener's quoted words on the agency's page today?
@@ -210,7 +231,15 @@ When this conversation is compacted, keep all of the following word for word in 
   about the operator comes word for word from `outreach/job_ask.json`: never a new proof line, no
   attachment, no other link, never n8n, Docker or Looker Studio. "Hiring" means an open role on the
   agency's own careers page today; the opener names it only for data, automation, scraping,
-  reporting or development work. Drafts are in `outreach/jobs/`; both are private.
+  reporting or development work. Drafts are in `outreach/jobs/`; both are private. Prefer a named
+  case study, client or project for the opener; services only as a fallback.
+- **Hiring signals** (`hiring.py`, `track.py discover --by-hiring`): roles read from careers pages
+  and public job-board APIs, robots.txt obeyed, one request at a time per site, cached 7 days. A
+  role is `fresh` (posted in the last 60 days: the only one that may be called "hiring"), `undated`
+  ("the {title} role on your careers page"), or `talent_pool` ("listed among the roles", and no
+  line about the hire); older or closed roles are dropped. Relevance is strong, adjacent or none.
+  Never LinkedIn, Indeed or Bayt. Never submit a form: Apply links go in
+  `outreach/apply_by_hand.md` for the operator.
 - **Follow-ups** are replies in the first email's thread ("Re:" and its subject). Never "just
   following up", "circling back", "bumping this" or "checking in": each adds something new or is
   not sent. Job ask: day 3 one new piece of proof and the trial question, day 7 close the loop in
@@ -247,8 +276,9 @@ When this conversation is compacted, keep all of the following word for word in 
   lines.** No payment details in the repository.
 - **Commands:** `discover.py`, `merge_clutch.py`, `enrich.py`, `shortlist.py`, `qualify.py ingest`
   and `summary`, `prospects.py`, `verify.py`, `pack.py build` and `fill`, `draft.py build`, `quotes` and
-  `followups`, `jobs.py scan`, `build` and `quotes`, `lint_drafts.py`, `track.py sync`, `plan`
-  (`--keep`), `ready`, `today`, `mark`, `bounces` and `list`, `us_track.py prepare`
+  `followups`, `jobs.py scan`, `build` and `quotes`, `hiring.py scan`, `report` and `drafts`,
+  `lint_drafts.py`, `track.py sync`, `plan` (`--keep`), `ready`, `today`, `mark`, `bounces`, `list`
+  and `discover --by-hiring`, `us_track.py prepare`
   and `digest`, `sample.py --brief`, `audit_public.py --online`, `examples/make_example.py`, `python -m pytest`,
   `docs/make_assets.py`, `docs/make_site.py --check`. Run
   them with `./.venv/Scripts/python.exe`.

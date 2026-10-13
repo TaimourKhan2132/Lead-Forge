@@ -424,6 +424,7 @@ src/
   draft.py            build an email from verified signals; check the opening line
   lint_drafts.py      check drafts against the house rules
   jobs.py             a second offer, the job ask: one fact quoted from the agency's own site
+  hiring.py           roles read from careers pages and public job-board APIs, each with its evidence
   track.py            SQLite tracker: plan, daily caps, follow-ups, bounces, the day's ready files
   sample.py           a job description in, a 10-row sample and a short proposal out
   us_track.py         agencies that buy build work, not lead packs
@@ -438,7 +439,8 @@ CLAUDE.md             the standing rules, for an AI coding agent working in this
 ```
 
 `data/`, `packs/`, `samples/`, `outreach/drafts/`, `outreach/jobs/`, `outreach/ready/`,
-`outreach/us_track/` and `queries/packs/` are gitignored. They hold real businesses.
+`outreach/us_track/`, `outreach/apply_by_hand.md` and `queries/packs/` are gitignored. They hold
+real businesses.
 
 <details>
 <summary><b>The qualification rubric</b></summary>

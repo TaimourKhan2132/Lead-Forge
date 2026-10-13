@@ -15,6 +15,7 @@
     python src/track.py mark <domain> bounced     # the address rejected it: no follow-ups, and it counts below
     python src/track.py bounces                   # bounces by day; two in one day means stop and clean the list
     python src/track.py list                      # every lead, and the reply rate of each offer
+    python src/track.py discover --by-hiring --region gulf   # start from the openings: see hiring.py
 
 Send rules, enforced by `plan` and `today`: at most 25 new emails a day and 30 messages a day counting
 follow-ups; follow-ups go first; nothing is sent on Saturday or Sunday; a follow-up that lands on a
@@ -188,13 +189,14 @@ def sync(conn: sqlite3.Connection) -> int:
         domain, text = draft.stem, draft.read_text(encoding="utf-8")
         scored = SCORED / f"{domain}.json"
         lead = conn.execute("SELECT status, offer, blocked FROM leads WHERE domain = ?", (domain,)).fetchone()
-        if not scored.exists():
-            console.print(f"[yellow]skip jobs/{domain}: needs a scored record as well as a draft[/yellow]")
-            continue
         if lead and (lead["status"] != "drafted" or (lead["offer"] == "lead_pack" and not lead["blocked"])):
             console.print(f"[yellow]skip jobs/{domain}: it already has a lead-pack email, and an agency gets one offer[/yellow]")
             continue
-        rec = json.loads(scored.read_text(encoding="utf-8"))
+        # A company found through its careers page may never have been scored. It is tracked without a score.
+        named = re.match(r"# Job ask: (.+) \(", text)
+        rec = (json.loads(scored.read_text(encoding="utf-8")) if scored.exists() else
+               {"agency": named.group(1) if named else domain, "tier": "", "score": None,
+                "region": header_field(text, "Region") or None})
         if not outreach_open(rec):
             console.print(f"[yellow]skip jobs/{domain}: its region is scored only, so nothing is sent to it yet[/yellow]")
             continue
@@ -236,9 +238,10 @@ def owed_follow_ups(conn: sqlite3.Connection) -> Counter:
 
 
 def job_rank(lead: sqlite3.Row) -> int:
-    """Among job asks, an agency whose careers page lists an open role goes first."""
+    """Among job asks, the better the role on the agency's careers page, the earlier it goes."""
     path = ROOT / (lead["draft_path"] or "")
-    return 0 if path.is_file() and header_field(path.read_text(encoding="utf-8"), "Hiring").startswith("yes") else 1
+    score = header_field(path.read_text(encoding="utf-8"), "Hiring score") if path.is_file() else ""
+    return -int(score) if score.isdigit() else 0
 
 
 def plan(conn: sqlite3.Connection, date: str | None, keep: bool = False) -> int:
@@ -247,7 +250,7 @@ def plan(conn: sqlite3.Connection, date: str | None, keep: bool = False) -> int:
     A day takes a new email only if it has fewer than 25 already, the day's total stays within 30,
     and the two follow-ups that email will need still fit on their own days. Follow-ups are never
     pushed out to make room for a new email. Packs that are built go first, because a pack goes
-    stale; then job asks, an agency with an open role ahead of one without; then agencies whose
+    stale; then job asks, the best hiring score first; then agencies whose
     pack is still to build. With `keep`, a lead that already has a date from `date` on stays on it,
     so a day's files do not change under the person sending them.
     """
@@ -511,7 +514,7 @@ def pack_checked(domain: str, pack_dir=SCORED / "packs") -> str:
 
 
 JOB_COLUMNS = ("n", "agency", "domain", "to", "subject", "body", "offer", "proof_type", "opener_quote", "evidence_url",
-               "hiring", "hiring_url", "role", "names_the_role", "score", "tier")
+               "hiring", "hiring_url", "role", "role_status", "hiring_score", "names_the_role", "score", "tier")
 
 
 def _subject(text: str) -> str:
@@ -584,7 +587,8 @@ def pack_file(day: dt.date, rows: list, total: str, first: str) -> str:
 def job_files(day: dt.date, rows: list, total: str, first: str) -> tuple[str, str]:
     """The day's job asks twice over: a page to read and check from, and the same fields as a CSV."""
     out = [f"# Job asks ready to send: {day.strftime('%A %d %B %Y')}", "",
-           f"{_plural(len(rows), 'job-ask email')}. Agencies with an open role come first, then by score. Nothing here has been sent.", "",
+           f"{_plural(len(rows), 'job-ask email')}. The best hiring score comes first, then the agency's own score. "
+           "Nothing here has been sent.", "",
            total, *first, "",
            "For each: open the links under it and confirm the quoted words are on the page, then paste the body into a",
            "plain-text email with no attachment. If a page shows something different, do not send that email; say so",
@@ -598,15 +602,18 @@ def job_files(day: dt.date, rows: list, total: str, first: str) -> tuple[str, st
         record = {"n": i, "agency": row["agency"], "domain": row["domain"], "to": header_field(text, "To"),
                   "subject": _subject(text), "body": _body(text, "email 1"), "offer": row["offer"],
                   "proof_type": header_field(text, "Proof")[:1], "opener_quote": header_field(text, "Opener quote"),
-                  "evidence_url": header_field(text, "Evidence"), "hiring": "yes" if hiring.startswith("yes") else "no",
+                  "evidence_url": header_field(text, "Evidence"),
+                  "hiring": "yes" if hiring.startswith("yes") else "talent_pool" if hiring.startswith("talent pool") else "no",
                   "hiring_url": page if page.startswith("http") else "", "role": hiring.partition(", ")[2],
+                  "role_status": header_field(text, "Role status"), "hiring_score": header_field(text, "Hiring score"),
                   "names_the_role": header_field(text, "Names the role"), "score": row["score"], "tier": row["tier"]}
         sheet.writerow(record)
         out += ["---", "", f"## {i}. {row['agency']}", "",
                 f"- **To:** {record['to']}", f"- **Subject:** {record['subject']}", f"- **Offer:** {record['offer']}",
                 f"- **Proof type:** {header_field(text, 'Proof')}", f"- **Opener quote:** {record['opener_quote']}",
                 f"- **Evidence URL:** {record['evidence_url']}",
-                f"- **Hiring:** {hiring}" + (f" ({page})" if hiring.startswith("yes") else f" (careers page: {page})"),
+                f"- **Hiring:** {hiring}" + (f" ({page})" if hiring != "no" else f" (careers page: {page})"),
+                f"- **Role status:** {record['role_status']}, hiring score {record['hiring_score'] or 0}",
                 f"- **Opener names the role:** {record['names_the_role']}",
                 f"- **Score:** {row['score']}, tier {row['tier']}",
                 # Anything the draft flags for the person sending it, such as a careers page worth a second look.
@@ -672,10 +679,16 @@ def main() -> int:
     p_plan.add_argument("date", nargs="?", help="YYYY-MM-DD to schedule from; omit to only show the plan")
     p_plan.add_argument("--keep", action="store_true", help="leave leads that already have a date where they are")
     sub.add_parser("bounces", help="bounced emails by day; warns when a day has two or more")
+    p_find = sub.add_parser("discover", help="find companies by what their careers pages list (hiring.py)")
+    p_find.add_argument("--by-hiring", action="store_true", required=True, help="the only way of discovering this command has")
+    p_find.add_argument("--region", default="gulf", help="a region in config/regions/")
     p_ready = sub.add_parser("ready", help="write one day's follow-ups, lead-pack emails and job asks to outreach/ready/")
     p_ready.add_argument("date", help="YYYY-MM-DD")
     args = ap.parse_args()
 
+    if args.cmd == "discover":
+        import hiring
+        return hiring.discover(args.region)
     conn = connect()
     try:
         if args.cmd == "sync":

@@ -11,6 +11,8 @@ outreach/us_track/
 # The job ask: drafts name real agencies, and the wording is the operator's own.
 outreach/jobs/
 outreach/job_ask.json
+# Roles the operator applies for himself: real companies.
+outreach/apply_by_hand.md
 # The day's send file names real agencies and businesses.
 outreach/ready/
 samples/
