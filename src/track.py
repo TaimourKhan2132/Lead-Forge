@@ -3,18 +3,25 @@
     python src/track.py sync                      # pick up every drafted lead (Gulf packs and the US track)
     python src/track.py plan 2026-10-13           # schedule every unsent lead from that day on, best score first
     python src/track.py plan                      # show the plan and each day's load against the caps
-    python src/track.py ready 2026-10-13          # write that day's emails to outreach/ready/2026-10-13.md
+    python src/track.py plan 2026-10-13 --keep    # leave dated leads where they are; place only the undated ones
+    python src/track.py ready 2026-10-13          # write that day's files to outreach/ready/: follow-ups,
+                                                  # lead-pack emails, and job asks (as .md and .csv)
     python src/track.py today                     # follow-ups due first, then new sends
     python src/track.py mark <domain> sent        # sets the day-3 and day-7 follow-up dates
     python src/track.py mark <domain> sent --date 2026-10-12     # for an email scheduled ahead in the mail client
     python src/track.py mark <domain> drafted     # a send was cancelled: clear its dates
     python src/track.py mark <domain> fu1         # follow-up 1 went out (fu2 likewise)
     python src/track.py mark <domain> replied --note "wants the other 7"
-    python src/track.py list
+    python src/track.py mark <domain> bounced     # the address rejected it: no follow-ups, and it counts below
+    python src/track.py bounces                   # bounces by day; two in one day means stop and clean the list
+    python src/track.py list                      # every lead, and the reply rate of each offer
 
-Send rules, enforced by `plan` and `today`: at most 10 new emails a day and 15 messages a day counting
+Send rules, enforced by `plan` and `today`: at most 25 new emails a day and 30 messages a day counting
 follow-ups; follow-ups go first; nothing is sent on Saturday or Sunday; a follow-up that lands on a
 weekend moves to Monday; follow-ups are due on day 3 and day 7.
+
+Every lead carries the offer its first email made, `lead_pack` or `job_ask` (`build_work` for the US
+track), so the two can be compared. An agency gets one offer.
 
 Nothing here sends anything. It only records what you did by hand.
 """
@@ -23,6 +30,7 @@ from __future__ import annotations
 import argparse
 import csv
 import datetime as dt
+import io
 import json
 import re
 import sqlite3
@@ -32,14 +40,16 @@ from collections import Counter
 from rich.console import Console
 from rich.table import Table
 
-from common import DATA, DRAFTS, PACKS, ROOT, SCORED, US_TRACK, utf8_stdout
+from common import DATA, DRAFTS, JOB_WORDING, JOBS, PACKS, ROOT, SCORED, US_TRACK, job_wording, utf8_stdout
 from pack import MAX_AGE_DAYS
 
 DB = DATA / "tracker.db"
 READY = ROOT / "outreach" / "ready"
-STATUSES = ("drafted", "sent", "replied", "won", "lost", "no_reply")
-NEW_CAP = 10    # first emails in a day
-DAILY_CAP = 15  # first emails and follow-ups together
+STATUSES = ("drafted", "sent", "replied", "won", "lost", "no_reply", "bounced")
+OFFERS = ("lead_pack", "job_ask", "build_work")
+NEW_CAP = 25    # first emails in a day
+DAILY_CAP = 30  # first emails and follow-ups together
+BOUNCE_LIMIT = 2  # this many bounces in one day means the list is bad: stop and clean it
 FU1_DAYS, FU2_DAYS = 3, 7
 console = Console()
 
@@ -53,7 +63,7 @@ CREATE TABLE IF NOT EXISTS leads (
     pack_path   TEXT,
     draft_path  TEXT,
     status      TEXT NOT NULL DEFAULT 'drafted'
-                CHECK (status IN ('drafted','sent','replied','won','lost','no_reply')),
+                CHECK (status IN ('drafted','sent','replied','won','lost','no_reply','bounced')),
     sent_at     TEXT,
     fu1_due     TEXT,
     fu2_due     TEXT,
@@ -62,7 +72,9 @@ CREATE TABLE IF NOT EXISTS leads (
     notes       TEXT NOT NULL DEFAULT '',
     channel     TEXT NOT NULL DEFAULT 'email',
     blocked     TEXT NOT NULL DEFAULT '',
-    planned_send TEXT
+    planned_send TEXT,
+    offer       TEXT NOT NULL DEFAULT 'lead_pack',
+    bounced_at  TEXT
 );
 """
 # An agency can be given a send date before its pack and draft exist, so the plan has its own table.
@@ -76,8 +88,9 @@ CREATE TABLE IF NOT EXISTS plan (
 );
 """
 # Columns added after the first release, for databases created before them.
+# Every email sent before `offer` existed was a lead pack, which is what the default records.
 MIGRATIONS = {"channel": "TEXT NOT NULL DEFAULT 'email'", "blocked": "TEXT NOT NULL DEFAULT ''",
-              "planned_send": "TEXT"}
+              "planned_send": "TEXT", "offer": "TEXT NOT NULL DEFAULT 'lead_pack'", "bounced_at": "TEXT"}
 MIN_PLAN_SCORE = 60  # tier A, then tier B down to this score
 SKIP_FILE = DATA / "skip.txt"  # one domain per line, optionally "domain  # reason"; never planned
 
@@ -92,6 +105,12 @@ def connect() -> sqlite3.Connection:
     for column, ddl in MIGRATIONS.items():
         if column not in have:
             conn.execute(f"ALTER TABLE leads ADD COLUMN {column} {ddl}")
+    made = conn.execute("SELECT sql FROM sqlite_master WHERE name = 'leads'").fetchone()[0]
+    if "'bounced'" not in made:
+        # The list of statuses is part of the table itself, so admitting a new one means rebuilding it.
+        columns = ", ".join(row["name"] for row in conn.execute("PRAGMA table_info(leads)"))
+        conn.executescript(f"ALTER TABLE leads RENAME TO leads_old; {SCHEMA} "
+                           f"INSERT INTO leads ({columns}) SELECT {columns} FROM leads_old; DROP TABLE leads_old;")
     return conn
 
 
@@ -130,16 +149,18 @@ def sync(conn: sqlite3.Connection) -> int:
         text = draft.read_text(encoding="utf-8")
         channel = header_field(text, "Channel").split()[0].lower() if header_field(text, "Channel") else "form"
         cur = conn.execute(
-            "INSERT OR IGNORE INTO leads (domain, agency, email, tier, draft_path, channel) VALUES (?,?,?,?,?,?)",
+            "INSERT OR IGNORE INTO leads (domain, agency, email, tier, draft_path, channel, offer) VALUES (?,?,?,?,?,?,'build_work')",
             (draft.stem, header_field(text, "Agency") or draft.stem, header_field(text, "To"), "US",
              draft.relative_to(ROOT).as_posix(), channel))
         added += cur.rowcount
-        conn.execute("UPDATE leads SET blocked = ?, channel = ?, email = ? WHERE domain = ?",
+        conn.execute("UPDATE leads SET blocked = ?, channel = ?, email = ?, offer = 'build_work' WHERE domain = ?",
                      (blocked_reason(text), channel, header_field(text, "To"), draft.stem))
     for draft in sorted(DRAFTS.glob("*.md")):
         domain = draft.stem
         text = draft.read_text(encoding="utf-8")
         blocked = blocked_reason(text)
+        if blocked and (JOBS / f"{domain}.md").exists():
+            continue  # a pack draft that is blocked gives way to a job ask for the same agency
         pack = PACKS / f"{domain}.html"
         scored = SCORED / f"{domain}.json"
         # A blocked draft has no pack to send, so it is tracked without one.
@@ -154,12 +175,39 @@ def sync(conn: sqlite3.Connection) -> int:
              pack_path, draft.relative_to(ROOT).as_posix()))
         added += cur.rowcount
         conn.execute("UPDATE leads SET blocked = ?, pack_path = ? WHERE domain = ?", (blocked, pack_path, domain))
+    # A job ask that was dropped after it was drafted leaves the tracker with its file.
+    for lead in conn.execute("SELECT domain, draft_path FROM leads WHERE offer = 'job_ask' AND status = 'drafted'").fetchall():
+        if not (ROOT / lead["draft_path"]).exists():
+            conn.execute("DELETE FROM leads WHERE domain = ?", (lead["domain"],))
+            conn.execute("DELETE FROM plan WHERE domain = ?", (lead["domain"],))
+    for draft in sorted(JOBS.glob("*.md")):
+        domain, text = draft.stem, draft.read_text(encoding="utf-8")
+        scored = SCORED / f"{domain}.json"
+        lead = conn.execute("SELECT status, offer, blocked FROM leads WHERE domain = ?", (domain,)).fetchone()
+        if not scored.exists():
+            console.print(f"[yellow]skip jobs/{domain}: needs a scored record as well as a draft[/yellow]")
+            continue
+        if lead and (lead["status"] != "drafted" or (lead["offer"] == "lead_pack" and not lead["blocked"])):
+            console.print(f"[yellow]skip jobs/{domain}: it already has a lead-pack email, and an agency gets one offer[/yellow]")
+            continue
+        rec = json.loads(scored.read_text(encoding="utf-8"))
+        path = draft.relative_to(ROOT).as_posix()
+        cur = conn.execute(
+            "INSERT OR IGNORE INTO leads (domain, agency, email, tier, score, draft_path, offer) VALUES (?,?,?,?,?,?,'job_ask')",
+            (domain, rec["agency"], header_field(text, "To"), rec["tier"], rec["score"], path))
+        added += cur.rowcount
+        if cur.rowcount or lead["offer"] != "job_ask":
+            conn.execute("DELETE FROM plan WHERE domain = ?", (domain,))  # any date it had was for a pack that will not be built
+        conn.execute("UPDATE leads SET offer = 'job_ask', email = ?, draft_path = ?, pack_path = NULL, blocked = '' WHERE domain = ?",
+                     (header_field(text, "To"), path, domain))
     # A blocked lead has no send date until it is unblocked and the plan is run again.
     conn.execute("DELETE FROM plan WHERE domain IN (SELECT domain FROM leads WHERE blocked <> '' OR status <> 'drafted')")
     conn.execute("UPDATE leads SET planned_send = (SELECT planned_send FROM plan WHERE plan.domain = leads.domain)")
     conn.commit()
     blocked_n = conn.execute("SELECT COUNT(*) FROM leads WHERE blocked <> ''").fetchone()[0]
-    console.print(f"[bold]sync[/bold] added={added}, total={conn.execute('SELECT COUNT(*) FROM leads').fetchone()[0]}, blocked={blocked_n}")
+    jobs_n = conn.execute("SELECT COUNT(*) FROM leads WHERE offer = 'job_ask'").fetchone()[0]
+    console.print(f"[bold]sync[/bold] added={added}, total={conn.execute('SELECT COUNT(*) FROM leads').fetchone()[0]}, "
+                  f"job_asks={jobs_n}, blocked={blocked_n}")
     return 0
 
 
@@ -180,57 +228,79 @@ def owed_follow_ups(conn: sqlite3.Connection) -> Counter:
     return owed
 
 
-def plan(conn: sqlite3.Connection, date: str | None) -> int:
-    """Give every unsent lead a send date from `date` on, best score first, inside the send rules.
+def job_rank(lead: sqlite3.Row) -> int:
+    """Among job asks, an agency whose careers page lists an open role goes first."""
+    path = ROOT / (lead["draft_path"] or "")
+    return 0 if path.is_file() and header_field(path.read_text(encoding="utf-8"), "Hiring").startswith("yes") else 1
 
-    A day takes a new email only if it has fewer than 10 already, the day's total stays within 15,
+
+def plan(conn: sqlite3.Connection, date: str | None, keep: bool = False) -> int:
+    """Give every unsent lead a send date from `date` on, inside the send rules.
+
+    A day takes a new email only if it has fewer than 25 already, the day's total stays within 30,
     and the two follow-ups that email will need still fit on their own days. Follow-ups are never
-    pushed out to make room for a new email.
+    pushed out to make room for a new email. Packs that are built go first, because a pack goes
+    stale; then job asks, an agency with an open role ahead of one without; then agencies whose
+    pack is still to build. With `keep`, a lead that already has a date from `date` on stays on it,
+    so a day's files do not change under the person sending them.
     """
     if date:
         start = workday(dt.date.fromisoformat(date))
-        built = conn.execute("SELECT domain, agency, tier, score FROM leads WHERE status = 'drafted' AND blocked = '' "
-                             "AND tier <> 'US' ORDER BY score DESC, domain").fetchall()
+        built = conn.execute("SELECT * FROM leads WHERE status = 'drafted' AND blocked = '' AND tier <> 'US'").fetchall()
+        built.sort(key=lambda r: (r["offer"] == "job_ask", job_rank(r) if r["offer"] == "job_ask" else 0, -(r["score"] or 0), r["domain"]))
         known = {row["domain"] for row in conn.execute("SELECT domain FROM leads")}
         with (SCORED / "summary.csv").open(encoding="utf-8", newline="") as fh:
             ranked = list(csv.DictReader(fh))  # already sorted best first by qualify.py
         skip = skipped_domains()
         unbuilt = [r for r in ranked if r["domain"] not in known and r["domain"] not in skip and int(r["score"]) >= MIN_PLAN_SCORE]
-        # Agencies with a pack and a draft go first; the rest follow by score and get built a day ahead.
-        queue = [(r["domain"], r["agency"], r["tier"], int(r["score"])) for r in [*built, *unbuilt]]
+        queue = [(r["domain"], r["agency"], r["tier"], int(r["score"] or 0)) for r in [*built, *unbuilt]]
         owed, new, day = owed_follow_ups(conn), Counter(), start
         # An email already scheduled in the mail client for one of these days has taken one of its places.
         for row in conn.execute("SELECT sent_at FROM leads WHERE status = 'sent' AND sent_at >= ?", (start.isoformat(),)):
             new[row["sent_at"]] += 1
+        dated = ({row["domain"]: row["planned_send"] for row in
+                  conn.execute("SELECT domain, planned_send FROM plan WHERE planned_send >= ?", (start.isoformat(),))} if keep else {})
         conn.execute("DELETE FROM plan")
-        for domain, agency, tier, score in queue:
-            while True:
-                key, fu1, fu2 = day.isoformat(), due(day, FU1_DAYS), due(day, FU2_DAYS)
-                if new[key] < NEW_CAP and new[key] + owed[key] < DAILY_CAP and owed[fu1] < DAILY_CAP and owed[fu2] < DAILY_CAP:
-                    break
-                day = workday(day + dt.timedelta(days=1))
-            conn.execute("INSERT INTO plan (domain, agency, tier, score, planned_send) VALUES (?,?,?,?,?)",
-                         (domain, agency, tier, score, key))
+
+        def place(lead: tuple, key: str) -> None:
+            conn.execute("INSERT INTO plan (domain, agency, tier, score, planned_send) VALUES (?,?,?,?,?)", (*lead, key))
             new[key] += 1
-            owed[fu1] += 1
-            owed[fu2] += 1
+            owed[due(dt.date.fromisoformat(key), FU1_DAYS)] += 1
+            owed[due(dt.date.fromisoformat(key), FU2_DAYS)] += 1
+
+        def room(key: str) -> bool:
+            return new[key] + owed[key] < DAILY_CAP
+
+        for lead in queue:
+            if lead[0] in dated:
+                place(lead, dated[lead[0]])
+        for lead in queue:
+            if lead[0] in dated:
+                continue
+            while not (new[day.isoformat()] < NEW_CAP and room(day.isoformat())
+                       and room(due(day, FU1_DAYS)) and room(due(day, FU2_DAYS))):
+                day = workday(day + dt.timedelta(days=1))
+            place(lead, day.isoformat())
         conn.execute("UPDATE leads SET planned_send = (SELECT planned_send FROM plan WHERE plan.domain = leads.domain)")
         conn.commit()
+        jobs_n = sum(r["offer"] == "job_ask" for r in built)
         console.print(f"[bold]plan[/bold] {len(queue)} agencies scheduled from {start.isoformat()} "
-                      f"({len(built)} with a pack and draft, {len(unbuilt)} still to build)")
+                      f"({len(built) - jobs_n} with a pack and draft, {jobs_n} job asks, {len(unbuilt)} still to build"
+                      + (f"; {len(dated)} kept the date they had" if keep else "") + ")")
 
     rows = conn.execute(
-        "SELECT plan.*, leads.status AS status, leads.draft_path AS draft, leads.blocked AS blocked "
+        "SELECT plan.*, leads.status AS status, leads.draft_path AS draft, leads.blocked AS blocked, leads.offer AS offer "
         "FROM plan LEFT JOIN leads ON leads.domain = plan.domain ORDER BY planned_send, score DESC").fetchall()
     table = Table(title=f"Send plan ({len(rows)})", title_justify="left")
-    for header in ("Send date", "Day", "Agency", "Tier", "Score", "State"):
+    for header in ("Send date", "Day", "Agency", "Offer", "Tier", "Score", "State"):
         table.add_column(header)
     for row in rows:
         state = "pack and draft not built yet" if row["draft"] is None else (row["blocked"] or row["status"])
         table.add_row(row["planned_send"], dt.date.fromisoformat(row["planned_send"]).strftime("%a"), row["agency"],
-                      row["tier"] or "", str(row["score"]), state)
+                      row["offer"] or "lead_pack", row["tier"] or "", str(row["score"]), state)
     console.print(table)
     show_load(conn)
+    bounce_check(conn)
     return 0
 
 
@@ -276,6 +346,12 @@ def mark(conn: sqlite3.Connection, domain: str, status: str, note: str, date: st
             console.print(f"[red]{domain} is '{row['status']}', so there is no follow-up to record.[/red]")
             return 1
         conn.execute(f"UPDATE leads SET {status}_sent_at = ? WHERE domain = ?", (on.isoformat(), domain))
+    elif status == "bounced":
+        if row["status"] != "sent":
+            console.print(f"[red]{domain} is '{row['status']}', so there is no sent email to have bounced.[/red]")
+            return 1
+        # It never arrived, so no follow-up is owed and it is not counted when replies are compared.
+        conn.execute("UPDATE leads SET status = 'bounced', bounced_at = ? WHERE domain = ?", (on.isoformat(), domain))
     elif status == "sent":
         if row["blocked"]:
             console.print(f"[red]{domain} is blocked ({row['blocked'][:80]}). It cannot be marked sent.[/red]")
@@ -289,7 +365,7 @@ def mark(conn: sqlite3.Connection, domain: str, status: str, note: str, date: st
     elif status == "drafted":
         # A send that was cancelled before it went out: forget its dates.
         conn.execute("UPDATE leads SET status='drafted', sent_at=NULL, fu1_due=NULL, fu2_due=NULL, fu1_sent_at=NULL, "
-                     "fu2_sent_at=NULL WHERE domain=?", (domain,))
+                     "fu2_sent_at=NULL, bounced_at=NULL WHERE domain=?", (domain,))
     else:
         conn.execute("UPDATE leads SET status=? WHERE domain=?", (status, domain))
     if note:
@@ -298,7 +374,26 @@ def mark(conn: sqlite3.Connection, domain: str, status: str, note: str, date: st
     row = conn.execute("SELECT * FROM leads WHERE domain = ?", (domain,)).fetchone()
     console.print(f"[green]{domain}[/green] -> {row['status']}"
                   + (f"  (sent {row['sent_at']}, follow-ups due {row['fu1_due']} and {row['fu2_due']})" if status == "sent" else ""))
+    if status == "bounced":
+        bounce_check(conn, on.isoformat())
     return 0
+
+
+def bounce_check(conn: sqlite3.Connection, day: str | None = None) -> bool:
+    """Two bounces in one day mean the list is bad. Say so wherever the day's sends are shown."""
+    day = day or today()
+    count = conn.execute("SELECT COUNT(*) FROM leads WHERE bounced_at = ?", (day,)).fetchone()[0]
+    if count >= BOUNCE_LIMIT:
+        console.print(f"[bold red]STOP: {count} emails bounced on {day}. Send nothing more until the list is cleaned: "
+                      "check every address still to be sent against the agency's own site.[/bold red]")
+    return count >= BOUNCE_LIMIT
+
+
+def show_bounces(conn: sqlite3.Connection) -> int:
+    rows = conn.execute("SELECT * FROM leads WHERE bounced_at IS NOT NULL ORDER BY bounced_at, domain").fetchall()
+    _table("Bounced", rows, [("Bounced on", "bounced_at"), ("Agency", "agency"), ("Email", "email"), ("Offer", "offer"), ("Sent", "sent_at")])
+    stops = [bounce_check(conn, day) for day in sorted({row["bounced_at"] for row in rows})]
+    return 1 if any(stops) else 0
 
 
 def _table(title: str, rows: list[sqlite3.Row], columns: list[tuple[str, str]]) -> None:
@@ -337,9 +432,10 @@ def show_today(conn: sqlite3.Connection) -> int:
     replies = conn.execute("SELECT * FROM leads WHERE status='replied' ORDER BY sent_at").fetchall()
 
     console.print(f"[bold]{now}[/bold]  sent today: {new_today}/{NEW_CAP} new, {sent_today}/{DAILY_CAP} in all")
+    bounce_check(conn)
     if weekend:
         console.print("[yellow]Weekend: nothing is sent today. Follow-ups that fell on it are due Monday.[/yellow]")
-    _table("Send today", to_send, [("Agency", "agency"), ("Tier", "tier"), ("Channel", "channel"), ("To", "email"),
+    _table("Send today", to_send, [("Agency", "agency"), ("Offer", "offer"), ("Tier", "tier"), ("Channel", "channel"), ("To", "email"),
                                    ("Score", "score"), ("Planned", "planned_send"), ("Draft", "draft_path"),
                                    ("Pack", "pack_path")])
     if held:
@@ -349,8 +445,8 @@ def show_today(conn: sqlite3.Connection) -> int:
     _table("Drafted with no send date", unplanned, [("Agency", "agency"), ("Tier", "tier"), ("Channel", "channel"), ("Draft", "draft_path")])
     _table("Blocked: do not send until resolved", blocked, [("Agency", "agency"), ("Tier", "tier"), ("Reason", "blocked"),
                                                             ("Draft", "draft_path")])
-    _table("Follow-up 1 due", fu1, [("Agency", "agency"), ("Email", "email"), ("Sent", "sent_at"), ("Due", "fu1_due"), ("Draft", "draft_path")])
-    _table("Follow-up 2 due", fu2, [("Agency", "agency"), ("Email", "email"), ("Sent", "sent_at"), ("Due", "fu2_due"), ("Draft", "draft_path")])
+    _table("Follow-up 1 due", fu1, [("Agency", "agency"), ("Offer", "offer"), ("Email", "email"), ("Sent", "sent_at"), ("Due", "fu1_due"), ("Draft", "draft_path")])
+    _table("Follow-up 2 due", fu2, [("Agency", "agency"), ("Offer", "offer"), ("Email", "email"), ("Sent", "sent_at"), ("Due", "fu2_due"), ("Draft", "draft_path")])
     _table("Replies waiting on you", replies, [("Agency", "agency"), ("Email", "email"), ("Sent", "sent_at"), ("Notes", "notes")])
     _table("No reply 4+ days after follow-up 2 (mark no_reply?)", stale, [("Agency", "agency"), ("Domain", "domain"), ("FU2 sent", "fu2_sent_at")])
     return 0
@@ -358,10 +454,34 @@ def show_today(conn: sqlite3.Connection) -> int:
 
 def show_list(conn: sqlite3.Connection) -> int:
     rows = conn.execute("SELECT * FROM leads ORDER BY status, tier, score DESC").fetchall()
-    _table("All leads", rows, [("Domain", "domain"), ("Agency", "agency"), ("Status", "status"), ("Tier", "tier"),
+    _table("All leads", rows, [("Domain", "domain"), ("Agency", "agency"), ("Offer", "offer"), ("Status", "status"), ("Tier", "tier"),
                                ("Channel", "channel"), ("Blocked", "blocked"), ("Planned", "planned_send"), ("Sent", "sent_at"),
                                ("FU1 due", "fu1_due"), ("FU2 due", "fu2_due")])
+    show_rates(conn)
     return 0
+
+
+def rates(conn: sqlite3.Connection) -> dict[str, dict]:
+    """Replies per offer. A bounce never arrived, so it is left out of what the replies are measured against."""
+    out = {}
+    for offer in OFFERS:
+        statuses = [row["status"] for row in conn.execute("SELECT status FROM leads WHERE offer = ? AND sent_at IS NOT NULL", (offer,))]
+        bounced = statuses.count("bounced")
+        replied = sum(status in ("replied", "won", "lost") for status in statuses)
+        out[offer] = {"sent": len(statuses), "bounced": bounced, "replied": replied,
+                      "rate": replied / (len(statuses) - bounced) if len(statuses) > bounced else None}
+    return out
+
+
+def show_rates(conn: sqlite3.Connection) -> None:
+    table = Table(title="Replies by offer (replied, won or lost, out of the emails that arrived)", title_justify="left")
+    for header in ("Offer", "Sent", "Bounced", "Replied", "Reply rate"):
+        table.add_column(header, justify="left" if header == "Offer" else "right")
+    for offer, n in rates(conn).items():
+        if n["sent"]:
+            table.add_row(offer, str(n["sent"]), str(n["bounced"]), str(n["replied"]), "-" if n["rate"] is None else f"{n['rate']:.0%}")
+    if table.row_count:
+        console.print(table)
 
 
 def _section(text: str, prefix: str) -> str:
@@ -383,55 +503,145 @@ def pack_checked(domain: str, pack_dir=SCORED / "packs") -> str:
     return min(days) if len(days) == len(keys) and all(days) else ""
 
 
+JOB_COLUMNS = ("n", "agency", "domain", "to", "subject", "body", "offer", "proof_type", "opener_quote", "evidence_url",
+               "hiring", "hiring_url", "role", "names_the_role", "score", "tier")
+
+
+def _subject(text: str) -> str:
+    lines = [re.sub(r"^\s*\d+\.\s*", "", ln).strip() for ln in _section(text, "subject").splitlines() if ln.strip()]
+    return lines[0] if lines else ""
+
+
+def _body(text: str, section: str) -> str:
+    return re.sub(r"<!--.*?-->", "", _section(text, section), flags=re.S).strip()
+
+
+def _plural(count: int, word: str) -> str:
+    return f"{count} {word}{'' if count == 1 else 's'}"
+
+
+def follow_ups_due(conn: sqlite3.Connection, date: str) -> list[tuple[int, sqlite3.Row]]:
+    """Follow-ups to send on that day: those due on it, and any that are already overdue and have not gone.
+
+    One that falls due on a day between today and that day is left to its own day's file. The second
+    follow-up is listed once the first has gone, or was due on an earlier day.
+    """
+    days = {"day": date, "now": today()}
+    owed = [(1, lead) for lead in conn.execute(
+        "SELECT * FROM leads WHERE status = 'sent' AND fu1_sent_at IS NULL AND (fu1_due = :day OR fu1_due < :now) "
+        "ORDER BY fu1_due, domain", days)]
+    return owed + [(2, lead) for lead in conn.execute(
+        "SELECT * FROM leads WHERE status = 'sent' AND fu2_sent_at IS NULL AND (fu2_due = :day OR fu2_due < :now) "
+        "AND (fu1_sent_at IS NOT NULL OR fu1_due < :day) ORDER BY fu2_due, domain", days)]
+
+
+def follow_up_file(day: dt.date, owed: list, total: str) -> str:
+    pivot = job_wording().get("pivot", "") if JOB_WORDING.exists() else ""
+    out = [f"# Follow-ups due: {day.strftime('%A %d %B %Y')}", "",
+           f"{_plural(len(owed), 'follow-up')}. These go before any new email. Nothing here has been sent.", "", total, "",
+           'Each one is a reply in the thread of the first email, so its subject is "Re:" and the subject that email went',
+           "out with. The subject shown is the first of the draft's subject lines; if you sent it under another, keep yours.", ""]
+    for i, (number, lead) in enumerate(owed, 1):
+        text = (ROOT / lead["draft_path"]).read_text(encoding="utf-8")
+        body = _body(text, f"follow-up {number}")
+        out += ["---", "", f"## {i}. Follow-up {number} to {lead['agency']} (first email sent {lead['sent_at']}, offer {lead['offer']})", "",
+                f"**To:** {header_field(text, 'To')}", f"**Subject:** Re: {_subject(text)}", "", "```text", body, "```", ""]
+        if lead["offer"] == "lead_pack" and not (pivot and pivot in body):
+            # Unless it has turned into the job ask, this follow-up offers the pack, so the pack has to be fit
+            # to send on the day it goes.
+            checked = pack_checked(lead["domain"])
+            if not checked:
+                out += ["The pack it offers has no verification date on record. Verify it before sending.", ""]
+            elif (day - dt.date.fromisoformat(checked)).days > MAX_AGE_DAYS:
+                out += [f"The pack it offers was last verified on {checked}, more than {MAX_AGE_DAYS} days before this date. "
+                        "Run `verify.py` on it again before sending, in case a reply asks for it.", ""]
+            else:
+                out += [f"The pack it offers was last verified on {checked}.", ""]
+    return "\n".join(out)
+
+
+def pack_file(day: dt.date, rows: list, total: str, first: str) -> str:
+    out = [f"# Ready to send: {day.strftime('%A %d %B %Y')}", "",
+           f"{_plural(len(rows), 'lead-pack email')}, highest score first. Blocked drafts are left out. Nothing here has been sent.", "",
+           total, *first, "",
+           "For each new email: open the links under it and confirm what the line says, then paste the body into a",
+           "plain-text email. If a link shows something different, do not send that email; say so and it gets rebuilt.", ""]
+    for i, row in enumerate(rows, 1):
+        text = (ROOT / row["draft_path"]).read_text(encoding="utf-8")
+        out += ["---", "", f"## {i}. {row['agency']} (score {row['score']}, tier {row['tier']})", "",
+                f"**To:** {header_field(text, 'To')}", f"**Subject:** {_subject(text)}", "", "```text", _body(text, "email 1"), "```", "",
+                "**Open these to confirm each claim:**", "", _section(text, "check before sending").strip(), ""]
+    return "\n".join(out)
+
+
+def job_files(day: dt.date, rows: list, total: str, first: str) -> tuple[str, str]:
+    """The day's job asks twice over: a page to read and check from, and the same fields as a CSV."""
+    out = [f"# Job asks ready to send: {day.strftime('%A %d %B %Y')}", "",
+           f"{_plural(len(rows), 'job-ask email')}. Agencies with an open role come first, then by score. Nothing here has been sent.", "",
+           total, *first, "",
+           "For each: open the links under it and confirm the quoted words are on the page, then paste the body into a",
+           "plain-text email with no attachment. If a page shows something different, do not send that email; say so",
+           "and it gets rebuilt or dropped.", ""]
+    table = io.StringIO()
+    sheet = csv.DictWriter(table, fieldnames=JOB_COLUMNS, lineterminator="\n")
+    sheet.writeheader()
+    for i, row in enumerate(rows, 1):
+        text = (ROOT / row["draft_path"]).read_text(encoding="utf-8")
+        hiring, page = header_field(text, "Hiring"), header_field(text, "Careers page")
+        record = {"n": i, "agency": row["agency"], "domain": row["domain"], "to": header_field(text, "To"),
+                  "subject": _subject(text), "body": _body(text, "email 1"), "offer": row["offer"],
+                  "proof_type": header_field(text, "Proof")[:1], "opener_quote": header_field(text, "Opener quote"),
+                  "evidence_url": header_field(text, "Evidence"), "hiring": "yes" if hiring.startswith("yes") else "no",
+                  "hiring_url": page if page.startswith("http") else "", "role": hiring.partition(", ")[2],
+                  "names_the_role": header_field(text, "Names the role"), "score": row["score"], "tier": row["tier"]}
+        sheet.writerow(record)
+        out += ["---", "", f"## {i}. {row['agency']}", "",
+                f"- **To:** {record['to']}", f"- **Subject:** {record['subject']}", f"- **Offer:** {record['offer']}",
+                f"- **Proof type:** {header_field(text, 'Proof')}", f"- **Opener quote:** {record['opener_quote']}",
+                f"- **Evidence URL:** {record['evidence_url']}",
+                f"- **Hiring:** {hiring}" + (f" ({page})" if hiring.startswith("yes") else f" (careers page: {page})"),
+                f"- **Opener names the role:** {record['names_the_role']}",
+                f"- **Score:** {row['score']}, tier {row['tier']}", "", "```text", record["body"], "```", "",
+                "**Open these to confirm:**", "", _section(text, "check before sending").strip(), ""]
+    return "\n".join(out), table.getvalue()
+
+
 def ready(conn: sqlite3.Connection, date: str) -> int:
-    """Write the day's emails to one file: who to, the subject, the body, and what to open to check it."""
+    """Write the day's files: the follow-ups due, the lead-pack emails, and the job asks (as .md and .csv)."""
     day = dt.date.fromisoformat(date)
     rows = conn.execute("SELECT * FROM leads WHERE status = 'drafted' AND blocked = '' AND planned_send = ? "
                         "ORDER BY score DESC, domain", (date,)).fetchall()
-    # Follow-ups owed by that day. The second is listed once the first has gone, or was due on an earlier day.
-    owed = [(1, lead) for lead in conn.execute(
-        "SELECT * FROM leads WHERE status = 'sent' AND fu1_sent_at IS NULL AND fu1_due <= ? ORDER BY fu1_due, domain", (date,))]
-    owed += [(2, lead) for lead in conn.execute(
-        "SELECT * FROM leads WHERE status = 'sent' AND fu2_sent_at IS NULL AND fu2_due <= ? "
-        "AND (fu1_sent_at IS NOT NULL OR fu1_due < ?) ORDER BY fu2_due, domain", (date, date))]
+    packs = [row for row in rows if row["offer"] != "job_ask"]
+    jobs = sorted((row for row in rows if row["offer"] == "job_ask"), key=lambda r: (job_rank(r), -(r["score"] or 0), r["domain"]))
+    owed = follow_ups_due(conn, date)
     if not rows and not owed:
         console.print(f"[yellow]No unblocked drafts are planned for {date} and no follow-up is due. "
                       f"Run `track.py plan {date}` first.[/yellow]")
         return 1
-    first = f"{len(owed)} follow-up{'s' if len(owed) != 1 else ''} due first, then " if owed else ""
-    out = [f"# Ready to send: {day.strftime('%A %d %B %Y')}", "",
-           f"{first}{len(rows)} new emails, highest score first. Blocked drafts are left out. Nothing here has been sent.", "",
-           "For each new email: open the links under it and confirm what the line says, then paste the body into a",
-           "plain-text email. If a link shows something different, do not send that email; say so and it gets rebuilt.", ""]
-    if owed:
-        out += ["---", "", "## Follow-ups due (these go first)", "",
-                "Reply in the same thread as the first email, so the subject stays as it was.", ""]
-    for number, lead in owed:
-        text = (ROOT / lead["draft_path"]).read_text(encoding="utf-8")
-        body = re.sub(r"<!--.*?-->", "", _section(text, f"follow-up {number}"), flags=re.S).strip()
-        checked = pack_checked(lead["domain"])
-        if not checked:
-            note = "The pack it offers has no verification date on record. Verify it before sending."
-        elif (day - dt.date.fromisoformat(checked)).days > MAX_AGE_DAYS:
-            note = (f"The pack it offers was last verified on {checked}, more than {MAX_AGE_DAYS} days before this date. "
-                    "Run `verify.py` on it again before sending, in case a reply asks for it.")
-        else:
-            note = f"The pack it offers was last verified on {checked}."
-        out += [f"### Follow-up {number} to {lead['agency']} (first email sent {lead['sent_at']})", "",
-                f"**To:** {header_field(text, 'To')}", "", "```text", body, "```", "", note, ""]
-    for i, row in enumerate(rows, 1):
-        text = (ROOT / row["draft_path"]).read_text(encoding="utf-8")
-        subjects = [re.sub(r"^\s*\d+\.\s*", "", ln).strip() for ln in _section(text, "subject").splitlines() if ln.strip()]
-        body = re.sub(r"<!--.*?-->", "", _section(text, "email 1"), flags=re.S).strip()
-        checks = _section(text, "check before sending").strip()
-        out += ["---", "", f"## {i}. {row['agency']} (score {row['score']}, tier {row['tier']})", "",
-                f"**To:** {header_field(text, 'To')}", f"**Subject:** {subjects[0]}", "", "```text", body, "```", "",
-                "**Open these to confirm each claim:**", "", checks, ""]
+    count = len(owed) + len(rows)
+    total = (f"The day in all: {_plural(len(owed), 'follow-up')}, {_plural(len(packs), 'lead-pack email')} and "
+             f"{_plural(len(jobs), 'job ask')}. That is {count} of the {DAILY_CAP} messages a day allows, and "
+             f"{len(rows)} of the {NEW_CAP} new ones." + (" THIS IS OVER THE CAP: hold the lowest-ranked back." if
+                                                          count > DAILY_CAP or len(rows) > NEW_CAP else ""))
+    first = [f"{_plural(len(owed), 'follow-up')} due that day: send {'it' if len(owed) == 1 else 'them'} first. "
+             f"See `{date}-followups.md`."] if owed else []
+    job_md, job_csv = job_files(day, jobs, total, first) if jobs else (None, None)
+    files = {"-followups.md": follow_up_file(day, owed, total) if owed else None,
+             ".md": pack_file(day, packs, total, first) if packs else None, "-jobs.md": job_md, "-jobs.csv": job_csv}
     READY.mkdir(parents=True, exist_ok=True)
-    path = READY / f"{date}.md"
-    path.write_text("\n".join(out), encoding="utf-8")
-    console.print(f"[bold]ready[/bold] wrote {path.relative_to(ROOT).as_posix()} with {len(rows)} emails"
-                  + (f" and {len(owed)} follow-up{'s' if len(owed) != 1 else ''}" if owed else ""))
+    for suffix, content in files.items():
+        path = READY / f"{date}{suffix}"
+        if content is None:
+            if path.exists():
+                path.unlink()  # written by an earlier run; nothing of that kind is due on this day any more
+                console.print(f"[yellow]removed {path.relative_to(ROOT).as_posix()}: nothing of that kind is due on {date} now[/yellow]")
+            continue
+        # The CSV carries a byte-order mark so a spreadsheet opens its accents and Arabic correctly.
+        path.write_text(content, encoding="utf-8-sig" if suffix.endswith(".csv") else "utf-8", newline="" if suffix.endswith(".csv") else None)
+        console.print(f"[bold]ready[/bold] wrote {path.relative_to(ROOT).as_posix()}")
+    console.print(f"[bold]ready[/bold] {date}: {_plural(len(owed), 'follow-up')}, {_plural(len(packs), 'lead-pack email')}, "
+                  f"{_plural(len(jobs), 'job ask')}")
+    bounce_check(conn)
     return 0
 
 
@@ -449,7 +659,9 @@ def main() -> int:
     p_mark.add_argument("--date", help="YYYY-MM-DD the message goes out, if not today (an email scheduled ahead)")
     p_plan = sub.add_parser("plan", help="schedule every unsent lead from a date on, or show the plan")
     p_plan.add_argument("date", nargs="?", help="YYYY-MM-DD to schedule from; omit to only show the plan")
-    p_ready = sub.add_parser("ready", help="write one day's emails, with the links to check, to outreach/ready/")
+    p_plan.add_argument("--keep", action="store_true", help="leave leads that already have a date where they are")
+    sub.add_parser("bounces", help="bounced emails by day; warns when a day has two or more")
+    p_ready = sub.add_parser("ready", help="write one day's follow-ups, lead-pack emails and job asks to outreach/ready/")
     p_ready.add_argument("date", help="YYYY-MM-DD")
     args = ap.parse_args()
 
@@ -458,7 +670,9 @@ def main() -> int:
         if args.cmd == "sync":
             return sync(conn)
         if args.cmd == "plan":
-            return plan(conn, args.date)
+            return plan(conn, args.date, args.keep)
+        if args.cmd == "bounces":
+            return show_bounces(conn)
         if args.cmd == "ready":
             return ready(conn, args.date)
         if args.cmd == "today":

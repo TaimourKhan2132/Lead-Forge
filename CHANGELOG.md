@@ -5,10 +5,25 @@ Notable changes to LeadForge. No real business is named here or anywhere else in
 ## Unreleased
 
 ### Added
-- `track.py ready <date>` lists the follow-ups due that day ahead of the new emails, each with the
-  date the pack it offers was last verified. A day with follow-ups and no new email gets a file too.
+- A second offer, the job ask (`jobs.py`): the operator asks an agency for part-time remote work.
+  `scan` reads each candidate's homepage and careers page in a browser, `build` renders the email
+  from the operator's own wording file and the agency's spec, and `quotes` confirms the words the
+  opener rests on are still on the agency's page. An agency with no quotable fact gets no email.
+- Every lead in the tracker carries the offer its first email made. `track.py list` ends with the
+  replies each offer has had, with bounces left out of the count.
+- `track.py mark <agency> bounced` and `track.py bounces`. Two bounces in one day print a warning to
+  stop and clean the list, wherever the day's sends are shown.
+- `track.py plan <date> --keep` places only the leads that have no date, so a day's files do not
+  change under the person sending from them.
+- `draft.py followups` rewrites only the follow-up sections of a draft that is already built.
+- `track.py ready <date>` writes the follow-ups due that day to their own file, ahead of the new
+  emails, each with its "Re:" subject. Job asks get a page and a CSV with the same fields.
 
 ### Changed
+- Send rules: at most 25 new emails a weekday and 30 messages a day with follow-ups. They were 10
+  and 15.
+- A follow-up has to add something. The linter rejects "just following up", "circling back",
+  "bumping this" and "checking in", and a lead-pack follow-up 1 can turn into the job ask.
 - `draft.py quotes`: when an agency's page will not load, the last day its words were read is kept,
   and the send file says both. A failed retry used to erase the earlier reading.
 - `verify.py` no longer writes the value of `--only` to the run log. Those values are businesses' own

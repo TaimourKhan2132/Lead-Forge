@@ -1,0 +1,19 @@
+{
+ "subject": "Part-time Python help for {agency}",
+ "pitch": "I'm a student looking for part-time remote work with a small agency. I build Python automations, scrapers and data pipelines.",
+ "proof": {
+  "A": "Recently I built a pipeline that finds local businesses and checks their websites in a real browser.",
+  "B": "Recently I built a data pipeline that resumes where it stopped, with retries and rate-limit handling.",
+  "C": "I look after a live website for its owner and built its admin tools."
+ },
+ "hiring_opener": "I saw you're hiring {a} {role}.",
+ "hiring_line": "If you'd like help before that hire is in place, I could take some of that work part-time.",
+ "ask": "Would a small paid trial task be worth a try? Fixed price, and you pay after it works.",
+ "work": "My work is here: code.example/your-name",
+ "link": "code.example/your-name",
+ "ps": "P.S. I check my own results before I hand them over, and I handle client data the same way.",
+ "follow_up_lead": "One more example of my work.",
+ "follow_up_demo": "Here is a short recording of the pipeline running from start to finish: {url}",
+ "follow_up_2": "Should I close this off on my side? If the timing's wrong, no problem, and if a small task comes up later, I'm one email away.",
+ "pivot": "If prospect lists aren't useful for you, I also take on Python automation and data work part-time, small paid trial first. My work: code.example/your-name"
+}

@@ -2,6 +2,7 @@
 
     python src/draft.py build <agency-domain>     # needs data/scored/drafts/<agency-domain>.draft.json
     python src/draft.py quotes [<agency-domain>]  # is what line 1 quotes still on the agency's site today?
+    python src/draft.py followups [<agency-domain> ...]   # rewrite only the follow-ups of drafts already built
     python src/draft.py build <name> --spec-dir examples/spec --out-dir examples   # the bundled example
 
 The spec is the reasoning layer's wording: the subject lines, the opening line about the agency
@@ -13,6 +14,13 @@ browser did not show. Under the email the draft lists the pages to open to check
 The opening line is checked too. The spec lists the words it relies on and the page each came from
 ("line1_checks": [{"url", "quotes"}]); `quotes` opens those pages in a browser and reports any words
 that are not there. An opening line must not say more than those quoted words do.
+
+Follow-ups are replies in the thread of the first email, so they have no subject of their own. Each
+must add something the first email did not say; a bare reminder is not written, and the linter rejects
+the usual ones. When the operator's wording file (outreach/job_ask.json) has a "pivot", follow-up 1 is
+that sentence: it turns the offer into the job ask. `followups` applies the current rules to a draft
+that is already built and leaves everything above its follow-ups byte for byte, because for an email
+that has gone out the draft is the record of what was sent.
 
 A spec with "status": "BLOCKED: <reason>" writes a stub that says why and contains no email. A draft
 that fails the linter is still written, so it can be fixed, but the command exits non-zero.
@@ -35,7 +43,7 @@ from dotenv import dotenv_values
 from rich.console import Console
 
 import signals
-from common import DRAFTS, ROOT, SCORED, log_run, utf8_stdout
+from common import DRAFTS, JOB_WORDING, ROOT, SCORED, job_wording, log_run, utf8_stdout
 from lint_drafts import lint
 from pack import load_pack
 
@@ -113,7 +121,14 @@ def claims(gap: dict, row: dict) -> list[tuple[str, str]]:
     return [("the quoted words are on this page", gap["source_url"])]
 
 
-def render(spec: dict, pack_dir: Path = SCORED / "packs", pack_folder: str = "packs") -> str:
+def follow_ups(spec: dict, greeting: str, name: str, pivot: str = "") -> list[str]:
+    """The two follow-up sections. With a pivot, follow-up 1 turns the offer into the job ask."""
+    first = [pivot] if pivot else [spec["fu1"], "", "Shall I send it over?"]
+    return ["## Follow-up 1 (day 3)", "", greeting, "", *first, "", name, "",
+            "## Follow-up 2 (day 7)", "", greeting, "", spec["fu2"], "", name, ""]
+
+
+def render(spec: dict, pack_dir: Path = SCORED / "packs", pack_folder: str = "packs", pivot: str = "") -> str:
     domain = spec["domain"]
     record = SCORED / f"{domain}.json"
     # A real draft takes its score from the scored record. The bundled example carries its own.
@@ -134,37 +149,35 @@ def render(spec: dict, pack_dir: Path = SCORED / "packs", pack_folder: str = "pa
     items = [p["line"] for p in people] or spec["items"]
     email = ["## Email 1", "", greeting, "", spec["line1"], "", spec["line2"], ""] + items
     email += ([""] + [spec["proof"]] if spec.get("proof") else []) + ["", CTA, "", name, "", "<!--"] + spec["evidence"] + ["-->", ""]
-    seen = json.loads(LINE1_RESULTS.read_text(encoding="utf-8")).get(domain) if LINE1_RESULTS.exists() else None
-    if spec.get("line1_note"):
-        state = spec["line1_note"]
-    elif seen is None:
-        state = "not checked yet; run `draft.py quotes`"
-    elif seen["ok"]:
-        state = f"its quoted words were on the page on {seen['checked']}"
-    elif seen.get("last_ok"):
-        # Read before, unreadable now. That is not the same as the words having gone.
-        state = (f"its quoted words were on the page on {seen['last_ok']}, but the page could not be read on "
-                 f"{seen['checked']}. Open it yourself before sending")
-    else:
-        state = f"NOT confirmed on {seen['checked']}: {seen['why']}. Read the page yourself before sending"
+    state = spec.get("line1_note") or line1_state(domain)
     check = ["## Check before sending", ""] + [f"Line 1 ({state}): {c['url']}" for c in spec["line1_checks"]]
     for i, person in enumerate(people, 1):
         check.append(f"{i}. {person['name']}")
         check += [f"   - {what}: {url}" for what, url in person["checks"]]
     check += [f"{i}. {c['name']}: {c['what']}\n   - {c['url']}" for i, c in enumerate(spec.get("checks", []), 1)] + [""]
-    follow_ups = [
-        "## Follow-up 1 (day 3)", "", greeting, "", spec["fu1"], "", "Shall I send it over?", "", name, "",
-        "## Follow-up 2 (day 7)", "", greeting, "", spec["fu2"], "", name, "",
-        "## LinkedIn connection note", "", spec["linkedin"], "",
-    ]
-    return "\n".join(header + subjects + email + check + follow_ups)
+    note = ["## LinkedIn connection note", "", spec["linkedin"], ""]
+    return "\n".join(header + subjects + email + check + follow_ups(spec, greeting, name, pivot) + note)
+
+
+def line1_state(domain: str, results: Path = LINE1_RESULTS, command: str = "draft.py quotes") -> str:
+    """What `quotes` last found for an agency's opening line, in words for the person about to send it."""
+    seen = json.loads(results.read_text(encoding="utf-8")).get(domain) if results.exists() else None
+    if seen is None:
+        return f"not checked yet; run `{command}`"
+    if seen["ok"]:
+        return f"its quoted words were on the page on {seen['checked']}"
+    if seen.get("last_ok"):
+        # Read before, unreadable now. That is not the same as the words having gone.
+        return (f"its quoted words were on the page on {seen['last_ok']}, but the page could not be read on "
+                f"{seen['checked']}. Open it yourself before sending")
+    return f"NOT confirmed on {seen['checked']}: {seen['why']}. Read the page yourself before sending"
 
 
 def build(domain: str, spec_dir: Path = SPECS, out_dir: Path = DRAFTS) -> int:
     spec = json.loads((spec_dir / f"{domain}.draft.json").read_text(encoding="utf-8"))
     real = out_dir == DRAFTS  # the bundled example is not a pipeline run, and its pack sits beside it
     try:
-        text = render(spec) if real else render(spec, spec_dir, out_dir.name)
+        text = render(spec, pivot=_pivot()) if real else render(spec, spec_dir, out_dir.name)
     except ValueError as exc:
         console.print(f"[red]Draft spec rejected for {domain}:\n{exc}[/red]")
         return 1
@@ -183,6 +196,40 @@ def build(domain: str, spec_dir: Path = SPECS, out_dir: Path = DRAFTS) -> int:
     blocked = spec.get("status", "").upper().startswith("BLOCKED")
     console.print(f"[{'yellow]blocked' if blocked else 'green]ok'}[/]   {shown}")
     return 0
+
+
+def _pivot() -> str:
+    """The operator's sentence that turns a lead-pack follow-up into the job ask, if one is set."""
+    return job_wording().get("pivot", "") if JOB_WORDING.exists() else ""
+
+
+def refresh_follow_ups(domains: list[str]) -> int:
+    """Rewrite only the follow-up sections of drafts that are already built, under the current rules."""
+    paths = [SPECS / f"{d}.draft.json" for d in domains] or sorted(SPECS.glob("*.draft.json"))
+    name = (dotenv_values(ROOT / ".env").get("LEADFORGE_NAME") or "").strip() or "{{NAME}}"
+    changed = failed = 0
+    for path in paths:
+        spec = json.loads(path.read_text(encoding="utf-8"))
+        target = DRAFTS / f"{spec['domain']}.md"
+        if spec.get("status", "").upper().startswith("BLOCKED") or not target.exists():
+            continue
+        text = target.read_text(encoding="utf-8")
+        start, end = text.find("## Follow-up 1"), text.find("## LinkedIn connection note")
+        if start < 0 or end < start:
+            console.print(f"[red]FAIL[/red] {spec['domain']}: the draft has no follow-up sections to rewrite")
+            failed += 1
+            continue
+        new = text[:start] + "\n".join(follow_ups(spec, spec.get("greeting", "Hello,"), name, _pivot())) + "\n" + text[end:]
+        problems = lint(new)
+        if problems:
+            failed += 1
+            console.print(f"[red]FAIL[/red] {spec['domain']}: " + "; ".join(problems))
+            continue
+        changed += new != text
+        target.write_text(new, encoding="utf-8")
+        console.print(f"[green]{'ok' if new != text else 'same'}[/green]   outreach/drafts/{target.name}")
+    log_run("python src/draft.py followups", {"drafts": len(paths), "rewritten": changed, "failed": failed})
+    return 1 if failed else 0
 
 
 def _plain(text: str) -> str:
@@ -244,32 +291,34 @@ def _fetch_pages(urls: list[str]) -> dict[str, str]:
     return pages
 
 
-def quotes(domains: list[str], browser: bool = True) -> int:
+def quotes(domains: list[str], browser: bool = True, spec_dir: Path = SPECS, suffix: str = ".draft.json",
+           checks=lambda spec: spec.get("line1_checks", []), command: str = "python src/draft.py quotes") -> int:
     """Confirm the words each opening line relies on are on the agency's page today.
 
     A plain request is tried first. Only pages where words are still missing are opened in a browser,
     which also sees text that scripts add.
     """
-    paths = [SPECS / f"{d}.draft.json" for d in domains] or sorted(SPECS.glob("*.draft.json"))
+    paths = [spec_dir / f"{d}{suffix}" for d in domains] or sorted(spec_dir.glob(f"*{suffix}"))
     specs = [json.loads(path.read_text(encoding="utf-8")) for path in paths]
     specs = [s for s in specs if not s.get("status", "").upper().startswith("BLOCKED")]
-    pages = _fetch_pages(sorted({c["url"] for s in specs for c in s.get("line1_checks", [])}))
-    unsure = sorted({c["url"] for s in specs for c in s.get("line1_checks", [])
+    pages = _fetch_pages(sorted({c["url"] for s in specs for c in checks(s)}))
+    unsure = sorted({c["url"] for s in specs for c in checks(s)
                      if any(_plain(q) not in _plain(pages[c["url"]]) for q in c["quotes"])})
     if unsure and browser:
         pages.update(asyncio.run(_read_pages(unsure)))
     failed = 0
-    results = json.loads(LINE1_RESULTS.read_text(encoding="utf-8")) if LINE1_RESULTS.exists() else {}
+    found = spec_dir / LINE1_RESULTS.name
+    results = json.loads(found.read_text(encoding="utf-8")) if found.exists() else {}
     today = dt.date.today().isoformat()
     for spec in specs:
-        checks = spec.get("line1_checks", [])
-        missing = [f"{q!r} on {c['url']}" for c in checks for q in c["quotes"] if _plain(q) not in _plain(pages[c["url"]])]
-        missing += [f"{c['url']} did not load" for c in checks if not pages[c["url"]]]
-        unread = [c["url"] for c in checks if not pages[c["url"]]]
-        if missing or not any(c["quotes"] for c in checks):
+        relied = checks(spec)
+        missing = [f"{q!r} on {c['url']}" for c in relied for q in c["quotes"] if _plain(q) not in _plain(pages[c["url"]])]
+        missing += [f"{c['url']} did not load" for c in relied if not pages[c["url"]]]
+        unread = [c["url"] for c in relied if not pages[c["url"]]]
+        if missing or not any(c["quotes"] for c in relied):
             failed += 1
             why = ("the page could not be read from this machine (no answer, or a browser check)" if unread
-                   else "these words were not found: " + "; ".join(missing)) if checks else "the spec lists no words to check"
+                   else "these words were not found: " + "; ".join(missing)) if relied else "the spec lists no words to check"
             before = results.get(spec["domain"], {})
             results[spec["domain"]] = {"ok": False, "checked": today, "why": why}
             # A page that would not load today takes nothing back: keep the last day its words were read.
@@ -279,9 +328,9 @@ def quotes(domains: list[str], browser: bool = True) -> int:
             console.print(f"[red]FAIL[/red] {spec['domain']}: {missing or 'no line1_checks given'}")
         else:
             results[spec["domain"]] = {"ok": True, "checked": today, "why": ""}
-            console.print(f"[green]ok[/green]   {spec['domain']}: {sum(len(c['quotes']) for c in checks)} quote(s) found on its site")
-    LINE1_RESULTS.write_text(json.dumps(results, ensure_ascii=False, indent=1), encoding="utf-8")
-    log_run("python src/draft.py quotes", {"drafts": len(specs), "failed": failed})
+            console.print(f"[green]ok[/green]   {spec['domain']}: {sum(len(c['quotes']) for c in relied)} quote(s) found on its site")
+    found.write_text(json.dumps(results, ensure_ascii=False, indent=1), encoding="utf-8")
+    log_run(command, {"drafts": len(specs), "failed": failed})
     return 1 if failed else 0
 
 
@@ -296,9 +345,13 @@ def main() -> int:
     p_quotes = sub.add_parser("quotes", help="confirm line 1's quoted words on the agency's rendered page")
     p_quotes.add_argument("agency", nargs="*", help="omit to check every draft")
     p_quotes.add_argument("--no-browser", action="store_true", help="plain requests only; report what they could not find")
+    p_follow = sub.add_parser("followups", help="rewrite only the follow-up sections of drafts already built")
+    p_follow.add_argument("agency", nargs="*", help="omit to rewrite every draft")
     args = ap.parse_args()
     if args.cmd == "quotes":
         return quotes(args.agency, browser=not args.no_browser)
+    if args.cmd == "followups":
+        return refresh_follow_ups(args.agency)
     return build(args.agency, args.spec_dir.resolve(), args.out_dir.resolve())
 
 

@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import datetime as dt
+import json
 import re
 import sys
 from collections import Counter
@@ -18,6 +19,8 @@ SCORED = DATA / "scored"
 PACKS = ROOT / "packs"
 DRAFTS = ROOT / "outreach" / "drafts"
 US_TRACK = ROOT / "outreach" / "us_track"
+JOBS = ROOT / "outreach" / "jobs"
+JOB_WORDING = ROOT / "outreach" / "job_ask.json"  # the operator's own wording; gitignored
 RUNLOG = ROOT / "RUNLOG.md"
 
 USER_AGENT = (
@@ -81,6 +84,14 @@ def root_domain(url: str | None) -> str:
 
 def is_platform(domain: str) -> bool:
     return domain in PLATFORM_DOMAINS or any(domain.endswith("." + p) for p in PLATFORM_DOMAINS)
+
+
+def job_wording(path: Path = JOB_WORDING) -> dict:
+    """The operator's wording for the job ask: subject, pitch, proof lines, follow-ups."""
+    if not path.exists():
+        raise SystemExit(f"{path.name} is missing. Copy examples/job_ask.example.json to outreach/job_ask.json "
+                         "and put your own wording in it.")
+    return json.loads(path.read_text(encoding="utf-8"))
 
 
 def slugify(text: str) -> str:

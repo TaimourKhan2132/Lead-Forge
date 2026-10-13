@@ -344,6 +344,56 @@ Counts only. No lead names or scraped data are written to this file, so it is sa
   more than three days before the send date.
 - **About two hundred Maps listings were opened today.** The last verification run had five
   listings fail to load. Nothing was blocked, and no further Maps runs were started.
+- **2026-10-13: a second offer was added, the job ask, on the operator's brief.** The first ten
+  lead-pack emails drew one reply. It declined the leads and asked for the operator's CV. So a
+  second first email now asks an agency for part-time remote work. The lead-pack track is
+  unchanged, and the tracker records which offer each first email made, so the two can be
+  compared.
+- **An agency gets one offer.** A job ask goes only to an agency that has never been emailed, is
+  not on the skip list and has no lead-pack draft waiting to go. The two agencies whose pack
+  drafts were blocked were given a job ask instead: neither block had anything to do with a job
+  ask.
+- **Candidates came from the agencies already scored.** 44 were eligible. 38 were read in a
+  browser on the day: the homepage, and any careers page it links to. Four homepages timed out and
+  were left unread, so those agencies got no email. No new discovery was needed.
+- **17 were chosen: those with an open role first, then by score.** Dropped, with the reason kept
+  outside this log: teams above the size sought (three at fifty or more, one at a hundred or
+  more), one solo freelancer, an EU-registered firm, an agency whose own site places it in another
+  country, firms that are not agencies of the three kinds sought (a call-centre and
+  mystery-shopping firm, a robotics maker, an ERP vendor, a smart-home installer, a network
+  integrator, a branding studio), one with no working address, one barely active, and one whose
+  careers page would not load and whose address sits on a different domain from its site.
+- **"Hiring" was decided from the careers page as it read on the day, not from the earlier
+  crawl.** The crawl of 10 October had found role names on eleven sites. On the day, four agencies
+  listed open roles and three of those roles are development or data work. Two sites that had
+  seemed to list roles show none: the names had come from a form's drop-down. One site lists roles
+  under "disciplines we want to meet", each with an apply link; it is counted as hiring, and the
+  draft carries a note asking the operator to read the page and decide.
+- **A named contact from the earlier scoring was wrong, and was caught.** One record named a
+  "co-founder" who is a client quoted in a testimonial. That email now opens "Hi there". The three
+  names that are used were read again on the pages that give them.
+- **The operator's wording is not in this repository.** The subject, the pitch, the three proof
+  lines, the trial question, the P.S. and the follow-up sentences live in a gitignored file, and
+  the linter checks each draft against it word for word. An example file with invented wording is
+  committed so the tests can run.
+- **Two sentences in that file are not the operator's.** His brief gave no lead-in for the day-3
+  follow-up and no sentence to carry the recording link, so one of each was written. They are
+  named for him outside this log.
+- **Send limits were raised on the operator's instruction:** 25 new emails a weekday and 30
+  messages a day with follow-ups, from 10 and 15. Two bounces in a day now print a warning to
+  stop.
+- **Not all 17 fit on the first day.** Ten lead-pack emails were already set for it, so the day
+  takes 15 job asks. First follow-ups from Wednesday, Thursday and Friday all land on the Monday,
+  which caps those three days at 29 new emails between them; 31 were ready. The two lowest-ranked
+  job asks moved to the next day with room. Moving two lead-pack emails instead would have let
+  their packs go stale.
+- **Lead-pack follow-up 1 now turns into the job ask**, with the operator's sentence. Only the
+  follow-up sections of the 23 built drafts were rewritten. The emails above them, ten of which
+  have gone out, were not touched. One sent draft has no spec to rebuild from and keeps its old
+  follow-up.
+- **The send file became three.** Follow-ups due on a day get their own file, with the "Re:"
+  subject of the email they answer. Lead-pack emails keep theirs. Job asks get a page and a CSV
+  with the same fields.
 
 ## Open items
 
@@ -351,12 +401,11 @@ Counts only. No lead names or scraped data are written to this file, so it is sa
   on this machine, which has no Docker.
 - **No Gulf rows on the Clutch shortlist.** The shortlist that arrived on 2026-10-11 holds only
   track=us agencies, which went to the US track. Nothing was merged into the Gulf list.
-- **One Gulf draft is blocked on its pack.** A web design studio's pack has only 8 prospects with a signal a web
-  studio can act on. It needs one more Maps search, which is new discovery and waits for the operator.
-- **One draft is blocked on its opening line.** That agency's site gave no answer from this machine
-  on 2026-10-11 or on 2026-10-13, so the words the line quotes were never read. Reading the page by
-  hand unblocks it. A second agency's page was read on 2026-10-11 and would not load on 2026-10-13;
-  its email stays in the batch and the send file says to open the page first.
+- **Two pack drafts stay blocked, and both agencies were given a job ask instead.** One pack has only 8
+  prospects with a signal a web studio can act on. The other draft's opening line was never
+  confirmed, because that site gave no answer from this machine on two days. Its careers page did
+  load on 2026-10-13, on the second try. A third agency's page was read on 2026-10-11 and would not
+  load on 2026-10-13; its email stays in the batch and the send file says to open the page first.
 - **One US-track draft is blocked** until a way to deliver its message is confirmed by hand.
 - **The tag signal is checked in a headless browser only.** It is the one allowed signal that cannot
   be confirmed on a phone. A site that serves a headless browser different code would fool it. Emails
@@ -367,7 +416,8 @@ Counts only. No lead names or scraped data are written to this file, so it is sa
 - **Later batches are planned but not built.** Nothing new is built until the operator says so. Each
   batch is built one send day ahead, with the allowed signals only.
 - **The plan is throttled by follow-ups.** Follow-ups from Wednesday, Thursday and Friday sends all
-  land on the following Monday, so `plan` places fewer new emails late in the week.
+  land on the following Monday. With 30 messages a day allowed, those three days can take 29 or 30
+  new emails between them, however many each day could hold on its own.
 - **Heavy runs trip a browser check on some hosts.** On 2026-10-11 page loads timed out in bursts and
   one host showed a holding page for about two hours. Both only ever drop a claim, but they cost
   candidates. Spread verification over smaller runs, and re-run what was dropped as unread.
@@ -378,6 +428,10 @@ Counts only. No lead names or scraped data are written to this file, so it is sa
 - **The repository's About box is still empty.** Description, topics, the social preview image and
   now the page's address are set in GitHub's own settings, which need the operator's signed-in
   browser.
+- **Which agency replied is not recorded.** The operator reported one reply and did not say from
+  whom. Until it is marked, that agency's follow-ups still appear in the send files.
+- **The job ask's first follow-up waits on a recording.** Until the link is set in `.env` it uses
+  a proof line the first email did not.
 
 ## Runs
 
@@ -2992,4 +3046,35 @@ Counts only. No lead names or scraped data are written to this file, so it is sa
 ### 2026-10-13T14:37:28+05:00
 - **Command:** `python src/pack.py build <agency>`
 - **Counts:** prospects=10, files=2
+- **Failures:** none
+
+### 2026-10-13T18:27:55+05:00
+- **Command:** `python src/jobs.py scan`
+- **Counts:** agencies=38, homepage_unread=4, careers_page_read=14
+- **Failures:** none
+- **Notes:** A homepage that would not load is left unread; that agency gets no email until it can be read.
+
+### 2026-10-13T18:32:59+05:00
+- **Command:** `python src/jobs.py quotes`
+- **Counts:** drafts=18, failed=0
+- **Failures:** none
+
+### 2026-10-13T18:33:46+05:00
+- **Command:** `python src/jobs.py quotes`
+- **Counts:** drafts=3, failed=0
+- **Failures:** none
+
+### 2026-10-13T18:33:47+05:00
+- **Command:** `python src/jobs.py build`
+- **Counts:** drafts=17, refused=0
+- **Failures:** none
+
+### 2026-10-13T18:34:11+05:00
+- **Command:** `python src/jobs.py build`
+- **Counts:** drafts=17, refused=0
+- **Failures:** none
+
+### 2026-10-13T18:34:11+05:00
+- **Command:** `python src/draft.py followups`
+- **Counts:** drafts=25, rewritten=23, failed=0
 - **Failures:** none

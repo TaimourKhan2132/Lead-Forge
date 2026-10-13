@@ -8,6 +8,9 @@ packs/*
 outreach/drafts/*
 !outreach/drafts/.gitkeep
 outreach/us_track/
+# The job ask: drafts name real agencies, and the wording is the operator's own.
+outreach/jobs/
+outreach/job_ask.json
 # The day's send file names real agencies and businesses.
 outreach/ready/
 samples/

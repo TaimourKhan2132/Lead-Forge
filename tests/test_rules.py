@@ -136,7 +136,7 @@ def test_follow_ups_fall_on_day_3_and_day_7_and_never_on_a_weekend(sent, fu1, fu
 
 
 def test_daily_caps():
-    assert (track.NEW_CAP, track.DAILY_CAP) == (10, 15)
+    assert (track.NEW_CAP, track.DAILY_CAP) == (25, 30)
 
 
 def test_a_follow_up_knows_how_old_the_pack_it_offers_is(tmp_path):

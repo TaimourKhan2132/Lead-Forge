@@ -280,8 +280,9 @@ The tracker schedules a new email only on a day where its two follow-ups will al
 
 | Send rule | |
 |---|---|
-| New emails a day | 10 at most |
-| Messages a day, with follow-ups | 15 at most, follow-ups first |
+| New emails a weekday | 25 at most |
+| Messages a day, with follow-ups | 30 at most, follow-ups first |
+| Bounces | Two in one day: stop and clean the list |
 | Weekends | Nothing is sent. A follow-up that lands on one moves to Monday |
 | Follow-ups | Day 3 and day 7 |
 
@@ -348,7 +349,7 @@ python src/draft.py quotes <agency-domain>                               # is li
 python src/lint_drafts.py
 python src/track.py sync
 python src/track.py plan 2026-10-13        # schedule every unsent lead from that day, best score first
-python src/track.py ready 2026-10-13       # that day's follow-ups and emails in one file, with the links to check
+python src/track.py ready 2026-10-13       # that day's follow-ups and emails, with the links to check
 python src/track.py today                  # follow-ups due first, then new sends
 python src/track.py mark <agency-domain> sent
 
@@ -422,7 +423,8 @@ src/
   pack.py             render a pack as Markdown and printable HTML
   draft.py            build an email from verified signals; check the opening line
   lint_drafts.py      check drafts against the house rules
-  track.py            SQLite tracker: plan, daily caps, follow-ups, the day's ready file
+  jobs.py             a second offer, the job ask: one fact quoted from the agency's own site
+  track.py            SQLite tracker: plan, daily caps, follow-ups, bounces, the day's ready files
   sample.py           a job description in, a 10-row sample and a short proposal out
   us_track.py         agencies that buy build work, not lead packs
   audit_public.py     prove nothing from data/ ever reached git history

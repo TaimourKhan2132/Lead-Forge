@@ -15,6 +15,11 @@ Stages: `discover` (Google Maps) → `enrich` (each site, with evidence) → `sh
 (rubric, tier A at 70 and above, B at 50 to 69) → `prospects` and `verify` (signals, confirmed in a
 browser) → `pack` → `draft` → `track`.
 
+There are two offers, and an agency gets one of them. The **lead pack** is the sample above. The
+**job ask** (`jobs.py`) asks an agency that has never been emailed for part-time remote work, and
+opens with one fact from that agency's own site. The tracker records which offer each first email
+made (`lead_pack` or `job_ask`), so their reply rates can be compared with `track.py list`.
+
 ## The offer
 
 - **$59** for 50 qualified leads in the buyer's niche and city, paid upfront.
@@ -69,18 +74,48 @@ to use is in `outreach/pricing.md`.
 14. **No payment details anywhere in this repository.**
 15. Banned in outreach: "I hope this finds you well", "I came across your profile", flattery,
     "synergy", "quick question", made-up statistics.
+16. **The job ask opens with one factual sentence about the agency**, resting on words quoted from
+    its own site, with the page's URL: a service it sells, a case study, a client it names, or an
+    open role. No compliments. Nothing about the agency's product being weak or missing something.
+    No quotable fact, no email: drop the agency and say why. Never guess.
+17. **Everything the job ask says about the operator comes word for word from his wording file**,
+    `outreach/job_ask.json` (gitignored): the pitch, one of three proof lines chosen by agency type
+    (A marketing, SEO and ads; B AI, automation and software; C web development), the trial question
+    and the P.S. Never write a new proof line. No attachments, and no link except the one in that
+    file. Never mention n8n, Docker or Looker Studio.
+18. **"Hiring" means an open role on the agency's own careers or jobs page today**, with the page
+    recorded. The opener names the role only when it is data, automation, scraping, reporting or
+    development work; otherwise the normal opener is used.
+19. **An agency gets one offer.** A job ask goes only to an agency that has never been emailed, is
+    not in `data/skip.txt` and has no lead-pack draft waiting to go.
 
 ## Send rules
 
-- At most 10 new emails a day.
-- At most 15 messages a day counting follow-ups.
+- At most 25 new emails a weekday.
+- At most 30 messages a day counting follow-ups.
 - Follow-ups go first. New emails take what is left.
 - Nothing is sent on Saturday or Sunday.
 - A follow-up that lands on a weekend moves to Monday.
 - Follow-ups are due on day 3 and day 7 after the first email.
+- Two or more bounces in one day: stop, and clean the list before anything else goes. Record each
+  with `track.py mark <agency> bounced`; `track.py bounces` shows them by day.
 
-`track.py plan` and `track.py today` enforce these. Packs and drafts are built in batches of 10, one
-batch ahead of each send day.
+`track.py plan` and `track.py today` enforce these. Packs and drafts are built one batch ahead of
+each send day.
+
+## Follow-ups
+
+- Never write "just following up", "circling back", "bumping this" or "checking in". Every
+  follow-up adds something new, or it is not sent.
+- A follow-up is a reply in the thread of the first email. Its subject is "Re:" and the original
+  subject, never a new one.
+- **Job ask, day 3:** one new piece of proof in two or three lines: the screen recording of the
+  pipeline when `LEADFORGE_DEMO_URL` is set in `.env`, otherwise a proof line the first email did
+  not use. It ends on the same trial question.
+- **Job ask, day 7:** close the loop, in under 40 words.
+- **Lead pack, day 3:** turn it into the job ask, with the `pivot` sentence from the wording file.
+  `draft.py followups` rewrites only the follow-ups of a draft that is already built. The email
+  above them is the record of what was sent, and is never rebuilt.
 
 ## Draft format
 
@@ -88,6 +123,10 @@ Three subject lines of 6 words or fewer. Email 1 at 120 words or fewer, plain te
 "Want the other 7? Just reply yes." Follow-up 1 at 50 words or fewer, follow-up 2 at 40. A LinkedIn
 note of 280 characters or fewer. The three business lines in email 1 are generated from verified
 signals by `draft.py`. They are never typed by hand.
+
+A job ask has one subject line, the email, the pages to open to check it, and two follow-ups (60
+words and 40). `jobs.py build` writes it from the wording file and the agency's spec, and
+`lint_drafts.py` checks it.
 
 ## Commands
 
@@ -107,16 +146,23 @@ python src/pack.py build <agency>                            # render the pack (
 python src/pack.py fill --readme-no-email                    # fill name and links from .env
 python src/draft.py build <agency>                           # render and lint the outreach draft
 python src/draft.py quotes [<agency>]                        # is what line 1 quotes on the agency's page today?
+python src/draft.py followups [<agency> ...]                 # rewrite only the follow-ups of drafts already built
+python src/jobs.py scan [<agency> ...]                       # the job ask: read each candidate's homepage and careers page
+python src/jobs.py build [<agency> ...]                      # render and lint the job-ask drafts in outreach/jobs/
+python src/jobs.py quotes [<agency> ...]                     # are the opener's quoted words on the agency's page today?
 python src/lint_drafts.py                                    # check every draft against the rules
 python src/track.py sync                                     # pick up new and blocked drafts
 python src/track.py plan <YYYY-MM-DD>                        # schedule unsent leads inside the send rules
-python src/track.py ready <YYYY-MM-DD>                       # the day's follow-ups and emails, and the links to check
+python src/track.py plan <YYYY-MM-DD> --keep                 # place only undated leads; dated ones stay where they are
+python src/track.py ready <YYYY-MM-DD>                       # the day's files: follow-ups, lead-pack emails, job asks
 python src/track.py today                                    # follow-ups due, then new sends
 python src/track.py mark <agency> sent [--date YYYY-MM-DD]   # record a send; sets follow-up dates
 python src/track.py mark <agency> drafted                    # a send was cancelled
 python src/track.py mark <agency> fu1                        # a follow-up went out (fu2 likewise)
 python src/track.py mark <agency> replied --note "<text>"    # also won, lost, no_reply
-python src/track.py list                                     # every lead and its status
+python src/track.py mark <agency> bounced                    # the address rejected it; no follow-up is owed
+python src/track.py bounces                                  # bounces by day; two in a day means stop
+python src/track.py list                                     # every lead, its offer and status, and replies by offer
 python src/us_track.py prepare                               # second track: agencies that buy build work
 python src/us_track.py digest                                # what their own sites say, to write from
 python src/sample.py --brief "<job description>"             # a 10-row sample and a short proposal
@@ -144,6 +190,19 @@ When this conversation is compacted, keep all of the following word for word in 
   prospects in the agency's own niche and city. Real names, domains and emails are only in `data/`,
   `packs/` and `outreach/`; none may reach git, `RUNLOG.md` or a commit message.
 - **Offer:** $59 for 50 leads; $99 a month for 25 a week; custom work quoted. Prices only after a reply.
+- **A second offer, the job ask** (`jobs.py`), asks an agency for part-time remote work. An agency
+  gets one offer: a job ask goes only to one never emailed, not skipped, with no lead-pack draft
+  waiting. Its opener is one factual sentence resting on words quoted from the agency's own site,
+  with the URL; no compliments, nothing about a weakness; no quotable fact, no email. What it says
+  about the operator comes word for word from `outreach/job_ask.json`: never a new proof line, no
+  attachment, no other link, never n8n, Docker or Looker Studio. "Hiring" means an open role on the
+  agency's own careers page today; the opener names it only for data, automation, scraping,
+  reporting or development work. Drafts are in `outreach/jobs/`; both are private.
+- **Follow-ups** are replies in the first email's thread ("Re:" and its subject). Never "just
+  following up", "circling back", "bumping this" or "checking in": each adds something new or is
+  not sent. Job ask: day 3 one new piece of proof and the trial question, day 7 close the loop in
+  under 40 words. Lead pack: day 3 turns into the job ask. Never rebuild a draft that has been
+  sent; `draft.py followups` rewrites only its follow-ups.
 - **Never send or submit anything.** Draft only. The operator sends by hand.
 - **Evidence or "unknown".** No invented facts. No claims of past clients, reviews or results.
 - **Allowed signals only**, each checkable in 10 seconds on a phone: no website on the Google
@@ -157,8 +216,9 @@ When this conversation is compacted, keep all of the following word for word in 
   or LinkedIn note.
 - A listing link that lands on another domain says nothing about the business. A malformed link is
   a broken link, not a dead site.
-- **The ready file** (`outreach/ready/<date>.md`) gives, for each claim, the exact URL to open; for
-  "no website on the listing" that is the Google Maps link.
+- **The ready files** for a day are `outreach/ready/<date>-followups.md`, `<date>.md` (lead-pack
+  emails) and `<date>-jobs.md` with `<date>-jobs.csv`. Each gives, for each claim, the exact URL to
+  open; for "no website on the listing" that is the Google Maps link.
 - **An opening line may say only what the agency's own page says.** Check it with `draft.py quotes`.
 - If a site shows a browser check or does not answer, record it as unread, wait and re-run. Never
   work around it.
@@ -167,18 +227,20 @@ When this conversation is compacted, keep all of the following word for word in 
   `BLOCKED` with the reason. Do not stretch.
 - **No LinkedIn scraping.** No logins, no bot-protected directories, no guessed addresses. Small
   crawls: depth 1, at most 4 pages at once, no proxies; stop if Google blocks.
-- **Send rules:** max 10 new emails a day; max 15 a day with follow-ups; follow-ups first; no
-  Saturday or Sunday sends; a weekend follow-up moves to Monday; follow-ups on day 3 and day 7.
+- **Send rules:** max 25 new emails a weekday; max 30 a day with follow-ups; follow-ups first; no
+  Saturday or Sunday sends; a weekend follow-up moves to Monday; follow-ups on day 3 and day 7; two
+  bounces in one day means stop and clean the list.
 - **Before every push:** `python src/audit_public.py --online` must exit 0. **No `Co-Authored-By`
   lines.** No payment details in the repository.
 - **Commands:** `discover.py`, `merge_clutch.py`, `enrich.py`, `shortlist.py`, `qualify.py ingest`
-  and `summary`, `prospects.py`, `verify.py`, `pack.py build` and `fill`, `draft.py build` and `quotes`,
-  `lint_drafts.py`, `track.py sync`, `plan`, `ready`, `today`, `mark` and `list`, `us_track.py prepare`
+  and `summary`, `prospects.py`, `verify.py`, `pack.py build` and `fill`, `draft.py build`, `quotes` and
+  `followups`, `jobs.py scan`, `build` and `quotes`, `lint_drafts.py`, `track.py sync`, `plan`
+  (`--keep`), `ready`, `today`, `mark`, `bounces` and `list`, `us_track.py prepare`
   and `digest`, `sample.py --brief`, `audit_public.py --online`, `examples/make_example.py`, `python -m pytest`,
   `docs/make_assets.py`, `docs/make_site.py --check`. Run
   them with `./.venv/Scripts/python.exe`.
 - The README's images, the live page and the examples show fictional data only. Never put a real
   business in a screenshot, GIF, test, example or on the page. The page is published from `gh-pages`
   by a workflow on every push to `main`.
-- Also keep: which drafts are `BLOCKED` and why, which emails have been sent and on what date, and
-  the path of the current ready file.
+- Also keep: which drafts are `BLOCKED` and why, which emails have been sent, on what date and with
+  which offer, who has replied or bounced, and the paths of the current ready files.
