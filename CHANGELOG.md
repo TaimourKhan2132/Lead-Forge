@@ -2,6 +2,14 @@
 
 Notable changes to LeadForge. No real business is named here or anywhere else in this repository.
 
+## Unreleased
+
+### Changed
+- `draft.py quotes`: when an agency's page will not load, the last day its words were read is kept,
+  and the send file says both. A failed retry used to erase the earlier reading.
+- `verify.py` no longer writes the value of `--only` to the run log. Those values are businesses' own
+  domains.
+
 ## [0.3.0] - 2026-10-13 · A live page
 
 The project now has a page of its own, served by GitHub Pages:

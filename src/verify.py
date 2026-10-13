@@ -511,11 +511,15 @@ def main() -> int:
     signals = json.loads(args.signals.read_text(encoding="utf-8")) if args.signals else []
     only = {k.strip() for k in args.only.split(",") if k.strip()}
     todo = [c for c in candidates if not c.get("verified_on") and (not only or c["key"] in only)][:args.top]
+    # Candidate keys are the businesses' own domains, so they never go into the public run log.
+    command = "python " + " ".join(["src/verify.py"] + sys.argv[1:])
+    if args.only:
+        command = command.replace(args.only, "<businesses>")
     try:
         stats = asyncio.run(verify(todo, signals, os.getenv("LEADFORGE_BROWSER", "msedge")))
     except GoogleBlocked as exc:
         console.print(f"[red]Google blocked the listing checks: {exc}. Stopped. Nothing was written.[/red]")
-        log_run("python " + " ".join(["src/verify.py"] + sys.argv[1:]), {"verified": 0}, failures=[f"google blocked: {exc}"], redact=(args.agency,))
+        log_run(command, {"verified": 0}, failures=[f"google blocked: {exc}"], redact=(args.agency,))
         return 3
 
     for cand in candidates:
@@ -529,7 +533,7 @@ def main() -> int:
         digest_text(usable, set(), header, len(usable)), encoding="utf-8")
 
     stats["usable"] = len(usable)
-    log_run("python " + " ".join(["src/verify.py"] + sys.argv[1:]), stats, redact=(args.agency,))
+    log_run(command, stats, redact=(args.agency,))
     console.print("[bold]verify[/bold] " + ", ".join(f"{k}={v}" for k, v in stats.items()))
     return 0
 

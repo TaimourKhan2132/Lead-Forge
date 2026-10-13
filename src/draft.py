@@ -141,6 +141,10 @@ def render(spec: dict, pack_dir: Path = SCORED / "packs", pack_folder: str = "pa
         state = "not checked yet; run `draft.py quotes`"
     elif seen["ok"]:
         state = f"its quoted words were on the page on {seen['checked']}"
+    elif seen.get("last_ok"):
+        # Read before, unreadable now. That is not the same as the words having gone.
+        state = (f"its quoted words were on the page on {seen['last_ok']}, but the page could not be read on "
+                 f"{seen['checked']}. Open it yourself before sending")
     else:
         state = f"NOT confirmed on {seen['checked']}: {seen['why']}. Read the page yourself before sending"
     check = ["## Check before sending", ""] + [f"Line 1 ({state}): {c['url']}" for c in spec["line1_checks"]]
@@ -266,7 +270,12 @@ def quotes(domains: list[str], browser: bool = True) -> int:
             failed += 1
             why = ("the page could not be read from this machine (no answer, or a browser check)" if unread
                    else "these words were not found: " + "; ".join(missing)) if checks else "the spec lists no words to check"
+            before = results.get(spec["domain"], {})
             results[spec["domain"]] = {"ok": False, "checked": today, "why": why}
+            # A page that would not load today takes nothing back: keep the last day its words were read.
+            last_ok = before.get("checked") if before.get("ok") else before.get("last_ok")
+            if unread and last_ok:
+                results[spec["domain"]]["last_ok"] = last_ok
             console.print(f"[red]FAIL[/red] {spec['domain']}: {missing or 'no line1_checks given'}")
         else:
             results[spec["domain"]] = {"ok": True, "checked": today, "why": ""}
