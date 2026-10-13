@@ -33,6 +33,7 @@ from rich.console import Console
 from rich.table import Table
 
 from common import DATA, DRAFTS, PACKS, ROOT, SCORED, US_TRACK, utf8_stdout
+from pack import MAX_AGE_DAYS
 
 DB = DATA / "tracker.db"
 READY = ROOT / "outreach" / "ready"
@@ -369,18 +370,55 @@ def _section(text: str, prefix: str) -> str:
     return next((v for k, v in found.items() if k.startswith(prefix)), "")
 
 
+def pack_checked(domain: str, pack_dir=SCORED / "packs") -> str:
+    """The oldest check among the ten businesses in an agency's pack, or '' if any has none on record.
+
+    A follow-up offers the pack, so the pack has to be fit to send on the day the follow-up goes.
+    """
+    spec, pool = pack_dir / f"{domain}.pack.json", pack_dir / f"{domain}.candidates.json"
+    if not (spec.exists() and pool.exists()):
+        return ""
+    keys = {prospect["key"] for prospect in json.loads(spec.read_text(encoding="utf-8"))["prospects"]}
+    days = [cand.get("verified_on") or "" for cand in json.loads(pool.read_text(encoding="utf-8")) if cand["key"] in keys]
+    return min(days) if len(days) == len(keys) and all(days) else ""
+
+
 def ready(conn: sqlite3.Connection, date: str) -> int:
     """Write the day's emails to one file: who to, the subject, the body, and what to open to check it."""
     day = dt.date.fromisoformat(date)
     rows = conn.execute("SELECT * FROM leads WHERE status = 'drafted' AND blocked = '' AND planned_send = ? "
                         "ORDER BY score DESC, domain", (date,)).fetchall()
-    if not rows:
-        console.print(f"[yellow]No unblocked drafts are planned for {date}. Run `track.py plan {date}` first.[/yellow]")
+    # Follow-ups owed by that day. The second is listed once the first has gone, or was due on an earlier day.
+    owed = [(1, lead) for lead in conn.execute(
+        "SELECT * FROM leads WHERE status = 'sent' AND fu1_sent_at IS NULL AND fu1_due <= ? ORDER BY fu1_due, domain", (date,))]
+    owed += [(2, lead) for lead in conn.execute(
+        "SELECT * FROM leads WHERE status = 'sent' AND fu2_sent_at IS NULL AND fu2_due <= ? "
+        "AND (fu1_sent_at IS NOT NULL OR fu1_due < ?) ORDER BY fu2_due, domain", (date, date))]
+    if not rows and not owed:
+        console.print(f"[yellow]No unblocked drafts are planned for {date} and no follow-up is due. "
+                      f"Run `track.py plan {date}` first.[/yellow]")
         return 1
+    first = f"{len(owed)} follow-up{'s' if len(owed) != 1 else ''} due first, then " if owed else ""
     out = [f"# Ready to send: {day.strftime('%A %d %B %Y')}", "",
-           f"{len(rows)} emails, highest score first. Blocked drafts are left out. Nothing here has been sent.", "",
-           "For each one: open the links under it and confirm what the line says, then paste the body into a",
+           f"{first}{len(rows)} new emails, highest score first. Blocked drafts are left out. Nothing here has been sent.", "",
+           "For each new email: open the links under it and confirm what the line says, then paste the body into a",
            "plain-text email. If a link shows something different, do not send that email; say so and it gets rebuilt.", ""]
+    if owed:
+        out += ["---", "", "## Follow-ups due (these go first)", "",
+                "Reply in the same thread as the first email, so the subject stays as it was.", ""]
+    for number, lead in owed:
+        text = (ROOT / lead["draft_path"]).read_text(encoding="utf-8")
+        body = re.sub(r"<!--.*?-->", "", _section(text, f"follow-up {number}"), flags=re.S).strip()
+        checked = pack_checked(lead["domain"])
+        if not checked:
+            note = "The pack it offers has no verification date on record. Verify it before sending."
+        elif (day - dt.date.fromisoformat(checked)).days > MAX_AGE_DAYS:
+            note = (f"The pack it offers was last verified on {checked}, more than {MAX_AGE_DAYS} days before this date. "
+                    "Run `verify.py` on it again before sending, in case a reply asks for it.")
+        else:
+            note = f"The pack it offers was last verified on {checked}."
+        out += [f"### Follow-up {number} to {lead['agency']} (first email sent {lead['sent_at']})", "",
+                f"**To:** {header_field(text, 'To')}", "", "```text", body, "```", "", note, ""]
     for i, row in enumerate(rows, 1):
         text = (ROOT / row["draft_path"]).read_text(encoding="utf-8")
         subjects = [re.sub(r"^\s*\d+\.\s*", "", ln).strip() for ln in _section(text, "subject").splitlines() if ln.strip()]
@@ -392,7 +430,8 @@ def ready(conn: sqlite3.Connection, date: str) -> int:
     READY.mkdir(parents=True, exist_ok=True)
     path = READY / f"{date}.md"
     path.write_text("\n".join(out), encoding="utf-8")
-    console.print(f"[bold]ready[/bold] wrote {path.relative_to(ROOT).as_posix()} with {len(rows)} emails")
+    console.print(f"[bold]ready[/bold] wrote {path.relative_to(ROOT).as_posix()} with {len(rows)} emails"
+                  + (f" and {len(owed)} follow-up{'s' if len(owed) != 1 else ''}" if owed else ""))
     return 0
 
 

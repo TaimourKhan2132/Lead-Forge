@@ -110,7 +110,7 @@ python src/draft.py quotes [<agency>]                        # is what line 1 qu
 python src/lint_drafts.py                                    # check every draft against the rules
 python src/track.py sync                                     # pick up new and blocked drafts
 python src/track.py plan <YYYY-MM-DD>                        # schedule unsent leads inside the send rules
-python src/track.py ready <YYYY-MM-DD>                       # the day's emails and the links to check
+python src/track.py ready <YYYY-MM-DD>                       # the day's follow-ups and emails, and the links to check
 python src/track.py today                                    # follow-ups due, then new sends
 python src/track.py mark <agency> sent [--date YYYY-MM-DD]   # record a send; sets follow-up dates
 python src/track.py mark <agency> drafted                    # a send was cancelled

@@ -4,6 +4,10 @@ Notable changes to LeadForge. No real business is named here or anywhere else in
 
 ## Unreleased
 
+### Added
+- `track.py ready <date>` lists the follow-ups due that day ahead of the new emails, each with the
+  date the pack it offers was last verified. A day with follow-ups and no new email gets a file too.
+
 ### Changed
 - `draft.py quotes`: when an agency's page will not load, the last day its words were read is kept,
   and the send file says both. A failed retry used to erase the earlier reading.

@@ -348,7 +348,7 @@ python src/draft.py quotes <agency-domain>                               # is li
 python src/lint_drafts.py
 python src/track.py sync
 python src/track.py plan 2026-10-13        # schedule every unsent lead from that day, best score first
-python src/track.py ready 2026-10-13       # that day's emails in one file, with the links to check
+python src/track.py ready 2026-10-13       # that day's follow-ups and emails in one file, with the links to check
 python src/track.py today                  # follow-ups due first, then new sends
 python src/track.py mark <agency-domain> sent
 

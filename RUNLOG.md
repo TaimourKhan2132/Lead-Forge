@@ -321,6 +321,29 @@ Counts only. No lead names or scraped data are written to this file, so it is sa
   work, not a pack.
 - **`verify.py` no longer writes `--only` values to this log.** They are the businesses' own
   domains. Ten such lines from today were scrubbed before anything was committed.
+- **2026-10-13: the batch after next was built too, on the operator's instruction.** The plan
+  allows four new emails that day, because their follow-ups fall on a Monday that is already full.
+  Four packs and drafts were built, each verified in a browser the same day, and each opening line
+  was read off the agency's own page.
+- **The four were chosen for fit, not strictly by score.** Of the fourteen agencies next in line,
+  ten were passed over. Two show clients that are large brands or government bodies, which a pack
+  of small local businesses does not fit. Three are large: about fifty staff, or offices in four
+  countries. Five are a weaker fit: a solo freelancer who is closer to a peer, a solo founder, one
+  whose pack would rest on the tag signal alone, and two with no clear local niche. None was put
+  on the skip list. That ruling is the operator's, and the ten are named for him outside this log.
+- **Each niche comes from the agency's own page:** the sectors among its featured website builds,
+  the label on half of its selected works, a page in its services menu, a page in its industries
+  menu.
+- **The first follow-up comes due on the same day, and its pack was verified again.** A follow-up
+  offers the pack, and this one says two businesses are hiring "now". All ten businesses in that
+  pack were checked in a browser again and all still show what the pack says. The pack was
+  rebuilt. The email that was already sent was not rebuilt, so the record of what went out is
+  unchanged.
+- **The send file now lists follow-ups first.** `track.py ready` writes each follow-up due that
+  day above the new emails, with the date its pack was last verified and a warning when that is
+  more than three days before the send date.
+- **About two hundred Maps listings were opened today.** The last verification run had five
+  listings fail to load. Nothing was blocked, and no further Maps runs were started.
 
 ## Open items
 
@@ -2780,4 +2803,193 @@ Counts only. No lead names or scraped data are written to this file, so it is sa
 ### 2026-10-13T14:05:32+05:00
 - **Command:** `python src/draft.py build <agency>`
 - **Counts:** lint_problems=0
+- **Failures:** none
+
+### 2026-10-13T14:16:21+05:00
+- **Command:** `python src/discover.py queries/packs/<agency>.txt pack_<agency> --concurrency 2`
+- **Counts:** queries=4, raw_rows=80, unique=78, with_site=74, platform_only=0, no_website=4, with_email=0, with_review_count=78
+- **Failures:** none
+- **Notes:** engine=playwright, output=data/raw/pack_<agency>.csv
+
+### 2026-10-13T14:18:15+05:00
+- **Command:** `python src/enrich.py data/raw/pack_<agency>.csv --mode light --concurrency 4 --out data/enriched/packs/<agency>`
+- **Counts:** leads=78, dead=7, http_error=2, no_website=4, ok=65
+- **Failures:** none
+
+### 2026-10-13T14:18:17+05:00
+- **Command:** `python src/prospects.py <agency> --niche real estate agency --want no_site,dead_site,stale,not_https,no_ads_tags,low_reviews --min-reviews 10 --max-reviews 1500 --digest 24`
+- **Counts:** listings=78, candidates=53, dropped=25, median_reviews=106, median_rating=4.7
+- **Failures:** none
+
+### 2026-10-13T14:21:19+05:00
+- **Command:** `python src/verify.py <agency> --want no_site,dead_site,stale,not_https,no_ads_tags,low_reviews --top 26`
+- **Counts:** listings_read=26, listings_failed=0, sites_opened=16, sites_unclear=6, confirmed=32, dropped=15, dead_site=3, not_https=0, no_ads_tags=5, usable=20
+- **Failures:** none
+
+### 2026-10-13T14:21:51+05:00
+- **Command:** `python src/discover.py queries/packs/<agency>.txt pack_<agency> --concurrency 2`
+- **Counts:** queries=4, raw_rows=78, unique=37, with_site=33, platform_only=0, no_website=4, with_email=0, with_review_count=37
+- **Failures:** none
+- **Notes:** engine=playwright, output=data/raw/pack_<agency>.csv
+
+### 2026-10-13T14:22:22+05:00
+- **Command:** `python src/enrich.py data/raw/pack_<agency>.csv --mode light --concurrency 4 --out data/enriched/packs/<agency>`
+- **Counts:** leads=37, blocked=1, dead=1, no_website=4, ok=30, placeholder=1
+- **Failures:** none
+
+### 2026-10-13T14:22:24+05:00
+- **Command:** `python src/prospects.py <agency> --niche pest control company --want low_reviews,low_rating,no_site,dead_site,stale,not_https --min-reviews 10 --max-reviews 3000 --digest 24`
+- **Counts:** listings=37, candidates=17, dropped=20, median_reviews=59, median_rating=4.8
+- **Failures:** none
+
+### 2026-10-13T14:24:45+05:00
+- **Command:** `python src/verify.py <agency> --want low_reviews,low_rating,no_site,dead_site,stale,not_https --top 26`
+- **Counts:** listings_read=17, listings_failed=0, sites_opened=14, sites_unclear=1, confirmed=14, dropped=8, dead_site=1, not_https=0, no_ads_tags=6, usable=11
+- **Failures:** none
+
+### 2026-10-13T14:25:18+05:00
+- **Command:** `python src/discover.py queries/packs/<agency>.txt pack_<agency> --concurrency 2`
+- **Counts:** queries=4, raw_rows=72, unique=67, with_site=43, platform_only=2, no_website=22, with_email=0, with_review_count=67
+- **Failures:** none
+- **Notes:** engine=playwright, output=data/raw/pack_<agency>.csv
+
+### 2026-10-13T14:25:43+05:00
+- **Command:** `python src/pack.py build <agency>`
+- **Counts:** prospects=10, files=2
+- **Failures:** none
+
+### 2026-10-13T14:25:44+05:00
+- **Command:** `python src/draft.py build <agency>`
+- **Counts:** lint_problems=0
+- **Failures:** none
+
+### 2026-10-13T14:25:45+05:00
+- **Command:** `python src/pack.py build <agency>`
+- **Counts:** prospects=10, files=2
+- **Failures:** none
+
+### 2026-10-13T14:25:45+05:00
+- **Command:** `python src/draft.py build <agency>`
+- **Counts:** lint_problems=1
+- **Failures:** none
+
+### 2026-10-13T14:25:55+05:00
+- **Command:** `python src/pack.py build <agency>`
+- **Counts:** prospects=10, files=2
+- **Failures:** none
+
+### 2026-10-13T14:25:55+05:00
+- **Command:** `python src/draft.py build <agency>`
+- **Counts:** lint_problems=0
+- **Failures:** none
+
+### 2026-10-13T14:25:56+05:00
+- **Command:** `python src/pack.py build <agency>`
+- **Counts:** prospects=10, files=2
+- **Failures:** none
+
+### 2026-10-13T14:25:57+05:00
+- **Command:** `python src/draft.py build <agency>`
+- **Counts:** lint_problems=0
+- **Failures:** none
+
+### 2026-10-13T14:26:22+05:00
+- **Command:** `python src/enrich.py data/raw/pack_<agency>.csv --mode light --concurrency 4 --out data/enriched/packs/<agency>`
+- **Counts:** leads=67, dead=1, http_error=1, no_website=22, ok=40, placeholder=1, platform_only=2
+- **Failures:** none
+
+### 2026-10-13T14:26:25+05:00
+- **Command:** `python src/prospects.py <agency> --niche gym and fitness studio --want no_site,dead_site,stale,no_ads_tags,low_reviews,low_rating --min-reviews 15 --max-reviews 3000 --digest 24`
+- **Counts:** listings=67, candidates=38, dropped=29, median_reviews=42, median_rating=4.7
+- **Failures:** none
+
+### 2026-10-13T14:28:55+05:00
+- **Command:** `python src/verify.py <agency> --want no_site,dead_site,stale,no_ads_tags,low_reviews,low_rating --top 26`
+- **Counts:** listings_read=26, listings_failed=0, sites_opened=12, sites_unclear=1, confirmed=30, dropped=6, dead_site=2, not_https=0, no_ads_tags=5, usable=24
+- **Failures:** none
+
+### 2026-10-13T14:29:27+05:00
+- **Command:** `python src/discover.py queries/packs/<agency>.txt pack_<agency> --concurrency 2`
+- **Counts:** queries=4, raw_rows=67, unique=66, with_site=46, platform_only=7, no_website=13, with_email=0, with_review_count=66
+- **Failures:** none
+- **Notes:** engine=playwright, output=data/raw/pack_<agency>.csv
+
+### 2026-10-13T14:29:42+05:00
+- **Command:** `python src/pack.py build <agency>`
+- **Counts:** prospects=10, files=2
+- **Failures:** none
+
+### 2026-10-13T14:29:42+05:00
+- **Command:** `python src/draft.py build <agency>`
+- **Counts:** lint_problems=2
+- **Failures:** none
+
+### 2026-10-13T14:30:14+05:00
+- **Command:** `python src/enrich.py data/raw/pack_<agency>.csv --mode light --concurrency 4 --out data/enriched/packs/<agency>`
+- **Counts:** leads=66, blocked=2, no_website=13, ok=42, platform_only=9
+- **Failures:** none
+
+### 2026-10-13T14:30:17+05:00
+- **Command:** `python src/prospects.py <agency> --niche beauty salon and spa --want no_site,dead_site,stale,no_ads_tags,low_reviews,low_rating --min-reviews 30 --max-reviews 3000 --digest 24`
+- **Counts:** listings=66, candidates=44, dropped=22, median_reviews=214, median_rating=4.8
+- **Failures:** none
+
+### 2026-10-13T14:32:47+05:00
+- **Command:** `python src/verify.py <agency> --want no_site,dead_site,stale,no_ads_tags,low_reviews,low_rating --top 26`
+- **Counts:** listings_read=21, listings_failed=5, sites_opened=13, sites_unclear=0, confirmed=19, dropped=13, dead_site=0, not_https=0, no_ads_tags=3, usable=15
+- **Failures:** none
+
+### 2026-10-13T14:33:54+05:00
+- **Command:** `python src/pack.py build <agency>`
+- **Counts:** prospects=10, files=2
+- **Failures:** none
+
+### 2026-10-13T14:33:54+05:00
+- **Command:** `python src/draft.py build <agency>`
+- **Counts:** lint_problems=0
+- **Failures:** none
+
+### 2026-10-13T14:33:55+05:00
+- **Command:** `python src/pack.py build <agency>`
+- **Counts:** prospects=10, files=2
+- **Failures:** none
+
+### 2026-10-13T14:33:55+05:00
+- **Command:** `python src/draft.py build <agency>`
+- **Counts:** lint_problems=0
+- **Failures:** none
+
+### 2026-10-13T14:34:02+05:00
+- **Command:** `python src/draft.py quotes`
+- **Counts:** drafts=4, failed=0
+- **Failures:** none
+
+### 2026-10-13T14:34:10+05:00
+- **Command:** `python src/draft.py build <agency>`
+- **Counts:** lint_problems=0
+- **Failures:** none
+
+### 2026-10-13T14:34:10+05:00
+- **Command:** `python src/draft.py build <agency>`
+- **Counts:** lint_problems=0
+- **Failures:** none
+
+### 2026-10-13T14:34:11+05:00
+- **Command:** `python src/draft.py build <agency>`
+- **Counts:** lint_problems=0
+- **Failures:** none
+
+### 2026-10-13T14:34:11+05:00
+- **Command:** `python src/draft.py build <agency>`
+- **Counts:** lint_problems=0
+- **Failures:** none
+
+### 2026-10-13T14:37:20+05:00
+- **Command:** `python src/verify.py <agency> --only <businesses> --signals queries/packs/<agency>.signals.json`
+- **Counts:** listings_read=10, listings_failed=0, sites_opened=7, sites_unclear=0, confirmed=28, dropped=0, dead_site=0, not_https=0, no_ads_tags=7, usable=32
+- **Failures:** none
+
+### 2026-10-13T14:37:28+05:00
+- **Command:** `python src/pack.py build <agency>`
+- **Counts:** prospects=10, files=2
 - **Failures:** none

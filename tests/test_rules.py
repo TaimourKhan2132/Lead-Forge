@@ -139,6 +139,19 @@ def test_daily_caps():
     assert (track.NEW_CAP, track.DAILY_CAP) == (10, 15)
 
 
+def test_a_follow_up_knows_how_old_the_pack_it_offers_is(tmp_path):
+    def pack(checks):
+        cands = [{"key": f"b{i}", "verified_on": day} for i, day in enumerate(checks)] + [{"key": "spare", "verified_on": ""}]
+        (tmp_path / "agency.example.pack.json").write_text(
+            json.dumps({"prospects": [{"key": f"b{i}"} for i in range(len(checks))]}), encoding="utf-8")
+        (tmp_path / "agency.example.candidates.json").write_text(json.dumps(cands), encoding="utf-8")
+        return track.pack_checked("agency.example", tmp_path)
+
+    assert pack(["2026-10-13", "2026-10-11", "2026-10-13"]) == "2026-10-11"  # as old as its oldest check
+    assert pack(["2026-10-13", ""]) == ""                                    # one business never verified
+    assert track.pack_checked("no-such-agency.example", tmp_path) == ""
+
+
 # --- the builders refuse what was not verified ---------------------------------------------------
 
 def test_the_example_email_passes_the_linter(example):
