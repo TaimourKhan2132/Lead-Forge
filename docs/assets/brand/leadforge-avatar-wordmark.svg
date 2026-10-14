@@ -1,0 +1,48 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1024" height="1024" viewBox="0 0 1024 1024">
+  <defs>
+    <radialGradient id="bg" cx="0.5" cy="0.42" r="0.75">
+      <stop offset="0" stop-color="#131d36"/>
+      <stop offset="1" stop-color="#0b1220"/>
+    </radialGradient>
+    <radialGradient id="glow" cx="0.5" cy="0.5" r="0.5">
+      <stop offset="0" stop-color="#f59e0b" stop-opacity=".34"/>
+      <stop offset=".38" stop-color="#f59e0b" stop-opacity=".07"/>
+      <stop offset="1" stop-color="#f59e0b" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="ink" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#fde68a"/>
+      <stop offset="1" stop-color="#f59e0b"/>
+    </linearGradient>
+    <linearGradient id="face-hi" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#fff7d6"/><stop offset="1" stop-color="#fde68a"/></linearGradient>
+    <linearGradient id="face-mid" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#fde68a"/><stop offset="1" stop-color="#fbbf24"/></linearGradient>
+    <linearGradient id="face-lo" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#fbbf24"/><stop offset="1" stop-color="#f59e0b"/></linearGradient>
+    <linearGradient id="face-deep" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#f59e0b"/><stop offset="1" stop-color="#b45309"/></linearGradient>
+    <pattern id="dots" width="32" height="32" patternUnits="userSpaceOnUse">
+      <circle cx="2" cy="2" r="1.4" fill="#ffffff" fill-opacity=".06"/>
+    </pattern>
+    <filter id="soft" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="18"/></filter>
+  </defs>
+  <rect width="1024" height="1024" fill="url(#bg)"/>
+  <rect width="1024" height="1024" fill="url(#dots)"/>
+  <circle cx="512" cy="380" r="231.7" fill="url(#glow)"/>
+  <circle cx="512" cy="380" r="257.4" fill="none" stroke="url(#ink)" stroke-opacity=".35" stroke-width="3.1"/>
+  <circle cx="512" cy="380" r="288.6" fill="none" stroke="#f59e0b" stroke-opacity=".14" stroke-width="2"
+          stroke-dasharray="3 14" stroke-linecap="round"/>
+  
+  <g filter="url(#soft)" opacity=".55"><circle cx="512" cy="380" r="82.4" fill="#fde68a"/></g>
+  <g>
+    <path d="M512,380 L475.6,343.6 L512.0,185.0 Z" fill="url(#face-hi)"/>
+    <path d="M512,380 L512.0,185.0 L548.4,343.6 Z" fill="url(#face-mid)"/>
+    <path d="M512,380 L548.4,343.6 L707.0,380.0 Z" fill="url(#face-mid)"/>
+    <path d="M512,380 L707.0,380.0 L548.4,416.4 Z" fill="url(#face-lo)"/>
+    <path d="M512,380 L548.4,416.4 L512.0,575.0 Z" fill="url(#face-lo)"/>
+    <path d="M512,380 L512.0,575.0 L475.6,416.4 Z" fill="url(#face-deep)"/>
+    <path d="M512,380 L475.6,416.4 L317.0,380.0 Z" fill="url(#face-mid)"/>
+    <path d="M512,380 L317.0,380.0 L475.6,343.6 Z" fill="url(#face-hi)"/>
+    <polygon points="512.0,185.0 548.4,343.6 707.0,380.0 548.4,416.4 512.0,575.0 475.6,416.4 317.0,380.0 475.6,343.6" fill="none" stroke="#fde68a" stroke-opacity=".55" stroke-width="2.5" stroke-linejoin="round"/>
+  </g>
+  <text x="512" y="842" text-anchor="middle" font-family="'Segoe UI Variable Display','Segoe UI',Arial,sans-serif"
+        font-weight="700" font-size="112" letter-spacing="-2"><tspan fill="#f8fafc">Lead</tspan><tspan fill="url(#ink)">Forge</tspan></text>
+  <text x="512" y="902" text-anchor="middle" font-family="'Cascadia Mono',Consolas,monospace" font-size="30" letter-spacing="4"
+        fill="#94a3b8">EVIDENCE-FIRST LEAD RESEARCH</text>
+</svg>

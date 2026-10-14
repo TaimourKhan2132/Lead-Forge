@@ -5,6 +5,9 @@ Notable changes to LeadForge. No real business is named here or anywhere else in
 ## Unreleased
 
 ### Added
+- Brand assets in `docs/assets/brand/`: the LeadForge mark as a square, round and named picture
+  (SVG and PNG), and a poster that explains the pipeline (PNG, with its HTML source). The poster
+  shows only the fictional example pack.
 - A second offer, the job ask (`jobs.py`): the operator asks an agency for part-time remote work.
   `scan` reads each candidate's homepage and careers page in a browser, `build` renders the email
   from the operator's own wording file and the agency's spec, and `quotes` confirms the words the
