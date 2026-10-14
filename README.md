@@ -44,6 +44,14 @@ drafts the outreach. A person sends it.
 </tr>
 </table>
 
+## At a glance
+
+<div align="center">
+<a href="docs/assets/brand/leadforge-poster@2x.png"><img src="docs/assets/brand/leadforge-poster.png" alt="The LeadForge poster: find the right prospects, prove every claim, then a person sends. A sample claim sheet for ten fictional dental clinics in Dubai shows three claims ticked, each with where to check it, and one retired claim struck out, beside the six steps of the pipeline: discover, enrich, score, verify, pack, draft and track." width="100%"></a>
+<br>
+<sub>The whole pipeline on one page. The businesses on it are the fictional example. <a href="docs/assets/brand/leadforge-poster@2x.png">Full size</a></sub>
+</div>
+
 ## See it work
 
 <div align="center">

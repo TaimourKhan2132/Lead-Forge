@@ -247,6 +247,8 @@ def build(out: Path = OUT) -> Path:
     for name in ("site.css", "site.js", "favicon.svg"):
         shutil.copyfile(SITE / name, out / name)
     shutil.copyfile(ROOT / "docs" / "assets" / "social-preview.png", out / "social-preview.png")
+    for name in ("leadforge-poster.png", "leadforge-poster@2x.png"):
+        shutil.copyfile(ROOT / "docs" / "assets" / "brand" / name, out / name)
     (out / "pack.html").write_text(pack_page(), encoding="utf-8")
     (out / ".nojekyll").write_text("", encoding="utf-8")  # serve the files as they are
     return out

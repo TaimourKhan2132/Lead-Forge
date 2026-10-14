@@ -112,6 +112,11 @@ h1 { font-size: clamp(40px, 5.5vw, 70px); line-height: 1.04; letter-spacing: -.0
 
 /* ---- sections ---- */
 .band { padding: 116px 0; }
+.poster { margin: 0; }
+.poster img { display: block; width: 100%; height: auto; border-radius: 18px; border: 1px solid var(--line-2);
+              box-shadow: 0 50px 100px -40px rgba(0, 0, 0, .9), 0 0 80px -30px rgba(245, 158, 11, .25); }
+.poster figcaption { margin-top: 16px; font: 14px/1.5 var(--mono); color: var(--muted); }
+.poster figcaption a { color: var(--amber-2); }
 .band.alt { background: linear-gradient(180deg, rgba(15, 23, 42, .62), rgba(15, 23, 42, .28)); border-block: 1px solid var(--line); }
 .head { max-width: 780px; margin: 0 0 52px; }
 h2 { font-size: clamp(30px, 3.5vw, 44px); line-height: 1.12; letter-spacing: -.03em; }
