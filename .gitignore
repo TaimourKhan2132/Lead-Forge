@@ -33,3 +33,6 @@ Thumbs.db
 
 # The live page, built by docs/make_site.py and published from the gh-pages branch.
 _site/
+
+# The operator's own notes, kept on this machine only.
+user_note.md
