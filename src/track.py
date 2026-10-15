@@ -550,12 +550,13 @@ def follow_up_file(day: dt.date, owed: list, total: str) -> str:
     out = [f"# Follow-ups due: {day.strftime('%A %d %B %Y')}", "",
            f"{_plural(len(owed), 'follow-up')}. These go before any new email. Nothing here has been sent.", "", total, "",
            'Each one is a reply in the thread of the first email, so its subject is "Re:" and the subject that email went',
-           "out with. The subject shown is the first of the draft's subject lines; if you sent it under another, keep yours.", ""]
+           "out with. The subject shown is the one recorded as sent (the draft's \"Sent subject\"), otherwise the first of",
+           "the draft's subject lines; if you sent it under another, keep yours.", ""]
     for i, (number, lead) in enumerate(owed, 1):
         text = (ROOT / lead["draft_path"]).read_text(encoding="utf-8")
         body = _body(text, f"follow-up {number}")
         out += ["---", "", f"## {i}. Follow-up {number} to {lead['agency']} (first email sent {lead['sent_at']}, offer {lead['offer']})", "",
-                f"**To:** {header_field(text, 'To')}", f"**Subject:** Re: {_subject(text)}", "", "```text", body, "```", ""]
+                f"**To:** {header_field(text, 'To')}", f"**Subject:** Re: {header_field(text, 'Sent subject') or _subject(text)}", "", "```text", body, "```", ""]
         if lead["offer"] == "lead_pack" and not (pivot and pivot in body):
             # Unless it has turned into the job ask, this follow-up offers the pack, so the pack has to be fit
             # to send on the day it goes.

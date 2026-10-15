@@ -193,6 +193,14 @@ def test_an_email_line_cannot_quote_words_that_were_not_read_off_the_page():
     assert draft._plain("Book on WhatsApp") not in draft._plain("…Call us 04 000 0000 Book via WhatsApp Open 9 AM…")
 
 
+def test_a_wix_domain_with_no_site_is_named_for_what_a_visitor_sees():
+    # The server answers 404, but the page says the domain is not connected. Say that, not "404".
+    for text in ("Looks like this domain isn't connected to a website yet!", "ConnectYourDomain Error | Wix.com"):
+        found = verify.GONE.search(text)
+        assert found and verify.gone_how(found.group(0)) == "opens a 'domain isn't connected' page"
+    assert verify.gone_how("Account Suspended") == 'opens an "Account Suspended" page'
+
+
 # --- releases ----------------------------------------------------------------------------------
 
 def test_every_version_in_the_changelog_has_notes_to_publish():

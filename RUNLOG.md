@@ -3402,3 +3402,13 @@ Counts only. No lead names or scraped data are written to this file, so it is sa
 - **Command:** `python src/draft.py quotes`
 - **Counts:** drafts=4, failed=0
 - **Failures:** none
+
+### 2026-10-15T13:16:52+05:00
+- **Command:** `python src/verify.py <agency> --only <businesses>`
+- **Counts:** listings_read=1, listings_failed=0, sites_opened=1, sites_unclear=0, confirmed=1, dropped=0, dead_site=1, not_https=0, no_ads_tags=0, usable=24
+- **Failures:** none
+
+### 2026-10-15T13:16:57+05:00
+- **Command:** `python src/pack.py build <agency>`
+- **Counts:** prospects=10, files=2
+- **Failures:** none

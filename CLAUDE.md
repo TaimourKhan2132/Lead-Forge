@@ -61,7 +61,9 @@ to use is in `outreach/pricing.md`.
    not add a new "X is missing from the site" signal without the operator's say-so.
 5. **A listing link that lands on a different domain is not that business's site.** Say nothing
    about the page it lands on. A link that 404s because it is malformed is a broken link, not a dead
-   site; say what the link does and what the domain shows.
+   site; say what the link does and what the domain shows. A Wix address with no site behind it
+   answers 404 but shows a page saying the domain is not connected: write "opens a 'domain isn't
+   connected' page", never "returns a 404 page".
 6. **Verify on the day.** Every signal is confirmed in a rendered browser with `verify.py` before a
    pack is built, and again if the pack is more than three days old. Never write "checked twice in a
    real browser" or any other claim about the checking in an email.
@@ -257,7 +259,8 @@ When this conversation is compacted, keep all of the following word for word in 
   WhatsApp, no chat, no enquiry chat, no social profiles linked. Not in any pack, email, follow-up
   or LinkedIn note.
 - A listing link that lands on another domain says nothing about the business. A malformed link is
-  a broken link, not a dead site.
+  a broken link, not a dead site. A Wix domain with no site "opens a 'domain isn't connected'
+  page", never "returns a 404 page".
 - **The ready files** for a day are `outreach/ready/<date>-followups.md`, `<date>.md` (lead-pack
   emails) and `<date>-jobs.md` with `<date>-jobs.csv`. Each gives, for each claim, the exact URL to
   open; for "no website on the listing" that is the Google Maps link.

@@ -46,6 +46,10 @@ Notable changes to LeadForge. No real business is named here or anywhere else in
   and the send file says both. A failed retry used to erase the earlier reading.
 - `verify.py` no longer writes the value of `--only` to the run log. Those values are businesses' own
   domains.
+- `verify.py` names a Wix domain with no site for what a visitor sees: the link "opens a 'domain
+  isn't connected' page". It used to say the link returns a 404 page.
+- A draft can record the subject its first email was really sent under (`Sent subject` in its
+  header), and that day's follow-ups reply under it.
 
 ## [0.3.0] - 2026-10-13 · A live page
 

@@ -53,7 +53,8 @@ CONSENT = re.compile(r"cookiebot|onetrust|cookieyes|cookie-law-info|complianz|cm
 BOT_WALL = re.compile(r"just a moment|attention required|access denied|verify you are human|are you a robot|captcha|"
                       r"security check|request blocked|forbidden|ddos", re.I)
 GONE = re.compile(r"account (?:has been )?suspended|domain (?:name )?(?:is )?for sale|buy this domain|this domain has expired|"
-                  r"domain (?:has )?expired|website (?:has )?expired|website is no longer available|is parked free", re.I)
+                  r"domain (?:has )?expired|website (?:has )?expired|website is no longer available|is parked free|"
+                  r"domain (?:isn['’]t|is not|not) connected|connectyourdomain", re.I)
 HOLDING_PAGE = re.compile(r"one moment|just a moment|checking your browser|please wait", re.I)
 COPY_MARK = re.compile(r"©|\(c\)|&copy;|\bcopyright\b", re.I)
 YEAR = re.compile(r"(?<![\d.,/])(199\d|20[0-3]\d)(?![\d.,/]\d)")
@@ -124,6 +125,19 @@ async def visit(context, url: str) -> dict:
         return {"state": "unclear", "why": "the page did not settle in 150 seconds"}
 
 
+def gone_how(words: str) -> str:
+    """What the listing's link shows, in the words a visitor would use for the page they land on."""
+    words = words.lower()
+    # A Wix address with no site behind it answers 404, but what a visitor sees is this page.
+    kind = ("a 'domain isn't connected' page" if "connect" in words
+            else 'an "Account Suspended" page' if "suspended" in words else "a parked-domain page" if "parked" in words
+            else 'a "website expired" page' if "website" in words and "expired" in words
+            else 'a "domain expired" page' if "expired" in words
+            else 'a "domain for sale" page' if "sale" in words or "buy" in words
+            else "a page saying the website is no longer available")
+    return f"opens {kind}"
+
+
 async def _visit(context, url: str) -> dict:
     page = await context.new_page()
     requests: list[str] = []
@@ -167,13 +181,7 @@ async def _visit(context, url: str) -> dict:
             text = ""
         gone = GONE.search(title) or (GONE.search(text) if len(text) < 1_500 else None)
         if gone:
-            words = gone.group(0).lower()
-            kind = ('an "Account Suspended" page' if "suspended" in words else "a parked-domain page" if "parked" in words
-                    else 'a "website expired" page' if "website" in words and "expired" in words
-                    else 'a "domain expired" page' if "expired" in words
-                    else 'a "domain for sale" page' if "sale" in words or "buy" in words
-                    else "a page saying the website is no longer available")
-            return {"state": "dead", "how": f"opens {kind}"}
+            return {"state": "dead", "how": gone_how(gone.group(0))}
         if status in (404, 410):
             return {"state": "dead", "how": f"returns a {status} page"}
         if status >= 400 or BOT_WALL.search(title):
