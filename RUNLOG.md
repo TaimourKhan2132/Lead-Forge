@@ -3327,3 +3327,78 @@ Counts only. No lead names or scraped data are written to this file, so it is sa
 - **Command:** `python src/jobs.py build`
 - **Counts:** drafts=22, refused=0
 - **Failures:** none
+
+### 2026-10-15T12:00:34+05:00
+- **Command:** `python src/verify.py <agency> --only <businesses>`
+- **Counts:** listings_read=3, listings_failed=0, sites_opened=2, sites_unclear=0, confirmed=3, dropped=0, dead_site=0, not_https=0, no_ads_tags=0, usable=15
+- **Failures:** none
+
+### 2026-10-15T12:01:07+05:00
+- **Command:** `python src/verify.py <agency> --only <businesses>`
+- **Counts:** listings_read=3, listings_failed=0, sites_opened=2, sites_unclear=0, confirmed=3, dropped=0, dead_site=1, not_https=0, no_ads_tags=0, usable=24
+- **Failures:** none
+
+### 2026-10-15T12:01:37+05:00
+- **Command:** `python src/verify.py <agency> --only <businesses>`
+- **Counts:** listings_read=3, listings_failed=0, sites_opened=2, sites_unclear=0, confirmed=5, dropped=0, dead_site=1, not_https=0, no_ads_tags=0, usable=20
+- **Failures:** none
+
+### 2026-10-15T12:02:15+05:00
+- **Command:** `python src/verify.py <agency> --only <businesses>`
+- **Counts:** listings_read=3, listings_failed=0, sites_opened=2, sites_unclear=0, confirmed=5, dropped=0, dead_site=0, not_https=0, no_ads_tags=1, usable=11
+- **Failures:** none
+
+### 2026-10-15T12:03:09+05:00
+- **Command:** `python src/verify.py <agency> --signals queries/packs/<agency>.signals.json --only <businesses>`
+- **Counts:** listings_read=2, listings_failed=0, sites_opened=1, sites_unclear=0, confirmed=6, dropped=0, dead_site=0, not_https=0, no_ads_tags=1, usable=32
+- **Failures:** none
+
+### 2026-10-15T12:03:45+05:00
+- **Command:** `python src/pack.py build <agency>`
+- **Counts:** prospects=10, files=2
+- **Failures:** none
+
+### 2026-10-15T12:03:46+05:00
+- **Command:** `python src/pack.py build <agency>`
+- **Counts:** prospects=10, files=2
+- **Failures:** none
+
+### 2026-10-15T12:03:46+05:00
+- **Command:** `python src/pack.py build <agency>`
+- **Counts:** prospects=10, files=2
+- **Failures:** none
+
+### 2026-10-15T12:03:47+05:00
+- **Command:** `python src/pack.py build <agency>`
+- **Counts:** prospects=10, files=2
+- **Failures:** none
+
+### 2026-10-15T12:03:48+05:00
+- **Command:** `python src/pack.py build <agency>`
+- **Counts:** prospects=10, files=2
+- **Failures:** none
+
+### 2026-10-15T12:03:48+05:00
+- **Command:** `python src/draft.py build <agency>`
+- **Counts:** lint_problems=0
+- **Failures:** none
+
+### 2026-10-15T12:03:49+05:00
+- **Command:** `python src/draft.py build <agency>`
+- **Counts:** lint_problems=0
+- **Failures:** none
+
+### 2026-10-15T12:03:49+05:00
+- **Command:** `python src/draft.py build <agency>`
+- **Counts:** lint_problems=0
+- **Failures:** none
+
+### 2026-10-15T12:03:50+05:00
+- **Command:** `python src/draft.py build <agency>`
+- **Counts:** lint_problems=0
+- **Failures:** none
+
+### 2026-10-15T12:04:03+05:00
+- **Command:** `python src/draft.py quotes`
+- **Counts:** drafts=4, failed=0
+- **Failures:** none
