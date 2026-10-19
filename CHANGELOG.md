@@ -5,6 +5,15 @@ Notable changes to LeadForge. No real business is named here or anywhere else in
 ## Unreleased
 
 ### Added
+- `track.py move <agency> fu1|fu2 <date>` puts a follow-up that has not gone out on another day. It
+  refuses a weekend, a day on or before the first email, and an order where follow-up 1 would come
+  after follow-up 2, notes the move on the lead, and shows the day's load against the cap.
+- `jobs.py followups` rewrites only the follow-ups of job-ask drafts, sent ones included. The subject
+  and the first email stay exactly as they were sent.
+- Follow-up 1 can carry a demo client report as its new piece of proof, from the wording file
+  (`follow_up_report` and `report_link`). A job ask's names the role its first email named; a
+  lead-pack follow-up that turns into the job ask adds it after the pivot sentence.
+- The day's follow-up file shows each thread's original subject on its own line.
 - Brand assets in `docs/assets/brand/`: the LeadForge mark as a square, round and named picture
   (SVG and PNG), and a poster that explains the pipeline (PNG, with its HTML source). The poster
   shows only the fictional example pack. The README and the live page both show it, and the page
@@ -50,6 +59,16 @@ Notable changes to LeadForge. No real business is named here or anywhere else in
   isn't connected' page". It used to say the link returns a 404 page.
 - A draft can record the subject its first email was really sent under (`Sent subject` in its
   header), and that day's follow-ups reply under it.
+- Follow-up 1 may run to 70 words, for lead-pack drafts and job asks alike, so it has room for a
+  link and a new piece of proof. It was 50 and 60.
+- `track.py ready` no longer deletes an earlier send file for a day when nothing of its kind is due
+  there any more. That happens when its emails went out early or were moved, and the file may be the
+  only copy of what was sent, so it goes to `outreach/ready/archive/`. It also does this when nothing
+  at all is due that day, which used to leave the stale file in place.
+
+### Fixed
+- `hiring.py scan --force <domains>` stopped with "unrecognized arguments". Options may now come
+  before or after the companies named, as the help text shows.
 
 ## [0.3.0] - 2026-10-13 · A live page
 

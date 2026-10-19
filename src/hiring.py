@@ -725,14 +725,18 @@ def discover(region_name: str, force: bool = False) -> int:
     return 0
 
 
-def main() -> int:
-    utf8_stdout()
+def arguments(argv: list[str] | None = None) -> argparse.Namespace:
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("cmd", choices=["scan", "report", "drafts"])
     ap.add_argument("domains", nargs="*", help="scan only: just these companies")
     ap.add_argument("--region", default=DEFAULT_REGION, help="a region in config/regions/ (default: %(default)s)")
     ap.add_argument("--force", action="store_true", help="read every site again, ignoring the 7-day cache")
-    args = ap.parse_args()
+    return ap.parse_intermixed_args(argv)  # so `scan --force a.com` works as well as `--force scan a.com`
+
+
+def main() -> int:
+    utf8_stdout()
+    args = arguments()
     where = region(args.region)
     results = scan(where, args.domains, args.force)
     if args.cmd == "report":

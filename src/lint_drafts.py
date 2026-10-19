@@ -4,7 +4,7 @@
     python src/lint_drafts.py <file.md> ...      # just these files, checked as Gulf drafts
 
 Rules for outreach/drafts: subjects of 6 words or fewer; email 1 at 120 words or fewer with no
-links, the fixed call-to-action and a {{NAME}} sign-off; follow-ups at 50 and 40 words; a LinkedIn
+links, the fixed call-to-action and a {{NAME}} sign-off; follow-ups at 70 and 40 words; a LinkedIn
 note of 280 characters or fewer; an evidence comment under email 1; none of the banned phrases; and
 none of the retired signal wording from signals.py (no booking, no WhatsApp, no chat, no social
 profiles and the rest), anywhere in the file. A draft whose header says "Status: BLOCKED" holds no
@@ -20,7 +20,7 @@ and the P.S., word for word from outreach/job_ask.json, and no other link; the o
 with no compliment and no remark that the agency lacks something; when the opener names a role it
 is worded to match the role's status, and only a role with a recent posting date is called
 "hiring"; the line offering help before the hire is there for a fresh or undated role and nowhere
-else; follow-up 1 at 60 words or fewer, ending on the trial question; follow-up 2 at 40; and no
+else; follow-up 1 at 70 words or fewer, ending on the trial question; follow-up 2 at 40; and no
 mention of n8n, Docker or Looker Studio.
 
 Rules for outreach/us_track: a contact-form message of 90 words or fewer with no links, the fixed
@@ -51,7 +51,8 @@ US_CTA = "Is there a piece of a current project I could take off your plate?"
 # A draft is signed either with the placeholder or, once `pack.py fill` has run, with the real name.
 SIGN_OFFS = [s for s in ("{{NAME}}", (dotenv_values(ROOT / ".env").get("LEADFORGE_NAME") or "").strip()) if s]
 JOB_NEVER = ("n8n", "docker", "looker studio")  # tools the job ask never mentions
-JOB_FU1_MAX, JOB_FU2_MAX = 60, 40
+JOB_FU1_MAX, JOB_FU2_MAX = 70, 40
+FU1_MAX, FU2_MAX = 70, 40  # lead-pack drafts; follow-up 1 may turn into the job ask and carry a new piece of proof
 JOB_OPENERS = {"fresh": "hiring_opener", "undated": "undated_opener", "talent_pool": "talent_pool_opener"}
 PRAISE = re.compile(r"\b(love[ds]?|impress\w*|amazing|awesome|great|beautiful|stunning|admir\w*|fantastic|excellent|"
                     r"incredible|brilliant|outstanding)\b", re.I)
@@ -111,7 +112,7 @@ def lint(text: str) -> list[str]:
         if not re.search(r"<!--.*?https?://.*?-->", email, flags=re.S):
             problems.append("email 1 has no evidence comment with a source URL")
 
-    for prefix, cap in (("follow-up 1", 50), ("follow-up 2", 40)):
+    for prefix, cap in (("follow-up 1", FU1_MAX), ("follow-up 2", FU2_MAX)):
         section = find(prefix)
         if section is None:
             problems.append(f"missing '{prefix}' section")

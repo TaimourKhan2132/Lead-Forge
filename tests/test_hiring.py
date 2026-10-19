@@ -154,3 +154,10 @@ def test_a_fresh_role_needs_a_posting_date_inside_sixty_days(tmp_path, monkeypat
         assert not any("fresh only" in problem for problem in jobs.problems(spec("fresh"), conn))
     finally:
         conn.close()
+
+
+def test_options_may_come_after_the_companies_named():
+    for argv in (["scan", "--force", "a.example", "b.example"], ["--force", "scan", "a.example", "b.example"],
+                 ["scan", "a.example", "b.example", "--force"]):
+        args = hiring.arguments(argv)
+        assert args.cmd == "scan" and args.force and args.domains == ["a.example", "b.example"]

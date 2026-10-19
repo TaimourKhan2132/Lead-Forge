@@ -216,3 +216,51 @@ def test_the_days_job_asks_are_written_as_a_page_and_as_a_sheet(db, tmp_path, mo
     assert sheet.splitlines()[0] == ",".join(track.JOB_COLUMNS)
     assert not (tmp_path / "ready" / "2026-10-14.md").exists()  # no lead-pack email that day, so no file for one
     assert json.dumps("job_ask")[1:-1] in sheet
+
+
+REPORT = {**WORDING, "report_lead": "One more example of my work:",
+          "follow_up_role": "With the {role} role in mind, one more example of my work:",
+          "follow_up_report": "a demo report for a fictional clinic, white-labelled for an agency.",
+          "report_link": "{{REPORT_LINK}}"}
+
+
+def test_follow_up_1_can_carry_the_demo_report_and_names_the_role_again():
+    named = jobs.render({**SPEC, "hiring": OPEN_ROLE}, REPORT, results=Path("never-checked.json"))
+    plain = jobs.render(SPEC, REPORT, results=Path("never-checked.json"))
+    first = lint_drafts.sections(named)["follow-up 1 (day 3)"]
+    assert "With the Automation Engineer role in mind, one more example of my work: a demo report" in first
+    assert first.count("{{REPORT_LINK}}") == 1 and first.strip().splitlines()[-3] == REPORT["ask"]
+    assert "One more example of my work: a demo report" in lint_drafts.sections(plain)["follow-up 1 (day 3)"]
+    assert lint_drafts.lint_job(named, REPORT) == [] and lint_drafts.lint_job(plain, REPORT) == []
+
+
+def test_a_lead_pack_follow_up_that_turns_into_the_job_ask_can_carry_the_report_too():
+    spec = {"fu1": "The ten clinics are on one page.", "fu2": "I will leave it here."}
+    report = draft._report("", REPORT)
+    turned = "\n".join(draft.follow_ups(spec, "Hi Sam,", "Name", WORDING["pivot"], report))
+    assert turned.index(WORDING["pivot"]) < turned.index(report) and turned.count("{{REPORT_LINK}}") == 1
+    assert draft._report("", WORDING) == ""  # no report in the wording file, no report in the follow-up
+
+
+def test_a_follow_up_moves_only_to_a_weekday_and_in_order(db):
+    add(db, "a.example", sent="2026-10-14")  # follow-ups due Mon 19 and Wed 21
+    assert track.move(db, "a.example", "fu1", "2026-10-24", "") == 1  # a Saturday
+    assert track.move(db, "a.example", "fu1", "2026-10-21", "") == 1  # not before follow-up 2
+    assert track.move(db, "a.example", "fu1", "2026-10-14", "") == 1  # not on or before the first email
+    assert track.move(db, "a.example", "fu2", "2026-10-26", "") == 0
+    assert track.move(db, "a.example", "fu1", "2026-10-21", "operator's call") == 0
+    row = db.execute("SELECT fu1_due, fu2_due, notes FROM leads WHERE domain = 'a.example'").fetchone()
+    assert (row["fu1_due"], row["fu2_due"]) == ("2026-10-21", "2026-10-26") and "operator's call" in row["notes"]
+    track.mark(db, "a.example", "fu1", "", "2026-10-21")
+    assert track.move(db, "a.example", "fu1", "2026-10-22", "") == 1  # a follow-up that went out stays put
+
+
+def test_a_send_file_from_an_earlier_run_is_archived_not_deleted(db, tmp_path, monkeypatch):
+    monkeypatch.setattr(track, "ROOT", tmp_path)
+    monkeypatch.setattr(track, "READY", tmp_path / "ready")
+    (tmp_path / "ready").mkdir()
+    (tmp_path / "ready" / "2026-10-20-jobs.md").write_text("what went out early", encoding="utf-8")
+    assert track.ready(db, "2026-10-20") == 1  # nothing is due that day any more
+    assert not (tmp_path / "ready" / "2026-10-20-jobs.md").exists()
+    kept = list((tmp_path / "ready" / "archive").glob("2026-10-20-jobs.superseded-*.md"))
+    assert len(kept) == 1 and kept[0].read_text(encoding="utf-8") == "what went out early"

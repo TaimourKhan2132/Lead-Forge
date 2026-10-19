@@ -121,9 +121,10 @@ def claims(gap: dict, row: dict) -> list[tuple[str, str]]:
     return [("the quoted words are on this page", gap["source_url"])]
 
 
-def follow_ups(spec: dict, greeting: str, name: str, pivot: str = "") -> list[str]:
-    """The two follow-up sections. With a pivot, follow-up 1 turns the offer into the job ask."""
-    first = [pivot] if pivot else [spec["fu1"], "", "Shall I send it over?"]
+def follow_ups(spec: dict, greeting: str, name: str, pivot: str = "", report: str = "") -> list[str]:
+    """The two follow-up sections. With a pivot, follow-up 1 turns the offer into the job ask, and with a
+    report from the wording file it also carries that as the new piece of proof."""
+    first = ([pivot] + (["", report] if report else [])) if pivot else [spec["fu1"], "", "Shall I send it over?"]
     return ["## Follow-up 1 (day 3)", "", greeting, "", *first, "", name, "",
             "## Follow-up 2 (day 7)", "", greeting, "", spec["fu2"], "", name, ""]
 
@@ -156,7 +157,8 @@ def render(spec: dict, pack_dir: Path = SCORED / "packs", pack_folder: str = "pa
         check += [f"   - {what}: {url}" for what, url in person["checks"]]
     check += [f"{i}. {c['name']}: {c['what']}\n   - {c['url']}" for i, c in enumerate(spec.get("checks", []), 1)] + [""]
     note = ["## LinkedIn connection note", "", spec["linkedin"], ""]
-    return "\n".join(header + subjects + email + check + follow_ups(spec, greeting, name, pivot) + note)
+    return "\n".join(header + subjects + email + check + follow_ups(spec, greeting, name, pivot, _report() if pivot else "")
+                     + note)
 
 
 def line1_state(domain: str, results: Path = LINE1_RESULTS, command: str = "draft.py quotes") -> str:
@@ -203,6 +205,18 @@ def _pivot() -> str:
     return job_wording().get("pivot", "") if JOB_WORDING.exists() else ""
 
 
+def _report(role: str = "", wording: dict | None = None) -> str:
+    """The demo client report as a piece of proof, in the operator's words, if his wording file has one.
+
+    Its lead-in names the role the first email named, when there was one. The link is on its own line."""
+    if wording is None:
+        wording = job_wording() if JOB_WORDING.exists() else {}
+    if not wording.get("follow_up_report"):
+        return ""
+    lead = wording["follow_up_role"].format(role=role) if role and wording.get("follow_up_role") else wording["report_lead"]
+    return f"{lead} {wording['follow_up_report']}" + (f"\n{wording['report_link']}" if wording.get("report_link") else "")
+
+
 def refresh_follow_ups(domains: list[str]) -> int:
     """Rewrite only the follow-up sections of drafts that are already built, under the current rules."""
     paths = [SPECS / f"{d}.draft.json" for d in domains] or sorted(SPECS.glob("*.draft.json"))
@@ -219,7 +233,9 @@ def refresh_follow_ups(domains: list[str]) -> int:
             console.print(f"[red]FAIL[/red] {spec['domain']}: the draft has no follow-up sections to rewrite")
             failed += 1
             continue
-        new = text[:start] + "\n".join(follow_ups(spec, spec.get("greeting", "Hello,"), name, _pivot())) + "\n" + text[end:]
+        pivot = _pivot()
+        new = text[:start] + "\n".join(follow_ups(spec, spec.get("greeting", "Hello,"), name, pivot,
+                                                  _report() if pivot else "")) + "\n" + text[end:]
         problems = lint(new)
         if problems:
             failed += 1

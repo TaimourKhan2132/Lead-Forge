@@ -26,6 +26,9 @@ There are two offers, and an agency gets one of them. The **lead pack** is the s
 opens with one fact from that agency's own site. The tracker records which offer each first email
 made (`lead_pack` or `job_ask`), so their reply rates can be compared with `track.py list`.
 
+Since 2026-10-19 the lead-pack offer is paused by the operator: every new message is a job ask, and
+a lead-pack follow-up turns into the job ask.
+
 ## The offer
 
 - **$59** for 50 qualified leads in the buyer's niche and city, paid upfront.
@@ -90,8 +93,9 @@ to use is in `outreach/pricing.md`.
 17. **Everything the job ask says about the operator comes word for word from his wording file**,
     `outreach/job_ask.json` (gitignored): the pitch, one of three proof lines chosen by agency type
     (A marketing, SEO and ads; B AI, automation and software; C web development), the trial question
-    and the P.S. Never write a new proof line. No attachments, and no link except the one in that
-    file. Never mention n8n, Docker or Looker Studio.
+    and the P.S. Never write a new proof line. No attachments, and no link except the ones in that
+    file (the work link, and the demo report's link in a follow-up). Never mention n8n, Docker or
+    Looker Studio.
 18. **A role has a status, and the email says no more than the status allows.** `hiring.py` reads
     roles from a company's own careers page or its public job system and records the exact text.
     - `fresh`: a posting date in the last 60 days. Only this may be called hiring: "I saw you're
@@ -121,7 +125,8 @@ to use is in `outreach/pricing.md`.
 - Follow-ups go first. New emails take what is left.
 - Nothing is sent on Saturday or Sunday.
 - A follow-up that lands on a weekend moves to Monday.
-- Follow-ups are due on day 3 and day 7 after the first email.
+- Follow-ups are due on day 3 and day 7 after the first email. `track.py move <agency> fu1 <date>`
+  puts one that has not gone out on another weekday, and keeps follow-up 1 before follow-up 2.
 - Two or more bounces in one day: stop, and clean the list before anything else goes. Record each
   with `track.py mark <agency> bounced`; `track.py bounces` shows them by day.
 
@@ -134,22 +139,26 @@ each send day.
   follow-up adds something new, or it is not sent.
 - A follow-up is a reply in the thread of the first email. Its subject is "Re:" and the original
   subject, never a new one.
-- **Job ask, day 3:** one new piece of proof in two or three lines: the screen recording of the
-  pipeline when `LEADFORGE_DEMO_URL` is set in `.env`, otherwise a proof line the first email did
-  not use. It ends on the same trial question.
+- **Job ask, day 3:** one new piece of proof in two or three lines, then the same trial question.
+  The proof is the demo client report when the wording file has one (`follow_up_report` and
+  `report_link`: a demo for a fictional business, never presented as a real client), else the
+  screen recording when `LEADFORGE_DEMO_URL` is set in `.env`, else a proof line the first email
+  did not use. If the first email named a role, the follow-up names it again, and says nothing new
+  about the agency. `jobs.py followups` rewrites only the follow-ups, sent drafts included.
 - **Job ask, day 7:** close the loop, in under 40 words.
-- **Lead pack, day 3:** turn it into the job ask, with the `pivot` sentence from the wording file.
-  `draft.py followups` rewrites only the follow-ups of a draft that is already built. The email
-  above them is the record of what was sent, and is never rebuilt.
+- **Lead pack, day 3:** turn it into the job ask, with the `pivot` sentence from the wording file,
+  followed by the demo report when the wording file has one. `draft.py followups` rewrites only
+  the follow-ups of a draft that is already built. The email above them is the record of what was
+  sent, and is never rebuilt.
 
 ## Draft format
 
 Three subject lines of 6 words or fewer. Email 1 at 120 words or fewer, plain text, no links, ending
-"Want the other 7? Just reply yes." Follow-up 1 at 50 words or fewer, follow-up 2 at 40. A LinkedIn
+"Want the other 7? Just reply yes." Follow-up 1 at 70 words or fewer, follow-up 2 at 40. A LinkedIn
 note of 280 characters or fewer. The three business lines in email 1 are generated from verified
 signals by `draft.py`. They are never typed by hand.
 
-A job ask has one subject line, the email, the pages to open to check it, and two follow-ups (60
+A job ask has one subject line, the email, the pages to open to check it, and two follow-ups (70
 words and 40). `jobs.py build` writes it from the wording file and the agency's spec, and
 `lint_drafts.py` checks it.
 
@@ -182,6 +191,7 @@ python src/track.py discover --by-hiring --region <region>   # the three above, 
 python src/jobs.py scan [<agency> ...]                       # the job ask: read each candidate's homepage and careers page
 python src/jobs.py build [<agency> ...]                      # render and lint the job-ask drafts in outreach/jobs/
 python src/jobs.py quotes [<agency> ...]                     # are the opener's quoted words on the agency's page today?
+python src/jobs.py followups [<agency> ...]                  # rewrite only the follow-ups of job asks, sent ones included
 python src/lint_drafts.py                                    # check every draft against the rules
 python src/track.py sync                                     # pick up new and blocked drafts
 python src/track.py plan <YYYY-MM-DD>                        # schedule unsent leads inside the send rules
@@ -194,6 +204,7 @@ python src/track.py mark <agency> fu1                        # a follow-up went 
 python src/track.py mark <agency> replied --note "<text>"    # also won, lost, no_reply
 python src/track.py mark <agency> bounced                    # the address rejected it; no follow-up is owed
 python src/track.py bounces                                  # bounces by day; two in a day means stop
+python src/track.py move <agency> fu1 <YYYY-MM-DD>           # put a follow-up not yet sent on another weekday
 python src/track.py list                                     # every lead, its offer and status, and replies by offer
 python src/us_track.py prepare                               # second track: agencies that buy build work
 python src/us_track.py digest                                # what their own sites say, to write from
@@ -226,6 +237,8 @@ When this conversation is compacted, keep all of the following word for word in 
   with `--region` on `discover.py`, `shortlist.py` and `qualify.py summary`. The UK is scored only
   (`outreach: false`): draft nothing for it until the operator says so. No Germany or other EU
   country for now; their cold-email rules are stricter.
+- **The lead-pack offer is paused (2026-10-19):** every new message is a job ask, and a lead-pack
+  follow-up turns into the job ask and carries the demo report.
 - **A second offer, the job ask** (`jobs.py`), asks an agency for part-time remote work. An agency
   gets one offer: a job ask goes only to one never emailed, not skipped, with no lead-pack draft
   waiting. Its opener is one factual sentence resting on words quoted from the agency's own site,
@@ -279,8 +292,8 @@ When this conversation is compacted, keep all of the following word for word in 
   lines.** No payment details in the repository.
 - **Commands:** `discover.py`, `merge_clutch.py`, `enrich.py`, `shortlist.py`, `qualify.py ingest`
   and `summary`, `prospects.py`, `verify.py`, `pack.py build` and `fill`, `draft.py build`, `quotes` and
-  `followups`, `jobs.py scan`, `build` and `quotes`, `hiring.py scan`, `report` and `drafts`,
-  `lint_drafts.py`, `track.py sync`, `plan` (`--keep`), `ready`, `today`, `mark`, `bounces`, `list`
+  `followups`, `jobs.py scan`, `build`, `quotes` and `followups`, `hiring.py scan`, `report` and `drafts`,
+  `lint_drafts.py`, `track.py sync`, `plan` (`--keep`), `ready`, `today`, `mark`, `move`, `bounces`, `list`
   and `discover --by-hiring`, `us_track.py prepare`
   and `digest`, `sample.py --brief`, `audit_public.py --online`, `examples/make_example.py`, `python -m pytest`,
   `docs/make_assets.py`, `docs/make_site.py --check`. Run

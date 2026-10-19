@@ -3,6 +3,7 @@
     python src/jobs.py scan [<agency-domain> ...]     # read each candidate's homepage and careers page, today
     python src/jobs.py build [<agency-domain> ...]    # render and lint outreach/jobs/<agency-domain>.md
     python src/jobs.py quotes [<agency-domain> ...]   # are the words each opener rests on still on the page?
+    python src/jobs.py followups [<agency-domain> ...] # rewrite only the follow-ups, sent drafts included
 
 An agency gets one offer. A job ask goes only to an agency that has never been emailed, is not on the
 skip list and has no lead-pack draft waiting to go.
@@ -274,7 +275,10 @@ def render(spec: dict, wording: dict, results: Path | None = None) -> str:
     read = draft.line1_state(domain, results or SPECS / "_line1.json", "jobs.py quotes")
     check = ["## Check before sending", "", f"What the email rests on ({read}). Open each page and find the words:", ""]
     check += [f"- {c['url']} : " + ", ".join(f'"{q}"' for q in c["quotes"]) for c in checks(spec)] + [""]
-    new = (wording["follow_up_demo"].format(url=demo) if demo
+    # The new piece of proof: the demo report if the wording file has one, else the recording, else a proof line
+    # the first email did not use. A role the first email named is named again in the report's lead-in.
+    new = (draft._report(hiring.get("role", "") if named else "", wording) if wording.get("follow_up_report")
+           else wording["follow_up_demo"].format(url=demo) if demo
            else f"{wording['follow_up_lead']} {wording['proof'][NEXT_PROOF[spec['type']]]}")
     follow_ups = ["## Follow-up 1 (day 3)", "", greeting, "", new, "", wording["ask"], "", name, "",
                   "## Follow-up 2 (day 7)", "", greeting, "", wording["follow_up_2"], "", name, ""]
@@ -317,17 +321,53 @@ def build(domains: list[str], spec_dir: Path = SPECS, out_dir: Path = JOBS, word
     return 1 if failed else 0
 
 
+def refresh_follow_ups(domains: list[str], spec_dir: Path = SPECS, out_dir: Path = JOBS, wording: dict | None = None) -> int:
+    """Rewrite only the follow-up sections of drafts already built, sent ones included.
+
+    The subject and email 1 above them are the record of what was sent and stay exactly as they are."""
+    wording = wording or job_wording()
+    paths = [spec_dir / f"{d}.job.json" for d in domains] or sorted(spec_dir.glob("*.job.json"))
+    changed = failed = 0
+    for path in paths:
+        spec = json.loads(path.read_text(encoding="utf-8"))
+        target = out_dir / f"{spec['domain']}.md"
+        if not target.exists():
+            continue
+        text = target.read_text(encoding="utf-8")
+        fresh = render(spec, wording, spec_dir / "_line1.json")
+        start, fresh_start = text.find("## Follow-up 1"), fresh.find("## Follow-up 1")
+        if start < 0:
+            console.print(f"[red]FAIL[/red] {spec['domain']}: the draft has no follow-up sections to rewrite")
+            failed += 1
+            continue
+        new = text[:start] + fresh[fresh_start:]
+        found = lint_job(new, wording)
+        if found:
+            failed += 1
+            console.print(f"[red]FAIL[/red] {spec['domain']}: " + "; ".join(found))
+            continue
+        changed += new != text
+        target.write_text(new, encoding="utf-8")
+        console.print(f"[green]{'ok' if new != text else 'same'}[/green]   outreach/jobs/{target.name}")
+    if out_dir == JOBS:
+        log_run("python src/jobs.py followups", {"drafts": len(paths), "rewritten": changed, "failed": failed})
+    return 1 if failed else 0
+
+
 def main() -> int:
     utf8_stdout()
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     sub = ap.add_subparsers(dest="cmd", required=True)
     for name, text in (("scan", "read each candidate's homepage and careers page in a browser"),
                        ("build", "render and lint the job-ask drafts"),
-                       ("quotes", "confirm each opener's quoted words on the agency's page today")):
+                       ("quotes", "confirm each opener's quoted words on the agency's page today"),
+                       ("followups", "rewrite only the follow-ups of drafts already built, sent ones included")):
         sub.add_parser(name, help=text).add_argument("agency", nargs="*", help="omit for every candidate, or every spec")
     args = ap.parse_args()
     if args.cmd == "scan":
         return scan(args.agency)
+    if args.cmd == "followups":
+        return refresh_follow_ups(args.agency)
     if args.cmd == "quotes":
         return draft.quotes(args.agency, spec_dir=SPECS, suffix=".job.json", checks=checks, command="python src/jobs.py quotes")
     return build(args.agency)

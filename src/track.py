@@ -13,6 +13,7 @@
     python src/track.py mark <domain> fu1         # follow-up 1 went out (fu2 likewise)
     python src/track.py mark <domain> replied --note "wants the other 7"
     python src/track.py mark <domain> bounced     # the address rejected it: no follow-ups, and it counts below
+    python src/track.py move <domain> fu1 2026-10-21   # a follow-up not yet sent goes on another weekday
     python src/track.py bounces                   # bounces by day; two in one day means stop and clean the list
     python src/track.py list                      # every lead, and the reply rate of each offer
     python src/track.py discover --by-hiring --region gulf   # start from the openings: see hiring.py
@@ -37,6 +38,7 @@ import re
 import sqlite3
 import sys
 from collections import Counter
+from pathlib import Path
 
 from rich.console import Console
 from rich.table import Table
@@ -314,8 +316,8 @@ def plan(conn: sqlite3.Connection, date: str | None, keep: bool = False) -> int:
     return 0
 
 
-def show_load(conn: sqlite3.Connection) -> None:
-    """Each day's messages against the caps, counting the follow-ups that the plan itself will create."""
+def daily_load(conn: sqlite3.Connection) -> dict[str, list[int]]:
+    """From today on, each day's [new, follow-up 1, follow-up 2], counting what the plan itself will create."""
     load: dict[str, list[int]] = {}
 
     def add(day: str | None, slot: int) -> None:
@@ -331,6 +333,12 @@ def show_load(conn: sqlite3.Connection) -> None:
         add(row["planned_send"], 0)
         add(due(day, FU1_DAYS), 1)
         add(due(day, FU2_DAYS), 2)
+    return load
+
+
+def show_load(conn: sqlite3.Connection) -> None:
+    """Each day's messages against the caps, counting the follow-ups that the plan itself will create."""
+    load = daily_load(conn)
     if not load:
         return
     table = Table(title=f"Daily load if every planned send goes out on its day (max {NEW_CAP} new, {DAILY_CAP} in all)",
@@ -386,6 +394,44 @@ def mark(conn: sqlite3.Connection, domain: str, status: str, note: str, date: st
                   + (f"  (sent {row['sent_at']}, follow-ups due {row['fu1_due']} and {row['fu2_due']})" if status == "sent" else ""))
     if status == "bounced":
         bounce_check(conn, on.isoformat())
+    return 0
+
+
+def move(conn: sqlite3.Connection, domain: str, which: str, date: str, note: str) -> int:
+    """Put a follow-up that has not gone out on another day, inside the send rules.
+
+    It stays a weekday, follow-up 1 stays before follow-up 2, and the day's load is shown against the cap."""
+    row = conn.execute("SELECT * FROM leads WHERE domain = ?", (domain,)).fetchone()
+    if row is None:
+        console.print(f"[red]No lead with domain {domain!r}. Run `track.py list`.[/red]")
+        return 1
+    if row["status"] != "sent":
+        console.print(f"[red]{domain} is '{row['status']}', so no follow-up is owed.[/red]")
+        return 1
+    if row[f"{which}_sent_at"]:
+        console.print(f"[red]{domain}: {which} went out on {row[which + '_sent_at']}. A sent follow-up stays where it is.[/red]")
+        return 1
+    on = dt.date.fromisoformat(date)
+    if on.weekday() >= 5:
+        console.print(f"[red]{date} is a {on.strftime('%A')}. Nothing is sent on a weekend.[/red]")
+        return 1
+    if date <= row["sent_at"]:
+        console.print(f"[red]{date} is not after the first email ({row['sent_at']}).[/red]")
+        return 1
+    other = "fu2" if which == "fu1" else "fu1"
+    if not row[f"{other}_sent_at"] and row[f"{other}_due"] and (
+            (which == "fu1" and date >= row["fu2_due"]) or (which == "fu2" and date <= row["fu1_due"])):
+        console.print(f"[red]Follow-up 1 has to come before follow-up 2 (now {row['fu1_due']} and {row['fu2_due']}). "
+                      f"Move {'follow-up 2 first' if which == 'fu1' else 'follow-up 1 first'}.[/red]")
+        return 1
+    before = row[f"{which}_due"]
+    conn.execute(f"UPDATE leads SET {which}_due = ? WHERE domain = ?", (date, domain))
+    record = f"follow-up {which[-1]} moved from {before} to {date}" + (f". {note}" if note else "")
+    conn.execute("UPDATE leads SET notes = trim(notes || char(10) || ?) WHERE domain = ?", (f"{today()}: {record}", domain))
+    conn.commit()
+    total = sum(daily_load(conn).get(date, [0, 0, 0]))
+    console.print(f"[green]{domain}[/green] {record}. {date} now holds {total} of the {DAILY_CAP} messages a day allows"
+                  + (f" [red]({total - DAILY_CAP} over the cap)[/red]" if total > DAILY_CAP else "") + ".")
     return 0
 
 
@@ -556,7 +602,8 @@ def follow_up_file(day: dt.date, owed: list, total: str) -> str:
         text = (ROOT / lead["draft_path"]).read_text(encoding="utf-8")
         body = _body(text, f"follow-up {number}")
         out += ["---", "", f"## {i}. Follow-up {number} to {lead['agency']} (first email sent {lead['sent_at']}, offer {lead['offer']})", "",
-                f"**To:** {header_field(text, 'To')}", f"**Subject:** Re: {header_field(text, 'Sent subject') or _subject(text)}", "", "```text", body, "```", ""]
+                f"**To:** {header_field(text, 'To')}", f"**Subject:** Re: {header_field(text, 'Sent subject') or _subject(text)}",
+                f"**Original subject:** {header_field(text, 'Sent subject') or _subject(text)}", "", "```text", body, "```", ""]
         if lead["offer"] == "lead_pack" and not (pivot and pivot in body):
             # Unless it has turned into the job ask, this follow-up offers the pack, so the pack has to be fit
             # to send on the day it goes.
@@ -625,6 +672,20 @@ def job_files(day: dt.date, rows: list, total: str, first: str) -> tuple[str, st
     return "\n".join(out), table.getvalue()
 
 
+def _retire(path: Path, date: str) -> None:
+    """Move a send file from an earlier run aside when nothing of its kind is due on its day any more.
+
+    Usually its emails went out on another day or were rescheduled, and it may be the only copy of what
+    was sent, so it goes to outreach/ready/archive/ instead of being deleted."""
+    if not path.exists():
+        return
+    kept = READY / "archive" / f"{path.stem}.superseded-{dt.datetime.now():%Y%m%d-%H%M%S}{path.suffix}"
+    kept.parent.mkdir(parents=True, exist_ok=True)
+    path.replace(kept)
+    console.print(f"[yellow]moved {path.relative_to(ROOT).as_posix()} to {kept.relative_to(ROOT).as_posix()}: "
+                  f"nothing of that kind is due on {date} now[/yellow]")
+
+
 def ready(conn: sqlite3.Connection, date: str) -> int:
     """Write the day's files: the follow-ups due, the lead-pack emails, and the job asks (as .md and .csv)."""
     day = dt.date.fromisoformat(date)
@@ -636,6 +697,8 @@ def ready(conn: sqlite3.Connection, date: str) -> int:
     if not rows and not owed:
         console.print(f"[yellow]No unblocked drafts are planned for {date} and no follow-up is due. "
                       f"Run `track.py plan {date}` first.[/yellow]")
+        for suffix in ("-followups.md", ".md", "-jobs.md", "-jobs.csv"):
+            _retire(READY / f"{date}{suffix}", date)
         return 1
     count = len(owed) + len(rows)
     total = (f"The day in all: {_plural(len(owed), 'follow-up')}, {_plural(len(packs), 'lead-pack email')} and "
@@ -651,9 +714,7 @@ def ready(conn: sqlite3.Connection, date: str) -> int:
     for suffix, content in files.items():
         path = READY / f"{date}{suffix}"
         if content is None:
-            if path.exists():
-                path.unlink()  # written by an earlier run; nothing of that kind is due on this day any more
-                console.print(f"[yellow]removed {path.relative_to(ROOT).as_posix()}: nothing of that kind is due on {date} now[/yellow]")
+            _retire(path, date)
             continue
         # The CSV carries a byte-order mark so a spreadsheet opens its accents and Arabic correctly.
         path.write_text(content, encoding="utf-8-sig" if suffix.endswith(".csv") else "utf-8", newline="" if suffix.endswith(".csv") else None)
@@ -676,6 +737,11 @@ def main() -> int:
     p_mark.add_argument("status", choices=STATUSES + ("fu1", "fu2"))
     p_mark.add_argument("--note", default="")
     p_mark.add_argument("--date", help="YYYY-MM-DD the message goes out, if not today (an email scheduled ahead)")
+    p_move = sub.add_parser("move", help="put a follow-up that has not gone out on another weekday")
+    p_move.add_argument("domain")
+    p_move.add_argument("which", choices=("fu1", "fu2"))
+    p_move.add_argument("date", help="YYYY-MM-DD, a weekday")
+    p_move.add_argument("--note", default="", help="why it moved")
     p_plan = sub.add_parser("plan", help="schedule every unsent lead from a date on, or show the plan")
     p_plan.add_argument("date", nargs="?", help="YYYY-MM-DD to schedule from; omit to only show the plan")
     p_plan.add_argument("--keep", action="store_true", help="leave leads that already have a date where they are")
@@ -698,6 +764,8 @@ def main() -> int:
             return plan(conn, args.date, args.keep)
         if args.cmd == "bounces":
             return show_bounces(conn)
+        if args.cmd == "move":
+            return move(conn, args.domain, args.which, args.date, args.note)
         if args.cmd == "ready":
             return ready(conn, args.date)
         if args.cmd == "today":
