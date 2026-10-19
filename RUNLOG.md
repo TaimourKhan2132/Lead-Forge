@@ -3412,3 +3412,40 @@ Counts only. No lead names or scraped data are written to this file, so it is sa
 - **Command:** `python src/pack.py build <agency>`
 - **Counts:** prospects=10, files=2
 - **Failures:** none
+
+### 2026-10-19T23:31:33+05:00
+- **Command:** `python src/hiring.py scan <companies>`
+- **Counts:** companies=9, read_now=9, from_cache=0, careers_page=5, unread=0, job_system=0, with_roles=1, fresh=0, undated=5, talent_pool=0, stale_dropped=0, strong=0, adjacent=1
+- **Failures:** none
+- **Notes:** One request at a time per site, robots.txt respected, results kept for 7 days.
+
+### 2026-10-19T23:32:34+05:00
+- **Command:** `python src/jobs.py quotes`
+- **Counts:** drafts=1, failed=0
+- **Failures:** none
+
+### 2026-10-19T23:35:09+05:00
+- **Command:** `python src/hiring.py scan <companies>`
+- **Counts:** companies=1, read_now=1, from_cache=0, careers_page=1, unread=0, job_system=0, with_roles=0, fresh=0, undated=0, talent_pool=0, stale_dropped=0, strong=0, adjacent=0
+- **Failures:** none
+- **Notes:** One request at a time per site, robots.txt respected, results kept for 7 days.
+
+### 2026-10-19T23:37:09+05:00
+- **Command:** `python src/draft.py followups`
+- **Counts:** drafts=21, rewritten=21, failed=0
+- **Failures:** none
+
+### 2026-10-19T23:37:16+05:00
+- **Command:** `python src/jobs.py followups`
+- **Counts:** drafts=22, rewritten=22, failed=0
+- **Failures:** none
+
+### 2026-10-19T23:39:51+05:00
+- **Command:** `python src/jobs.py followups`
+- **Counts:** drafts=22, rewritten=0, failed=0
+- **Failures:** none
+
+### 2026-10-19T23:39:52+05:00
+- **Command:** `python src/draft.py followups`
+- **Counts:** drafts=21, rewritten=0, failed=0
+- **Failures:** none
