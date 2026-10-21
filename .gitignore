@@ -36,3 +36,6 @@ _site/
 
 # The operator's own notes, kept on this machine only.
 user_note.md
+
+# Upwork job samples, built from public listings; never committed.
+upwork/

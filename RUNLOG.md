@@ -3449,3 +3449,9 @@ Counts only. No lead names or scraped data are written to this file, so it is sa
 - **Command:** `python src/draft.py followups`
 - **Counts:** drafts=21, rewritten=0, failed=0
 - **Failures:** none
+
+### 2026-10-21T20:28:16+05:00
+- **Command:** `python src/discover.py <upwork sample queries> <name> --engine playwright --depth 1 --concurrency 2`
+- **Counts:** queries=6, raw_rows=81, unique=77, with_site=48, platform_only=8, no_website=21, with_email=0, with_review_count=77
+- **Failures:** none
+- **Notes:** engine=playwright, an Upwork sample; output moved to the gitignored upwork/ folder
