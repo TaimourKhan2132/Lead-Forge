@@ -3455,3 +3455,15 @@ Counts only. No lead names or scraped data are written to this file, so it is sa
 - **Counts:** queries=6, raw_rows=81, unique=77, with_site=48, platform_only=8, no_website=21, with_email=0, with_review_count=77
 - **Failures:** none
 - **Notes:** engine=playwright, an Upwork sample; output moved to the gitignored upwork/ folder
+
+### 2026-10-22T16:48:29+05:00
+- **Command:** `python src/discover.py <upwork sample query> <name> --engine playwright --depth 2 --concurrency 1 --no-reviews`
+- **Counts:** queries=1, raw_rows=20, unique=19, with_site=18, platform_only=1, no_website=0, with_email=0, with_review_count=19
+- **Failures:** none
+- **Notes:** engine=playwright, an Upwork sample; output moved to the gitignored upwork/ folder
+
+### 2026-10-22T16:48:53+05:00
+- **Command:** `python src/discover.py <upwork sample query> <name> --engine playwright --depth 3 --concurrency 1 --no-reviews`
+- **Counts:** queries=1, raw_rows=20, unique=20, with_site=17, platform_only=1, no_website=2, with_email=0, with_review_count=20
+- **Failures:** none
+- **Notes:** engine=playwright, an Upwork sample; output moved to the gitignored upwork/ folder
