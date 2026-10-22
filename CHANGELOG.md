@@ -5,6 +5,23 @@ Notable changes to LeadForge. No real business is named here or anywhere else in
 ## Unreleased
 
 ### Added
+- `contacts.py` reads the contact details a business publishes itself, for every business in a
+  discover.py CSV:
+  - It re-opens the Maps listing: closed or not, phone, address, coordinates.
+  - It reads the home page and up to three contact pages of the business's own site.
+  - It records each email shown as a mailto link or as text, and each Facebook page and Instagram
+    account linked, with the page it was on and where on that page.
+  - It drops junk addresses, share buttons, posts, reels and the platforms' own accounts, with the
+    reason.
+  - facebook.com and instagram.com are never opened, and robots.txt is obeyed.
+  - It skips a page behind a bot check, a CAPTCHA or a login. A contact form's hidden reCAPTCHA
+    frame alone does not count.
+  - When several pages of one kind are linked, the header or footer wins. A tie is broken only by
+    the business's own name, else the choice is left blank with every candidate kept.
+  - It tries a page again, up to three times with a pause, when the failure looks passing: a
+    timeout, a DNS failure or a host's 5xx. An error page is never read as the site.
+  - It records a contact page that would not load, with the reason, instead of passing over it.
+  - Results go to a gitignored folder, and the run log gets counts only.
 - `track.py move <agency> fu1|fu2 <date>` puts a follow-up that has not gone out on another day. It
   refuses a weekend, a day on or before the first email, and an order where follow-up 1 would come
   after follow-up 2, notes the move on the lead, and shows the day's load against the cap.

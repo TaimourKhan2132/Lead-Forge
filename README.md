@@ -258,6 +258,7 @@ Each rule is enforced by code, not by remembering it.
 | An opening line says only what the agency's page says | `draft.py quotes` re-reads the page and records the result beside the link |
 | No real business ever reaches git | `audit_public.py` searches every commit on every ref, and the built live page, for each name, domain and email in the private data folder |
 | The send rules | `track.py plan` and `track.py today` |
+| A contact detail is published, never guessed | `contacts.py` keeps only what a business's own page shows, with that page; it never opens Facebook or Instagram |
 
 The rules that can run offline are under test: `python -m pytest`.
 
@@ -381,6 +382,21 @@ and writes a 10-row CSV plus a proposal of 120 words or fewer that points at it.
 only what the sample contains, such as how many rows have an email. A field that cannot be sourced
 honestly, an owner's name for instance, is named as missing and left out.
 
+When a job asks for contact details, `contacts.py` reads them off each business's own pages:
+
+```bash
+python src/discover.py queries/<list>.txt <name>
+python src/contacts.py data/raw/<name>.csv --skip-names "great clips,supercuts"
+```
+
+For every business it re-opens the Maps listing (closed or not, phone, address, coordinates), then the
+home page and up to three contact pages of its own site. It records each email shown as a link or as
+text, and each Facebook page and Instagram account linked, with the page it was on. Junk addresses,
+share buttons, posts and a platform's own accounts are dropped with the reason. facebook.com and
+instagram.com are never opened, robots.txt is obeyed, and a page behind a CAPTCHA or a login is skipped.
+When a site links several pages of one kind, the one in its header or footer wins. Anything still
+ambiguous is left blank for a person, with every candidate kept.
+
 </details>
 
 <details>
@@ -433,6 +449,7 @@ src/
   lint_drafts.py      check drafts against the house rules
   jobs.py             a second offer, the job ask: one fact quoted from the agency's own site
   hiring.py           roles read from careers pages and public job-board APIs, each with its evidence
+  contacts.py         the emails, Facebook pages and Instagram accounts a business publishes, with the page
   track.py            SQLite tracker: plan, daily caps, follow-ups, bounces, the day's ready files
   sample.py           a job description in, a 10-row sample and a short proposal out
   us_track.py         agencies that buy build work, not lead packs

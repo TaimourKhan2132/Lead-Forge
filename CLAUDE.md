@@ -117,6 +117,11 @@ to use is in `outreach/pricing.md`.
     public board API where it has one (Greenhouse, Lever, Workable, Recruitee). Never LinkedIn,
     Indeed or Bayt. If a source's terms are unclear, skip it and say so. An Apply link goes in
     `outreach/apply_by_hand.md` for the operator to use himself; never submit a form.
+21. **Contact details are read, never guessed** (`contacts.py`). An email counts only when the
+    business's own site shows it, as a mailto link or as text, and its page is recorded. A Facebook
+    or Instagram link counts only as the business published it, on its own site or as its Maps
+    listing's website. facebook.com and instagram.com are never opened. A page showing a CAPTCHA, a
+    bot check or a login is skipped. An ambiguous choice is left blank, not settled by a guess.
 
 ## Send rules
 
@@ -209,6 +214,7 @@ python src/track.py list                                     # every lead, its o
 python src/us_track.py prepare                               # second track: agencies that buy build work
 python src/us_track.py digest                                # what their own sites say, to write from
 python src/sample.py --brief "<job description>"             # a 10-row sample and a short proposal
+python src/contacts.py data/raw/<name>.csv [--out <dir>]      # emails and Facebook/Instagram pages a business publishes
 python src/audit_public.py --online                          # must pass before every push
 python examples/make_example.py                              # rebuild the fictional example pack and email
 python src/lint_drafts.py <file.md>                          # lint one file (examples/rejected.example.md must fail)
@@ -293,7 +299,7 @@ When this conversation is compacted, keep all of the following word for word in 
 - **Commands:** `discover.py`, `merge_clutch.py`, `enrich.py`, `shortlist.py`, `qualify.py ingest`
   and `summary`, `prospects.py`, `verify.py`, `pack.py build` and `fill`, `draft.py build`, `quotes` and
   `followups`, `jobs.py scan`, `build`, `quotes` and `followups`, `hiring.py scan`, `report` and `drafts`,
-  `lint_drafts.py`, `track.py sync`, `plan` (`--keep`), `ready`, `today`, `mark`, `move`, `bounces`, `list`
+  `lint_drafts.py`, `contacts.py`, `track.py sync`, `plan` (`--keep`), `ready`, `today`, `mark`, `move`, `bounces`, `list`
   and `discover --by-hiring`, `us_track.py prepare`
   and `digest`, `sample.py --brief`, `audit_public.py --online`, `examples/make_example.py`, `python -m pytest`,
   `docs/make_assets.py`, `docs/make_site.py --check`. Run
