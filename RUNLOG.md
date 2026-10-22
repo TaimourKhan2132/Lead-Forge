@@ -3479,3 +3479,27 @@ Counts only. No lead names or scraped data are written to this file, so it is sa
 - **Counts:** queries=2, raw_rows=35, unique=27, with_site=23, platform_only=0, no_website=4, with_email=0, with_review_count=26
 - **Failures:** none
 - **Notes:** engine=playwright, an Upwork sample; output moved to the gitignored upwork/ folder
+
+### 2026-10-23T01:19:47+05:00
+- **Command:** `python src/contacts.py <businesses.csv>`
+- **Counts:** businesses=45, skipped_by_name=7, closed=1, with_site=36, gated=5, with_email=12, with_facebook=16, with_instagram=20
+- **Failures:** none
+- **Notes:** robots.txt obeyed; facebook.com and instagram.com never opened
+
+### 2026-10-23T01:24:21+05:00
+- **Command:** `python src/contacts.py <businesses.csv>`
+- **Counts:** businesses=45, skipped_by_name=7, closed=1, with_site=36, gated=5, with_email=13, with_facebook=16, with_instagram=20
+- **Failures:** none
+- **Notes:** robots.txt obeyed; facebook.com and instagram.com never opened
+
+### 2026-10-23T01:25:03+05:00
+- **Command:** `python src/contacts.py <businesses.csv>`
+- **Counts:** businesses=39, skipped_by_name=1, closed=0, with_site=34, gated=1, with_email=21, with_facebook=20, with_instagram=28
+- **Failures:** none
+- **Notes:** robots.txt obeyed; facebook.com and instagram.com never opened
+
+### 2026-10-23T01:25:38+05:00
+- **Command:** `python src/contacts.py <businesses.csv>`
+- **Counts:** businesses=45, skipped_by_name=7, closed=1, with_site=36, gated=5, with_email=14, with_facebook=16, with_instagram=20
+- **Failures:** none
+- **Notes:** robots.txt obeyed; facebook.com and instagram.com never opened
